@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstdio>
+#include <exception>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -625,6 +626,20 @@ void exercise_endpoint_handler_status_and_cancellation()
 
 int main()
 {
+    std::set_terminate([] {
+        if (auto error = std::current_exception()) {
+            try { std::rethrow_exception(error); }
+            catch (const std::exception& detail) {
+                std::fprintf(stderr, "axtp_control_endpoint_test uncaught exception: %s\n", detail.what());
+            } catch (...) {
+                std::fprintf(stderr, "axtp_control_endpoint_test uncaught non-standard exception\n");
+            }
+        } else {
+            std::fprintf(stderr, "axtp_control_endpoint_test terminated without an active exception\n");
+        }
+        std::fflush(stderr);
+        std::abort();
+    });
     using axent::control::ControlResult;
     using axent::control::ControlStatus;
 
