@@ -3,6 +3,7 @@
 #include <condition_variable>
 #include <cstdint>
 #include <cstdlib>
+#include <cstdio>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -31,6 +32,7 @@ using namespace std::chrono_literals;
 void require(bool condition, const char* message)
 {
     if (!condition) {
+        std::fprintf(stderr,"axtp_control_endpoint_test assertion failed: %s\n",message);std::fflush(stderr);
         throw std::runtime_error(message);
     }
 }
