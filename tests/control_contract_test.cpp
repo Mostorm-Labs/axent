@@ -51,6 +51,17 @@ int main()
     params["expectedSettingsRevision"] = "18446744073709551616";
     if (validate_payload("cast.setPresentationSettings",PayloadRole::Request,params)) return 5;
     if (!validate_payload("cast.getStatus",PayloadRole::Request,nlohmann::json::object())) return 6;
+    if (!validate_payload("cast.getWebCastBackendState",PayloadRole::Request,{{"controlVersion",1},{"futureOptional",true}})) return 7;
+    if (validate_payload("cast.getWebCastBackendState",PayloadRole::Request,nlohmann::json::object())) return 8;
+    nlohmann::json node={{"state","offline"},{"transportConnected",false},{"retainedPeerCount",0},{"connectedPeerCount",0}};
+    nlohmann::json backend={{"backendContext",{{"controlVersion",1},{"runtimeInstanceId","11111111-1111-4111-8111-111111111111"},
+        {"backendRevision","9007199254740993"},{"backendEventSequence","18446744073709551615"}}},
+        {"state",{{"enabled",true},{"state","starting"},{"selectedBackend","none"},{"cloud",node},
+        {"local",{{"fallbackEnabled",true},{"serviceState","dormant"},{"startAttempts","0"},{"signaling",node}}}}}};
+    if (!validate_payload("cast.getWebCastBackendState",PayloadRole::Response,backend) ||
+        !validate_payload("cast.webcastBackendChanged",PayloadRole::Event,backend)) return 9;
+    backend["backendContext"]["backendRevision"]="18446744073709551616";
+    if (validate_payload("cast.webcastBackendChanged",PayloadRole::Event,backend)) return 10;
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-field-initializers"
