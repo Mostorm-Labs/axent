@@ -4,6 +4,7 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <string_view>
 
 #include <nlohmann/json.hpp>
 
@@ -68,6 +69,14 @@ struct ControlResult {
     ControlStatus status = ControlStatus::success();
     nlohmann::json body = nlohmann::json::object();
 };
+
+enum class PayloadRole { Request, Response, Event };
+// Generated protocol facts are kept inside Axent's private runtime adapter.
+// Product capability/ownership/operation semantics remain host responsibilities.
+bool validate_payload(std::string_view route, PayloadRole role, const nlohmann::json& value);
+std::optional<std::uint64_t> parse_decimal_uint64(std::string_view value) noexcept;
+// Exact generated source metadata; development versions remain visibly unpublished.
+std::string_view protocol_spec_version() noexcept;
 
 using ControlHandler = std::function<ControlResult(const ControlRequest&)>;
 using EndpointControlHandler = std::function<ControlOperationPtr(const ControlRequest&)>;

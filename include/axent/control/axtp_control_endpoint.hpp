@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include <nlohmann/json.hpp>
 
@@ -13,6 +14,14 @@ namespace axent {
 struct AxtpControlEndpointOptions {
     std::string bind_address = "127.0.0.1";
     std::uint16_t port = 0;
+    std::size_t max_pending_events = 1024;
+    std::size_t max_pending_event_bytes = 4U * 1024U * 1024U;
+    std::size_t max_pending_tasks = 1024;
+};
+
+struct ControlEvent {
+    control::ControlRoute route;
+    nlohmann::json data;
 };
 
 class AxtpControlEndpoint final {
@@ -40,6 +49,9 @@ public:
 
     control::ControlStatus publish_event(control::ControlRoute route,
                                          nlohmann::json data = nlohmann::json::object());
+    // All parts are admitted atomically; overflow disconnects control clients
+    // for resynchronization, without stopping the listener or media owners.
+    control::ControlStatus publish_events(std::vector<ControlEvent> events);
 
 private:
     struct Impl;

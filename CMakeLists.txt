@@ -20,6 +20,7 @@ add_library(axent_control_contract STATIC
 add_library(axent::control_contract ALIAS axent_control_contract)
 target_include_directories(axent_control_contract PUBLIC include)
 target_link_libraries(axent_control_contract PUBLIC nlohmann_json::nlohmann_json)
+target_link_libraries(axent_control_contract PRIVATE axtp::core)
 axent_enable_warnings(axent_control_contract)
 
 add_library(axent_media_contract INTERFACE)

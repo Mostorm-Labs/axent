@@ -1005,5 +1005,20 @@ int main()
     (void)blocking_token;
     (void)self_stop_token;
     (void)replacement;
+    {
+        axent::AxtpControlEndpoint limited;
+        auto token = limited.register_handler({std::nullopt,"cast.setPresentationSettings",false},
+            [](const axent::control::ControlRequest&) { return axent::control::ControlResult{}; });
+        axent::AxtpControlEndpointOptions options;
+        options.max_pending_events = 1;
+        require(limited.start(options).ok(),"new generated route must register by name");
+        std::vector<axent::ControlEvent> batch = {
+            {{std::nullopt,"cast.sessionsChanged",false},nlohmann::json::object()},
+            {{std::nullopt,"cast.presentationChanged",false},nlohmann::json::object()}};
+        require(limited.publish_events(std::move(batch)) == ControlStatus::busy(),
+            "oversized event batch must reject atomically");
+        require(limited.running(),"event backpressure must preserve control listener");
+        require(limited.stop().ok(),"limited endpoint stops independently");
+    }
     return 0;
 }

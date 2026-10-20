@@ -18,6 +18,9 @@ public:
     {
         return factory_ ? factory_(options) : nullptr;
     }
+    std::optional<std::vector<transport::HidDeviceInfo>> discovery_override() const override {
+        return std::vector<transport::HidDeviceInfo>{};
+    }
 
 private:
     AxtpAdapterTestSeam::TransportFactory factory_;

@@ -36,6 +36,21 @@ static_assert(std::is_same_v<
 
 int main()
 {
+    using namespace axent::control;
+    if (parse_decimal_uint64("18446744073709551615") != UINT64_MAX ||
+        parse_decimal_uint64("18446744073709551616") || parse_decimal_uint64("01")) return 2;
+    nlohmann::json params = {{"controlVersion",1},
+        {"runtimeInstanceId","11111111-1111-4111-8111-111111111111"},
+        {"clientInstanceId","22222222-2222-4222-8222-222222222222"},
+        {"commandId","33333333-3333-4333-8333-333333333333"},
+        {"expectedSettingsRevision","9007199254740993"},
+        {"patch",{{"capacity",4}}},{"persist",true}};
+    if (!validate_payload("cast.setPresentationSettings",PayloadRole::Request,params)) return 3;
+    params["futureOptional"] = true;
+    if (!validate_payload("cast.setPresentationSettings",PayloadRole::Request,params)) return 4;
+    params["expectedSettingsRevision"] = "18446744073709551616";
+    if (validate_payload("cast.setPresentationSettings",PayloadRole::Request,params)) return 5;
+    if (!validate_payload("cast.getStatus",PayloadRole::Request,nlohmann::json::object())) return 6;
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-field-initializers"
