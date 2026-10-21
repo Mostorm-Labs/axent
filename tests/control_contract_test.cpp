@@ -62,6 +62,14 @@ int main()
         !validate_payload("cast.webcastBackendChanged",PayloadRole::Event,backend)) return 9;
     backend["backendContext"]["backendRevision"]="18446744073709551616";
     if (validate_payload("cast.webcastBackendChanged",PayloadRole::Event,backend)) return 10;
+    nlohmann::json focus={{"controlVersion",1},{"runtimeInstanceId","11111111-1111-4111-8111-111111111111"},
+        {"clientInstanceId","22222222-2222-4222-8222-222222222222"},{"commandId","33333333-3333-4333-8333-333333333333"},
+        {"target",{{"session",{{"id","source"},{"generation","18446744073709551615"}}},{"slotId",0},{"bindingGeneration","9007199254740993"},{"lifecycleGeneration","1"}}},
+        {"expectedMeetingRevision","9007199254740995"},{"display","primary"},{"futureOptional",true}};
+    if(!validate_payload("cast.setPresentationFocus",PayloadRole::Request,focus))return 11;
+    focus["expectedMeetingRevision"]="01";if(validate_payload("cast.setPresentationFocus",PayloadRole::Request,focus))return 12;
+    params["expectedSettingsRevision"]="1";params["patch"]={{"presentationAudioFollow",false}};
+    if(!validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 13;
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-field-initializers"
