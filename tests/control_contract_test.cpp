@@ -67,9 +67,16 @@ int main()
         {"target",{{"session",{{"id","source"},{"generation","18446744073709551615"}}},{"slotId",0},{"bindingGeneration","9007199254740993"},{"lifecycleGeneration","1"}}},
         {"expectedMeetingRevision","9007199254740995"},{"display","primary"},{"futureOptional",true}};
     if(!validate_payload("cast.setPresentationFocus",PayloadRole::Request,focus))return 11;
+    focus["display"]="focus";if(!validate_payload("cast.setPresentationFocus",PayloadRole::Request,focus))return 14;
     focus["expectedMeetingRevision"]="01";if(validate_payload("cast.setPresentationFocus",PayloadRole::Request,focus))return 12;
     params["expectedSettingsRevision"]="1";params["patch"]={{"presentationAudioFollow",false}};
     if(!validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 13;
+    params["patch"]={{"presentationFocusOnDoubleClick",false}};
+    if(!validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 15;
+    params["patch"]={{"presentationSplitOnDoubleClick",true}};
+    if(!validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 17;
+    params["patch"]={{"presentationFocusOnDoubleClick","false"}};
+    if(validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 16;
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-field-initializers"
