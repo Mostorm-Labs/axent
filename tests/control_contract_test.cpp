@@ -36,6 +36,47 @@ static_assert(std::is_same_v<
 
 int main()
 {
+    using namespace axent::control;
+    if (parse_decimal_uint64("18446744073709551615") != UINT64_MAX ||
+        parse_decimal_uint64("18446744073709551616") || parse_decimal_uint64("01")) return 2;
+    nlohmann::json params = {{"controlVersion",1},
+        {"runtimeInstanceId","11111111-1111-4111-8111-111111111111"},
+        {"clientInstanceId","22222222-2222-4222-8222-222222222222"},
+        {"commandId","33333333-3333-4333-8333-333333333333"},
+        {"expectedSettingsRevision","9007199254740993"},
+        {"patch",{{"capacity",4}}},{"persist",true}};
+    if (!validate_payload("cast.setPresentationSettings",PayloadRole::Request,params)) return 3;
+    params["futureOptional"] = true;
+    if (!validate_payload("cast.setPresentationSettings",PayloadRole::Request,params)) return 4;
+    params["expectedSettingsRevision"] = "18446744073709551616";
+    if (validate_payload("cast.setPresentationSettings",PayloadRole::Request,params)) return 5;
+    if (!validate_payload("cast.getStatus",PayloadRole::Request,nlohmann::json::object())) return 6;
+    if (!validate_payload("cast.getWebCastBackendState",PayloadRole::Request,{{"controlVersion",1},{"futureOptional",true}})) return 7;
+    if (validate_payload("cast.getWebCastBackendState",PayloadRole::Request,nlohmann::json::object())) return 8;
+    nlohmann::json node={{"state","offline"},{"transportConnected",false},{"retainedPeerCount",0},{"connectedPeerCount",0}};
+    nlohmann::json backend={{"backendContext",{{"controlVersion",1},{"runtimeInstanceId","11111111-1111-4111-8111-111111111111"},
+        {"backendRevision","9007199254740993"},{"backendEventSequence","18446744073709551615"}}},
+        {"state",{{"enabled",true},{"state","starting"},{"selectedBackend","none"},{"cloud",node},
+        {"local",{{"fallbackEnabled",true},{"serviceState","dormant"},{"startAttempts","0"},{"signaling",node}}}}}};
+    if (!validate_payload("cast.getWebCastBackendState",PayloadRole::Response,backend) ||
+        !validate_payload("cast.webcastBackendChanged",PayloadRole::Event,backend)) return 9;
+    backend["backendContext"]["backendRevision"]="18446744073709551616";
+    if (validate_payload("cast.webcastBackendChanged",PayloadRole::Event,backend)) return 10;
+    nlohmann::json focus={{"controlVersion",1},{"runtimeInstanceId","11111111-1111-4111-8111-111111111111"},
+        {"clientInstanceId","22222222-2222-4222-8222-222222222222"},{"commandId","33333333-3333-4333-8333-333333333333"},
+        {"target",{{"session",{{"id","source"},{"generation","18446744073709551615"}}},{"slotId",0},{"bindingGeneration","9007199254740993"},{"lifecycleGeneration","1"}}},
+        {"expectedMeetingRevision","9007199254740995"},{"display","sidebar"},{"futureOptional",true}};
+    if(!validate_payload("cast.setPresentationFocus",PayloadRole::Request,focus))return 11;
+    focus["display"]="focus";if(!validate_payload("cast.setPresentationFocus",PayloadRole::Request,focus))return 14;
+    focus["expectedMeetingRevision"]="01";if(validate_payload("cast.setPresentationFocus",PayloadRole::Request,focus))return 12;
+    params["expectedSettingsRevision"]="1";params["patch"]={{"presentationAudioFollow",false}};
+    if(!validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 13;
+    params["patch"]={{"presentationFocusOnDoubleClick",false}};
+    if(!validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 15;
+    params["patch"]={{"presentationGridOnDoubleClick",true}};
+    if(!validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 17;
+    params["patch"]={{"presentationFocusOnDoubleClick","false"}};
+    if(validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 16;
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-field-initializers"

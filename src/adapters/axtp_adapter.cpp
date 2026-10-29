@@ -698,6 +698,7 @@ struct AxtpAdapter::RuntimeState {
     nlohmann::json health_probe_params = nlohmann::json::object();
     std::uint64_t next_video_reconfigure_id = 1;
     bool suppress_video_auto_open = false;
+    bool suppress_paired_audio_auto_open = false;
     std::vector<std::uint32_t> video_frame_rates;
     bool video_supports_active_reconfigure = true;
     // Capabilities are static for a physical session.  Source-state changes
@@ -981,7 +982,8 @@ std::shared_ptr<AxtpAdapter::DeviceContext> AxtpAdapter::device_context_for(
             selector = config_.selector;
         }
         if (selector.kind == TransportKind::Hid) {
-            const auto hid_devices = axent::transport::enumerateHidDevices(
+            const auto injected=runtime_->factory->discovery_override();
+            const auto hid_devices = injected?*injected:axent::transport::enumerateHidDevices(
                 selector.vendor_id, selector.product_id);
             auto projection = detail::project_hid_devices(
                 selector, hid_devices, config_.endpoint_delivery_mode);
@@ -1341,7 +1343,8 @@ std::vector<DeviceSnapshot> AxtpAdapter::discover()
     }
 
 #if AXENT_HAS_AXTP_HID_TRANSPORT
-    const auto hid_devices = axent::transport::enumerateHidDevices(
+    const auto injected=runtime_->factory->discovery_override();
+    const auto hid_devices = injected?*injected:axent::transport::enumerateHidDevices(
         selector.vendor_id, selector.product_id);
     auto projection = detail::project_hid_devices(
         selector, hid_devices, config_.endpoint_delivery_mode);
@@ -2566,6 +2569,7 @@ void AxtpAdapter::clear_video_stream_params_session(bool preserve_logical_sessio
     runtime_->active_video_open_params = nlohmann::json::object();
     runtime_->active_audio_open_params = nlohmann::json::object();
     runtime_->suppress_video_auto_open = false;
+    runtime_->suppress_paired_audio_auto_open = false;
     runtime_->video_frame_rates.clear();
     runtime_->video_supports_active_reconfigure = true;
     runtime_->capabilities_cache.clear();
@@ -4125,6 +4129,7 @@ bool AxtpAdapter::ensure_session_locked(const std::string& device_id,
         runtime_->video_params_state.state = VideoStreamParamsStateKind::Idle;
         runtime_->video_params_state.phase = VideoStreamParamsPhase::Idle;
         runtime_->suppress_video_auto_open = false;
+        runtime_->suppress_paired_audio_auto_open = false;
     }
 
     if (configure_media) {
@@ -4353,6 +4358,8 @@ void AxtpAdapter::advance_video_reconfigure(const std::string& device_id)
             runtime_->session_video_frame_rate = operation.previous_frame_rate;
             runtime_->video_reconfigure.reset();
             runtime_->suppress_video_auto_open = !preserve_previous_stream;
+            runtime_->suppress_paired_audio_auto_open = !preserve_previous_stream &&
+                (operation.previous_audio_descriptor.has_value() || !operation.previous_audio_open_params.empty());
             auto& current = runtime_->video_params_state;
             current.desired_frame_rate = operation.previous_frame_rate;
             current.state = VideoStreamParamsStateKind::Failed;
@@ -4667,6 +4674,7 @@ void AxtpAdapter::advance_video_reconfigure(const std::string& device_id)
             current.last_error.reset();
             runtime_->video_reconfigure.reset();
             runtime_->suppress_video_auto_open = false;
+            runtime_->suppress_paired_audio_auto_open = false;
             completed = current;
         }
         notify_video_stream_params_state(std::move(completed));
@@ -4777,7 +4785,8 @@ bool AxtpAdapter::configure_media_stream_kind(
     if (!from_video_reconfigure) {
         std::lock_guard<std::mutex> lock(runtime_->video_params_mutex);
         if (runtime_->video_reconfigure.has_value() ||
-            (kind == MediaKind::Video && runtime_->suppress_video_auto_open)) {
+            (kind == MediaKind::Video && runtime_->suppress_video_auto_open) ||
+            (kind == MediaKind::Audio && runtime_->suppress_paired_audio_auto_open)) {
             return false;
         }
     }

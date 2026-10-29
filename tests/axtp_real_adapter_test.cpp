@@ -2725,6 +2725,7 @@ int main()
     // scripted transport drops only the read-only capability probe on the old
     // physical session; a replacement transport answers normally.
     axent::AxtpAdapterConfig recovery_config = axent::AxtpAdapter::na20_defaults();
+    recovery_config.session_probe_mode = axent::SessionProbeMode::LegacyRpc;
     recovery_config.session_health_probe_interval_ms = 20;
     recovery_config.session_health_probe_timeout_ms = 15;
     recovery_config.session_health_failure_threshold = 2;
@@ -2897,6 +2898,9 @@ int main()
     const auto after_rollback_failure = frame_rate_adapter->active_media_stream_descriptors();
     require(after_rollback_failure.empty(),
             "rollback failure after a paired close must not expose a stale audio stream");
+    std::this_thread::sleep_for(std::chrono::milliseconds(750));
+    require(frame_rate_adapter->active_media_stream_descriptors().empty(),
+            "failed paired rollback must not auto-reopen an audio stream without its video");
 
     // Codec negotiation is session-local: auto prefers H.265 when both the
     // peer and the runtime advertise it, but a rejected H.265 open retries

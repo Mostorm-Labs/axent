@@ -1676,6 +1676,7 @@ int main()
     real_request.client_id = "nearcast-real";
     real_request.device_id = real_device.id;
     const auto real_lease = real_host.acquire_session(real_request);
+    if(!real_lease.acquired)std::fprintf(stderr,"real lease diagnostic: status=%u reason=%s\n",static_cast<unsigned>(real_lease.status),real_lease.reason.c_str());
     require(real_lease.acquired, "real AXTP device lease should be acquired");
     const auto real_call = real_host.call(real_lease.session_id, "audio.getAlgorithmConfig", {});
     require(real_call.status == axent::ControlStatus::Ok, "real AXTP host call should dispatch");
