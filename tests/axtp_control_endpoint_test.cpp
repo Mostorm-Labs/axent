@@ -3,6 +3,8 @@
 #include <condition_variable>
 #include <cstdint>
 #include <cstdlib>
+#include <cstdio>
+#include <exception>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -31,6 +33,7 @@ using namespace std::chrono_literals;
 void require(bool condition, const char* message)
 {
     if (!condition) {
+        std::fprintf(stderr,"axtp_control_endpoint_test assertion failed: %s\n",message);std::fflush(stderr);
         throw std::runtime_error(message);
     }
 }
@@ -623,6 +626,20 @@ void exercise_endpoint_handler_status_and_cancellation()
 
 int main()
 {
+    std::set_terminate([] {
+        if (auto error = std::current_exception()) {
+            try { std::rethrow_exception(error); }
+            catch (const std::exception& detail) {
+                std::fprintf(stderr, "axtp_control_endpoint_test uncaught exception: %s\n", detail.what());
+            } catch (...) {
+                std::fprintf(stderr, "axtp_control_endpoint_test uncaught non-standard exception\n");
+            }
+        } else {
+            std::fprintf(stderr, "axtp_control_endpoint_test terminated without an active exception\n");
+        }
+        std::fflush(stderr);
+        std::abort();
+    });
     using axent::control::ControlResult;
     using axent::control::ControlStatus;
 
@@ -1005,5 +1022,20 @@ int main()
     (void)blocking_token;
     (void)self_stop_token;
     (void)replacement;
+    {
+        axent::AxtpControlEndpoint limited;
+        auto token = limited.register_handler({std::nullopt,"cast.setPresentationSettings",false},
+            [](const axent::control::ControlRequest&) { return axent::control::ControlResult{}; });
+        axent::AxtpControlEndpointOptions options;
+        options.max_pending_events = 1;
+        require(limited.start(options).ok(),"new generated route must register by name");
+        std::vector<axent::ControlEvent> batch = {
+            {{std::nullopt,"cast.sessionsChanged",false},nlohmann::json::object()},
+            {{std::nullopt,"cast.presentationChanged",false},nlohmann::json::object()}};
+        require(limited.publish_events(std::move(batch)) == ControlStatus::busy(),
+            "oversized event batch must reject atomically");
+        require(limited.running(),"event backpressure must preserve control listener");
+        require(limited.stop().ok(),"limited endpoint stops independently");
+    }
     return 0;
 }

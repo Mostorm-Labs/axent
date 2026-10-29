@@ -108,7 +108,9 @@ nlohmann::json json_from_bytes(const axtp::Bytes& bytes)
     try {
         const std::string text(bytes.begin(), bytes.end());
         auto parsed = nlohmann::json::parse(text);
-        return parsed.is_object() ? std::move(parsed) : nlohmann::json::object();
+        // Preserve value kinds for the contract/host validator. Coercing an
+        // array or null into {} hides malformed arguments from new methods.
+        return parsed;
     } catch (const std::exception&) {
         return nlohmann::json::object();
     }
@@ -504,6 +506,14 @@ struct AxtpControlEndpoint::Impl {
         if (options.bind_address.empty()) {
             options.bind_address = "127.0.0.1";
         }
+        if (!options.max_pending_events || !options.max_pending_event_bytes || !options.max_pending_tasks) {
+            lifecycle_state = LifecycleState::Stopped;
+            return control::ControlStatus::invalid_argument();
+        }
+        event_limit = options.max_pending_events;
+        event_byte_limit = options.max_pending_event_bytes;
+        task_limit = options.max_pending_tasks;
+        disconnect_requested.store(false);
         std::vector<HandlerRegistration> registrations;
         {
             std::lock_guard<std::mutex> registry_lock(registry->mutex);
@@ -678,16 +688,34 @@ struct AxtpControlEndpoint::Impl {
         if (!running.load()) {
             return control::ControlStatus::unavailable();
         }
+        if (pending_tasks.size() >= task_limit) return control::ControlStatus::busy();
         pending_tasks.push_back(std::move(task));
         return control::ControlStatus::success();
     }
 
     control::ControlStatus publish_event(control::ControlRoute route, nlohmann::json data)
     {
-        ResolvedRoute resolved;
+        return publish_events({ControlEvent{std::move(route), std::move(data)}});
+    }
+
+    control::ControlStatus publish_events(std::vector<ControlEvent> batch)
+    {
+        std::vector<PendingEvent> resolved_batch;
+        std::size_t bytes = 0;
         try {
-            resolved = resolve_event_route(route);
+            for (auto& event : batch) {
+                auto resolved = resolve_event_route(event.route);
+                const auto size = event.data.dump().size() + resolved.name.size() + 64;
+                if (size > event_byte_limit || bytes > event_byte_limit - size) {
+                    disconnect_requested.store(true);
+                    return control::ControlStatus::busy();
+                }
+                bytes += size;
+                resolved_batch.push_back({std::move(resolved), std::move(event.data)});
+            }
         } catch (const std::invalid_argument&) {
+            return control::ControlStatus::invalid_argument();
+        } catch (const nlohmann::json::exception&) {
             return control::ControlStatus::invalid_argument();
         }
         if (!running.load()) {
@@ -699,17 +727,20 @@ struct AxtpControlEndpoint::Impl {
             if (!running.load()) {
                 return control::ControlStatus::unavailable();
             }
-            const auto id = event_ids.find(resolved.protocol_id);
-            if (id != event_ids.end() && id->second != resolved.name) {
-                return control::ControlStatus::invalid_argument();
+            if (disconnect_requested.load() || resolved_batch.size() > event_limit ||
+                pending_events.size() > event_limit - resolved_batch.size() ||
+                pending_event_bytes > event_byte_limit - bytes) {
+                pending_events.clear();
+                pending_event_bytes = 0;
+                disconnect_requested.store(true);
+                return control::ControlStatus::busy();
             }
-            const auto name = event_names.find(resolved.name);
-            if (name != event_names.end() && name->second != resolved.protocol_id) {
-                return control::ControlStatus::invalid_argument();
+            for (auto& event : resolved_batch) {
+                event_ids.emplace(event.route.protocol_id, event.route.name);
+                event_names.emplace(event.route.name, event.route.protocol_id);
+                pending_events.push_back(std::move(event));
             }
-            event_ids.emplace(resolved.protocol_id, resolved.name);
-            event_names.emplace(resolved.name, resolved.protocol_id);
-            pending_events.push_back(PendingEvent{std::move(resolved), std::move(data)});
+            pending_event_bytes += bytes;
         }
         return control::ControlStatus::success();
     }
@@ -719,6 +750,7 @@ struct AxtpControlEndpoint::Impl {
         WorkerThreadMarker worker_marker(this);
         while (running.load()) {
             try {
+                if (disconnect_requested.exchange(false) && transport) transport->disconnectClients();
                 if (adapter != nullptr && transport != nullptr) {
                     adapter->poll(*transport);
                 }
@@ -765,6 +797,7 @@ struct AxtpControlEndpoint::Impl {
         {
             std::lock_guard<std::mutex> lock(event_mutex);
             events.swap(pending_events);
+            pending_event_bytes = 0;
         }
         if (adapter == nullptr) {
             return;
@@ -807,6 +840,11 @@ struct AxtpControlEndpoint::Impl {
 
     std::mutex event_mutex;
     std::deque<PendingEvent> pending_events;
+    std::size_t pending_event_bytes = 0;
+    std::atomic<std::size_t> event_limit{1024};
+    std::atomic<std::size_t> event_byte_limit{4U * 1024U * 1024U};
+    std::atomic<std::size_t> task_limit{1024};
+    std::atomic<bool> disconnect_requested{false};
     std::map<std::uint32_t, std::string> event_ids;
     std::map<std::string, std::uint32_t> event_names;
 
@@ -871,6 +909,11 @@ control::ControlStatus AxtpControlEndpoint::publish_event(control::ControlRoute 
                                                            nlohmann::json data)
 {
     return impl_->publish_event(std::move(route), std::move(data));
+}
+
+control::ControlStatus AxtpControlEndpoint::publish_events(std::vector<ControlEvent> events)
+{
+    return impl_->publish_events(std::move(events));
 }
 
 } // namespace axent

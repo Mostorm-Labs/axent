@@ -109,10 +109,14 @@ public:
                         reply_target = target->second;
                     }
                 }
+                bool overflow=false;
                 {
                     std::lock_guard<std::mutex> lock(_rxMutex);
-                    _rxMessages.push(ReceivedMessage{id, reply_target, message->str});
+                    overflow=message->str.size()>65536 || _rxMessages.size()>=1024 ||
+                        message->str.size()>kQueueBytes-_rxBytes;
+                    if(!overflow){_rxBytes+=message->str.size();_rxMessages.push(ReceivedMessage{id, reply_target, message->str});}
                 }
+                if(overflow){webSocket.close(1013,"control request backpressure");return;}
                 runMessageQueuedHookForTesting();
             });
         const bool started = _server->listenAndStart();
@@ -143,12 +147,18 @@ public:
             std::lock_guard<std::mutex> lock(_rxMutex);
             std::queue<ReceivedMessage> empty;
             _rxMessages.swap(empty);
+            _rxBytes=0;
         }
         _open.store(false);
         if (_netInitialized) {
             ix::uninitNetSystem();
             _netInitialized = false;
         }
+    }
+
+    void disconnectClients() {
+        const auto clients = activeClients();
+        for (const auto& client : clients) if (client) client->close(1013, "control backpressure; resynchronize");
     }
 
     void poll() override {
@@ -178,6 +188,7 @@ public:
                     return;
                 }
                 message = std::move(_rxMessages.front());
+                _rxBytes-=message.text.size();
                 _rxMessages.pop();
             }
             runBeforeDispatchHookForTesting();
@@ -221,7 +232,7 @@ public:
         if (!_dispatchConnectionId.empty()) {
             auto client = clientFor(_dispatchConnectionId);
             if (client) {
-                (void)client->sendText(text);
+                sendBounded(client,text);
             }
             return;
         }
@@ -253,7 +264,7 @@ public:
         }
         if (client) {
             const std::string text(reinterpret_cast<const char*>(data), size);
-            (void)client->sendText(text);
+            sendBounded(client,text);
         }
     }
 
@@ -401,9 +412,15 @@ private:
                          const std::string& text) {
         for (const auto& client : clients) {
             if (client) {
-                (void)client->sendText(text);
+                sendBounded(client,text);
             }
         }
+    }
+
+    static void sendBounded(const std::shared_ptr<ix::WebSocket>& client,const std::string& text) {
+        if(text.size()>kQueueBytes || client->bufferedAmount()>kQueueBytes-text.size())
+            client->close(1013,"control event backpressure; resynchronize");
+        else if(!client->sendText(text).success)client->close(1013,"control send failed; resynchronize");
     }
 
     static bool isHello(const std::string& text) {
@@ -439,6 +456,8 @@ private:
     std::string _helloText;
     mutable std::mutex _rxMutex;
     std::queue<ReceivedMessage> _rxMessages;
+    static constexpr std::size_t kQueueBytes=4U*1024U*1024U;
+    std::size_t _rxBytes=0;
     std::string _dispatchConnectionId;
     std::uint64_t _dispatchReplyTarget = 0;
 };

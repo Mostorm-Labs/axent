@@ -981,7 +981,8 @@ std::shared_ptr<AxtpAdapter::DeviceContext> AxtpAdapter::device_context_for(
             selector = config_.selector;
         }
         if (selector.kind == TransportKind::Hid) {
-            const auto hid_devices = axent::transport::enumerateHidDevices(
+            const auto injected=runtime_->factory->discovery_override();
+            const auto hid_devices = injected?*injected:axent::transport::enumerateHidDevices(
                 selector.vendor_id, selector.product_id);
             auto projection = detail::project_hid_devices(
                 selector, hid_devices, config_.endpoint_delivery_mode);
@@ -1341,7 +1342,8 @@ std::vector<DeviceSnapshot> AxtpAdapter::discover()
     }
 
 #if AXENT_HAS_AXTP_HID_TRANSPORT
-    const auto hid_devices = axent::transport::enumerateHidDevices(
+    const auto injected=runtime_->factory->discovery_override();
+    const auto hid_devices = injected?*injected:axent::transport::enumerateHidDevices(
         selector.vendor_id, selector.product_id);
     auto projection = detail::project_hid_devices(
         selector, hid_devices, config_.endpoint_delivery_mode);
