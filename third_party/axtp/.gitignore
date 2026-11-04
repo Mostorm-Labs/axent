@@ -10,3 +10,4 @@ build/
 runtimes/**/build/
 dist/
 outputs/
+.codex/

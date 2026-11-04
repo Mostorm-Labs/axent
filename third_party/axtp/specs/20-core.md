@@ -9,7 +9,7 @@ AXTP 用两条生产路径暴露同一套业务注册表：
 | 路径 | Transport 示例 | Wire 形态 | 必需能力 |
 |---|---|---|---|
 | Standard Framed | `AXTP-TCP`、`AXTP-USB-HID` | `Standard Frame Header(12B) + Payload(N) + CRC16(2B)` | CONTROL / RPC / STREAM |
-| WebSocket Unframed JSON | `AXTP-WS-JSON`、`AXTP-WS-CLOUD-REVERSE` | WebSocket message payload 是 JSON `{ sid, op, d }` | 仅 RPC |
+| WebSocket Unframed JSON | `AXTP-WS-JSON`、`AXTP-WS-CLOUD-REVERSE` | WebSocket message payload 是 JSON `{ sid, op, m?, d }` | 仅 RPC |
 
 PayloadType 只选择解析器：
 
@@ -38,8 +38,8 @@ Header 布局：
 | `Version` | 2 | 1B | 当前值为 `0x01`。 |
 | `PayloadType` | 3 | 1B | CONTROL=`0x01`，RPC=`0x02`，STREAM=`0x03`。 |
 | `PayloadLength` | 4 | 2B | 仅 payload 字节数，不包含 header 和 CRC。 |
-| `SourceId` | 6 | 1B | 发送方 logical node。 |
-| `DestinationId` | 7 | 1B | 接收方 logical node。 |
+| `SourceId` | 6 | 1B | 当前 framed link 内的发送方 logical node；不是全局 Endpoint ID。 |
+| `DestinationId` | 7 | 1B | 当前 framed link 内的接收方 logical node；不是全局 Endpoint ID。 |
 | `MessageId` | 8 | 2B | 用于分片和调试的 frame/message 关联。 |
 | `FrameIndex` | 10 | 1B | 分片序号，从 0 开始。 |
 | `FrameCount` | 11 | 1B | 分片总数；未分片 message 使用 1。 |
@@ -50,6 +50,8 @@ Header 布局：
 Frame parser MUST 在分发前校验 magic、version、PayloadType、`PayloadLength + 14 <= maxFrameSize`、`FrameCount >= 1`、`FrameIndex < FrameCount`、CRC 和完整 payload 可用性。
 
 分片属于 Frame layer。Request/Response 匹配使用 RPC request id，不使用 `MessageId`。STREAM 排序使用 `seqId`，不使用 `MessageId`。
+
+Frame `SourceId` / `DestinationId` 只描述当前 Standard Framed link 的逐跳 node address。对象编码 RPC 的 `m.src` / `m.dst` 描述跨 relay 的逻辑 Endpoint address。Relay 转发 RPC 时 MAY 改变 Frame `SourceId` / `DestinationId`，但 MUST 按本文 RPC 规则处理端到端 `m.src` / `m.dst`。
 
 ## Transport Profile 传输配置
 
@@ -170,6 +172,12 @@ RPC 是业务控制面。它运行在 Standard Framed `PayloadType=RPC` 中，�
 JSON/CBOR/MSGPACK RPC envelope：
 
 ```json
+{ "sid": "12345678", "op": 7, "m": { "src": "ep-app-001", "dst": "ep-camera-001" }, "d": {} }
+```
+
+`m` 是 optional。既有消息仍可保持：
+
+```json
 { "sid": "12345678", "op": 7, "d": {} }
 ```
 
@@ -177,7 +185,95 @@ JSON/CBOR/MSGPACK RPC envelope：
 |---|---|
 | `sid` | 分配前为空字符串；Identified 后携带 Logical Server 分配的 session 字符串。AXTP-native 生成端使用 8 位 hex；接收端按 opaque string 兼容。 |
 | `op` | uint8 操作码。 |
+| `m` | Optional message metadata object。v1 首批标准字段为 `src`、`dst`；未知且 structurally valid 的 optional metadata field 按 codec forward-compatibility 规则处理。 |
 | `d` | op-specific object；允许 empty object。 |
+
+### Endpoint identity
+
+Endpoint 是可以被 AXTP 逻辑寻址并独立接收或产生 RPC 的实体。Endpoint 可以是设备、Agent、应用实例、Cloud service、Room、Software service 或其他逻辑资源。
+
+`endpointId` 是 Endpoint 的稳定 opaque string identity。它：
+
+- MUST 是非空 string，并 SHOULD 不超过 128 UTF-8 bytes；
+- MUST 在所属寻址/管理域中唯一；
+- MUST 对同一个逻辑 Endpoint 稳定：transport 重连、RPC `sid` 变化和进程/设备重启不得导致新的 `endpointId`；
+- MUST NOT 从当前 `sid`、request id、IP address、TCP/WebSocket connection id、USB path、BLE connection handle 或当前 parent Agent 直接推导；
+- MUST NOT 被接收方按前缀解析来决定 Endpoint type；类型和拓扑属于 discovery/registry/business data。
+
+AXTP-native Endpoint 使用一个稳定的 `endpointKey` 确定性生成 `endpointId`。规则固定为：
+
+```text
+canonicalInput = UTF-8("AXTP-ENDPOINT-v1|" + endpointKey)
+digest         = SHA-256(canonicalInput)
+endpointId     = "ep_" + lowerHex(digest[0..15])
+```
+
+也就是取 SHA-256 的前 16 bytes，以 32 个小写 hex 字符表示。AXTP-native sender 生成的 canonical `endpointId` 形态为：
+
+```text
+ep_<32 lowercase hex chars>
+```
+
+确定性规则：
+
+1. 相同 `endpointKey` MUST 每次生成完全相同的 `endpointId`；
+2. 不同逻辑 Endpoint MUST NOT 共用同一个 `endpointKey`；
+3. 一个 Endpoint 一旦选择 `endpointKey`，在该 Endpoint 生命周期内 MUST NOT 因重启、重连、换 IP、换 USB port 或更换 parent Agent 而改变；
+4. receiver MUST 把 `endpointId` 当作 opaque string。为了兼容 legacy/external sender，receiver MUST NOT 要求收到的 `endpointId` 一定符合 `ep_<32hex>` canonical sender form，只要该值是合法的非空 Endpoint ID。
+
+`endpointKey` 本身不在 wire 上发送，只作为本地稳定身份输入。推荐来源保持简单：
+
+| Endpoint | `endpointKey` 建议来源 |
+|---|---|
+| App | `app:<productNamespace>:<persistentInstallationId>`；`persistentInstallationId` 首次安装生成一次并持久化。 |
+| Agent | `agent:<productNamespace>:<persistentInstallationId>`；首次安装生成一次并持久化。 |
+| Cloud / Service / Room / Software | `service:<namespace>:<stableResourceId>`；使用管理系统已经稳定存在的资源 ID。 |
+| AXTP-native Device | 优先使用设备自身持久 `deviceUuid` 或稳定 public-key identity。 |
+| Legacy / Child Device | 使用协议能够稳定取得的设备 identity，例如 `deviceUuid`，其次 stable public key，再其次 `vendor + product + serialNumber` 的 canonical identity。 |
+
+对于软件 Endpoint，首次创建一个随机 UUID 作为 `persistentInstallationId` 是允许的；关键不是每次重新生成 UUID，而是**生成一次、持久化、以后始终用同一个值作为 `endpointKey` 的组成部分**。删除该持久 identity 并重新安装/重新 provision 表示创建了新的逻辑 Endpoint，因此 MAY 得到新的 `endpointId`。
+
+对于物理 Device，`endpointKey` MUST 来自设备本身的稳定 identity，而不是当前 Agent。这样同一个 Device 从 Agent A 移到 Agent B，只要两边取得相同的稳定 device identity，就会确定性得到相同 `endpointId`。产品/profile SHOULD 固定 identity evidence 的选择优先级，避免同一设备因为后续出现新的 identity field 而切换 `endpointKey`。
+
+无法取得或持久化稳定 `endpointKey` 的对象不能保证稳定 Endpoint identity。此类对象 SHOULD 只作为 provider-local `childId` / 临时资源存在，直到完成稳定 identity 绑定后再向上游投影为可寻址 Endpoint。Identity fingerprint MAY 用于构造或查找 `endpointKey`，但 fingerprint 本身不是 wire `endpointId`。
+
+### RPC message metadata
+
+v1 对 `m` 正式定义两个字段：
+
+| 字段 | 类型 | 语义 |
+|---|---|---|
+| `m.src` | string | 原始逻辑来源 Endpoint ID。Relay 转发时保持原来源；它不是当前 socket/frame sender。 |
+| `m.dst` | string | 当前逻辑消息唯一的最终目标 Endpoint ID。它 MUST 是单个 string，MUST NOT 是 array。 |
+
+`m.src` / `m.dst` 是对象编码 RPC 的逻辑地址，不改变 `sid` 的 session scope，也不改变 Standard Frame `SourceId` / `DestinationId` 的逐跳含义。
+
+第一跳发送方 MAY 省略 `m.src`；接入 relay/server MAY 根据已认证 RPC Session 确定来源并在可信转发时补充 `m.src`。接收方 MUST NOT 把未经认证 peer 自报的 `m.src` 单独作为授权依据。
+
+Request 中 `m.dst` 缺失时，目标默认为当前 RPC Session 的 Logical Server，行为与既有 `{ sid, op, d }` RPC 完全一致。`m.dst` 存在时：
+
+1. 若 `m.dst` 标识当前 Endpoint，则本地处理；
+2. 若当前 Endpoint 是 relay 且其 Endpoint Provider Table 能解析 `m.dst`，则 relay MAY 将 RPC 转交给本地 adapter、child session 或下级 Agent；
+3. relay MUST NOT 要求调用方提供 `nextHop`、完整 Agent path、`routeId`、`ttl` 或 `hops`；
+4. 已知但当前不可达的目标 SHOULD 使用 `UNAVAILABLE`；未知目标 SHOULD 使用 `NOT_FOUND`，除非业务 method 已注册更具体错误；
+5. relay 的内部 provider/parent-child topology 是本地实现事实，不是 RPC envelope contract。
+
+这种行为称为 Endpoint Relay。多级 Agent SHOULD 使用 Endpoint Projection：每一层向上游暴露最终可寻址 Endpoint，并在本地维护 `endpointId -> provider` 映射，使上游无需了解真实 Agent 层级。
+
+RequestResponse 逻辑上返回给 Request 的来源。Relay 若在转发 Request 时保留/补充了 `m.src` 和 `m.dst`，则向上游转发对应 RequestResponse 时 SHOULD 使用：
+
+```text
+response.m.src = request.m.dst
+response.m.dst = request.m.src
+```
+
+如果某一侧没有使用 metadata，Response MAY 继续省略 `m`，并依赖当前 `sid` 和 request id 完成现有逐 session response matching。
+
+Event 的 `m.src` SHOULD 标识真正产生事件的 Endpoint，而不是中间 Agent/Cloud relay。Event 的 `m.dst` MAY 缺失：缺失表示接收范围由当前 session subscription / event relay policy 决定。Relay MAY 将一个逻辑 Event fanout 到多个 outbound sessions；每个 wire message 仍是单目标或无显式目标的 Event，Relay MUST NOT 把 `m.dst` 改为数组，并 MUST NOT 因 fanout 改写原始 `m.src`。需要显式定向单个消费者时，Event MAY 携带单个 `m.dst`。
+
+多目标 Request 不由 `m.dst` 表达。需要对多个 Endpoint 执行相同操作时，调用方 SHOULD 发送多个独立 Request；如果多个资源构成一个可独立寻址的逻辑整体，可以把该整体建模为一个 Endpoint；需要 batch/atomic/partial-result 语义时，业务 domain SHOULD 定义 batch method，并在 `d.params` 中携带 targets。这样每个 AXTP Request 仍只有一个负责执行的 `m.dst` 和一个 RequestResponse 生命周期。
+
+AXTP v1 不定义 `route`、`routeId`、`nextHop`、`ttl`、`hops`、`trace` 或 `deadline` metadata。后续对象编码可以通过 optional `m` fields 独立扩展，但不得改变本节单目标 `m.dst` 的基础语义。
 
 AXTP-native `sid` 生成使用非零 `uint32`，在 JSON / CBOR / MSGPACK envelope 中渲染为固定 8 位十六进制字符串，例如 `"00000003"` 或 `"12345678"`。对象编码接收端 MUST NOT 要求收到的 `sid` 一定是 8 位 hex；Identified 后应把 Logical Server 分配的非空字符串按 opaque value 保存，并在后续 Request / Response / Event 中精确携带。JSON_BINARY fixed header 中仍使用 4B Big-Endian / network byte order `uint32`，未分配前为 `0`。
 
@@ -201,11 +297,12 @@ RequestResponse 的 `d.status` 在 JSON / CBOR / MSGPACK envelope 中 MUST 是 o
 { "sid": "", "op": 2, "d": { "randomSeed": 305419896, "eventMasks": "090101" } }
 { "sid": "12345678", "op": 3, "d": { "accepted": true } }
 { "sid": "12345678", "op": 7, "d": { "id": 1, "method": "audio.getAlgorithmConfig", "params": {} } }
-{ "sid": "12345678", "op": 8, "d": { "id": 1, "status": { "ok": true, "code": 0 }, "result": {} } }
-{ "sid": "12345678", "op": 6, "d": { "event": "audio.algorithmConfigChanged", "data": { "reason": "user_request", "applyState": "applied" } } }
+{ "sid": "12345678", "op": 7, "m": { "src": "ep-app-001", "dst": "ep-audio-001" }, "d": { "id": 2, "method": "audio.getAlgorithmConfig", "params": {} } }
+{ "sid": "12345678", "op": 8, "m": { "src": "ep-audio-001", "dst": "ep-app-001" }, "d": { "id": 2, "status": { "ok": true, "code": 0 }, "result": {} } }
+{ "sid": "12345678", "op": 6, "m": { "src": "ep-audio-001" }, "d": { "event": "audio.algorithmConfigChanged", "data": { "reason": "user_request", "applyState": "applied" } } }
 ```
 
-Event 的业务 payload 不重复携带 `sid`。发送方 MUST 在 RPC envelope 或 JSON_BINARY fixed header 中携带当前 RPC session 的 `sid`；接收方按 envelope/header 校验、路由和鉴权后，再把 `d.data` 作为 event payload 交给业务处理。
+Event 的业务 payload 不重复携带 `sid`。发送方 MUST 在 RPC envelope 或 JSON_BINARY fixed header 中携带当前 RPC session 的 `sid`；接收方按 envelope/header 校验、寻址和鉴权后，再把 `d.data` 作为 event payload 交给业务处理。
 
 在 Standard Framed JSON RPC 中，RPC payload 是 `rpcEncoding(1B) + JSON bytes`；当 `selectedRpcEncoding=JSON` 时，`rpcEncoding=0x01`。在 WebSocket Unframed JSON 中，WebSocket message payload 正好就是 JSON object。
 
@@ -234,6 +331,8 @@ rpcEncoding(1) + rpcOp(1) + sid(4) + requestId(4)
 ```
 
 JSON_BINARY 多字节字段使用 Big-Endian / network byte order。Event 使用 requestId `0`。`bodyEncoding` 的值为 NONE=`0x00`、TLV8=`0x01`、TLV16=`0x02`。
+
+JSON_BINARY 15B fixed header 在本次 Endpoint Relay 扩展中保持不变，不承载 `m.src` / `m.dst`。需要 Endpoint Relay 的 peer MUST 使用支持 `m` 的对象编码 RPC profile；不得在现有 JSON_BINARY v1 header 中插入可变 metadata。
 
 Request/Response matching MUST 使用 RPC request id。Unknown method MUST 返回 RPC error，例如 `RPC_METHOD_NOT_FOUND`；CONTROL MUST NOT 处理业务 method error。
 

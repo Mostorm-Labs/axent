@@ -101,6 +101,7 @@ function renderFieldConstraint(field: SchemaField): string {
     field.derivedFrom === undefined ? undefined : `derivedFrom=${field.derivedFrom}`,
     field.schema === undefined ? undefined : `schema=${field.schema}`,
     field.enumValues === undefined || field.enumValues.length === 0 ? undefined : `enum=${field.enumValues.join("/")}`,
+    field.variants === undefined ? undefined : `variants=${field.variants.discriminator}->${Object.entries(field.variants.mapping).map(([key, value]) => `${key}=${value}`).join(",")}`,
     field.repeated ? "repeated" : undefined,
     field.array?.itemType === undefined ? undefined : `array.itemType=${field.array.itemType}`,
     field.array?.itemSchema === undefined ? undefined : `array.itemSchema=${field.array.itemSchema}`,
@@ -124,6 +125,7 @@ function renderTypeName(type: string, field?: SchemaField): string {
     bytes: "Bytes",
     enum: "Enum",
     bitmap: "Bitmap",
+    object: "Object",
     string: "String",
     uint8: "UInt8",
     uint16: "UInt16",
@@ -236,14 +238,13 @@ function renderProfile(profile: ProfileDefinition): string[] {
 }
 
 function referencedTypeNames(model: ProtocolModel): Set<string> {
+  // Only method/event root schemas and capability schemas are inlined in the
+  // document; every other schema (nested field.schema/array.itemSchema refs and
+  // variant mappings) gets its own "Additional Types" section instead.
   return new Set([
     ...model.methods.flatMap((method) => [method.request.type, method.response.type]),
     ...model.events.map((event) => event.payload.type),
-    ...model.capabilities.flatMap((capability) => capability.schema ? [capability.schema] : []),
-    ...model.schemas.flatMap((schema) => schema.fields.flatMap((field) => [
-      field.schema,
-      field.array?.itemSchema
-    ].filter((value): value is string => Boolean(value))))
+    ...model.capabilities.flatMap((capability) => capability.schema ? [capability.schema] : [])
   ]);
 }
 

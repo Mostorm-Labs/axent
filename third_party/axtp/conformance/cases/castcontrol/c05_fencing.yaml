@@ -1,0 +1,556 @@
+id: castcontrol.c05_fencing
+title: P0 c05 fencing
+since: spec/v0.18.0
+level: cast-control
+profiles:
+  - cast-control
+  - websocket-jsonrpc
+given:
+  device_profile: cast_control_receiver
+  oracle: reference/cast-control.mjs
+  source: specs/45-cast-control.md
+scenarios:
+  - name: wrong_session
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params:
+              target:
+                session:
+                  id: session-hid
+                  generation: "7"
+                slotId: 0
+                bindingGeneration: "1"
+                lifecycleGeneration: "1"
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+      - id: execute
+        direction: runtime_local
+        control_model:
+          action: execute
+          input: {}
+          expect:
+            operation:
+              state: rejected
+              outcomeReason: STALE_TARGET
+      - id: unaffected
+        direction: runtime_local
+        control_model:
+          action: assert_state
+          input: {}
+          expect:
+            state:
+              presentation:
+                started: true
+                lifecycleGeneration: "1"
+                configuredCapacity: 3
+                validationAvailable: false
+                effectiveCapacity: 3
+                appliedCapacity: 3
+                layoutMode: grid
+                layoutSettling: false
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-hid
+                        generation: "9007199254740993"
+                      slotId: 0
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 1
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-airplay
+                        generation: "9007199254740994"
+                      slotId: 1
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 2
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-webcast
+                        generation: "9007199254740995"
+                      slotId: 2
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                contentAdaptation: auto-fit
+            cleanups: []
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: wrong_slotid
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params:
+              target:
+                session:
+                  id: session-hid
+                  generation: "9007199254740993"
+                slotId: 99
+                bindingGeneration: "1"
+                lifecycleGeneration: "1"
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+      - id: execute
+        direction: runtime_local
+        control_model:
+          action: execute
+          input: {}
+          expect:
+            operation:
+              state: rejected
+              outcomeReason: STALE_TARGET
+      - id: unaffected
+        direction: runtime_local
+        control_model:
+          action: assert_state
+          input: {}
+          expect:
+            state:
+              presentation:
+                started: true
+                lifecycleGeneration: "1"
+                configuredCapacity: 3
+                validationAvailable: false
+                effectiveCapacity: 3
+                appliedCapacity: 3
+                layoutMode: grid
+                layoutSettling: false
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-hid
+                        generation: "9007199254740993"
+                      slotId: 0
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 1
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-airplay
+                        generation: "9007199254740994"
+                      slotId: 1
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 2
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-webcast
+                        generation: "9007199254740995"
+                      slotId: 2
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                contentAdaptation: auto-fit
+            cleanups: []
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: wrong_bindinggeneration
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params:
+              target:
+                session:
+                  id: session-hid
+                  generation: "9007199254740993"
+                slotId: 0
+                bindingGeneration: "7"
+                lifecycleGeneration: "1"
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+      - id: execute
+        direction: runtime_local
+        control_model:
+          action: execute
+          input: {}
+          expect:
+            operation:
+              state: rejected
+              outcomeReason: STALE_TARGET
+      - id: unaffected
+        direction: runtime_local
+        control_model:
+          action: assert_state
+          input: {}
+          expect:
+            state:
+              presentation:
+                started: true
+                lifecycleGeneration: "1"
+                configuredCapacity: 3
+                validationAvailable: false
+                effectiveCapacity: 3
+                appliedCapacity: 3
+                layoutMode: grid
+                layoutSettling: false
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-hid
+                        generation: "9007199254740993"
+                      slotId: 0
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 1
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-airplay
+                        generation: "9007199254740994"
+                      slotId: 1
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 2
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-webcast
+                        generation: "9007199254740995"
+                      slotId: 2
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                contentAdaptation: auto-fit
+            cleanups: []
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: wrong_lifecyclegeneration
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params:
+              target:
+                session:
+                  id: session-hid
+                  generation: "9007199254740993"
+                slotId: 0
+                bindingGeneration: "1"
+                lifecycleGeneration: "7"
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+      - id: execute
+        direction: runtime_local
+        control_model:
+          action: execute
+          input: {}
+          expect:
+            operation:
+              state: rejected
+              outcomeReason: STALE_TARGET
+      - id: unaffected
+        direction: runtime_local
+        control_model:
+          action: assert_state
+          input: {}
+          expect:
+            state:
+              presentation:
+                started: true
+                lifecycleGeneration: "1"
+                configuredCapacity: 3
+                validationAvailable: false
+                effectiveCapacity: 3
+                appliedCapacity: 3
+                layoutMode: grid
+                layoutSettling: false
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-hid
+                        generation: "9007199254740993"
+                      slotId: 0
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 1
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-airplay
+                        generation: "9007199254740994"
+                      slotId: 1
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 2
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-webcast
+                        generation: "9007199254740995"
+                      slotId: 2
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                contentAdaptation: auto-fit
+            cleanups: []
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: wrong_epoch
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params:
+              runtimeInstanceId: 44444444-4444-4444-8444-444444444444
+          expect:
+            status: INVALID_STATE
+      - id: unaffected
+        direction: runtime_local
+        control_model:
+          action: assert_state
+          input: {}
+          expect:
+            state:
+              presentation:
+                started: true
+                lifecycleGeneration: "1"
+                configuredCapacity: 3
+                validationAvailable: false
+                effectiveCapacity: 3
+                appliedCapacity: 3
+                layoutMode: grid
+                layoutSettling: false
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-hid
+                        generation: "9007199254740993"
+                      slotId: 0
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 1
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-airplay
+                        generation: "9007199254740994"
+                      slotId: 1
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 2
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-webcast
+                        generation: "9007199254740995"
+                      slotId: 2
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                contentAdaptation: auto-fit
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: queued_slot_reused
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params: {}
+          expect:
+            operation:
+              state: queued
+      - id: reuse
+        direction: runtime_local
+        control_model:
+          action: rebind
+          input: {}
+          expect:
+            bindingGeneration: "2"
+      - id: execute
+        direction: runtime_local
+        control_model:
+          action: execute
+          input: {}
+          expect:
+            operation:
+              state: rejected
+              outcomeReason: STALE_TARGET
+      - id: new_binding
+        direction: runtime_local
+        control_model:
+          action: assert_state
+          input: {}
+          expect:
+            state:
+              presentation:
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "2"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-hid
+                        generation: "9007199254740993"
+                      slotId: 0
+                      bindingGeneration: "2"
+                      lifecycleGeneration: "1"
+                  - slotId: 1
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-airplay
+                        generation: "9007199254740994"
+                      slotId: 1
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 2
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-webcast
+                        generation: "9007199254740995"
+                      slotId: 2
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+            cleanups: []
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: wrong_session_id
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params:
+              target:
+                session:
+                  id: different-session
+                  generation: "9007199254740993"
+                slotId: 0
+                bindingGeneration: "1"
+                lifecycleGeneration: "1"
+          expect:
+            status: SUCCESS
+      - id: execute
+        direction: runtime_local
+        control_model:
+          action: execute
+          input: {}
+          expect:
+            operation:
+              state: rejected
+              outcomeReason: STALE_TARGET
+      - id: unaffected
+        direction: runtime_local
+        control_model:
+          action: assert_state
+          input: {}
+          expect:
+            state:
+              presentation:
+                started: true
+                lifecycleGeneration: "1"
+                configuredCapacity: 3
+                validationAvailable: false
+                effectiveCapacity: 3
+                appliedCapacity: 3
+                layoutMode: grid
+                layoutSettling: false
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-hid
+                        generation: "9007199254740993"
+                      slotId: 0
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 1
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-airplay
+                        generation: "9007199254740994"
+                      slotId: 1
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 2
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-webcast
+                        generation: "9007199254740995"
+                      slotId: 2
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                contentAdaptation: auto-fit
+            cleanups: []
+    assertions:
+      - The required identity and record guarantees hold.

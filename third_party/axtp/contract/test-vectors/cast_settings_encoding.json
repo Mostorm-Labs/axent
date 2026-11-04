@@ -1,0 +1,134 @@
+{
+  "schema": "CastSettingsEventContext",
+  "encoding": "json+tlv8",
+  "scope": "schema-local object body",
+  "fields": {
+    "controlVersion": 1,
+    "runtimeInstanceId": 2,
+    "settingsRevision": 3,
+    "settingsEventSequence": 4
+  },
+  "pairs": [
+    {
+      "name": "zero",
+      "accepted": true,
+      "json": {
+        "controlVersion": 1,
+        "runtimeInstanceId": "11111111-1111-4111-8111-111111111111",
+        "settingsRevision": "0",
+        "settingsEventSequence": "0"
+      },
+      "tlv8Hex": "010400000001022431313131313131312D313131312D343131312D383131312D313131313131313131313131030130040130"
+    },
+    {
+      "name": "beyond_js_precision",
+      "accepted": true,
+      "json": {
+        "controlVersion": 1,
+        "runtimeInstanceId": "11111111-1111-4111-8111-111111111111",
+        "settingsRevision": "9007199254740993",
+        "settingsEventSequence": "9007199254740993"
+      },
+      "tlv8Hex": "010400000001022431313131313131312D313131312D343131312D383131312D313131313131313131313131031039303037313939323534373430393933041039303037313939323534373430393933"
+    },
+    {
+      "name": "uint64_max",
+      "accepted": true,
+      "json": {
+        "controlVersion": 1,
+        "runtimeInstanceId": "11111111-1111-4111-8111-111111111111",
+        "settingsRevision": "18446744073709551615",
+        "settingsEventSequence": "18446744073709551615"
+      },
+      "tlv8Hex": "010400000001022431313131313131312D313131312D343131312D383131312D3131313131313131313131310314313834343637343430373337303935353136313504143138343436373434303733373039353531363135"
+    },
+    {
+      "name": "negative",
+      "accepted": false,
+      "json": {
+        "controlVersion": 1,
+        "runtimeInstanceId": "11111111-1111-4111-8111-111111111111",
+        "settingsRevision": "-1",
+        "settingsEventSequence": "-1"
+      },
+      "tlv8Hex": "010400000001022431313131313131312D313131312D343131312D383131312D31313131313131313131313103022D3104022D31"
+    },
+    {
+      "name": "exponent",
+      "accepted": false,
+      "json": {
+        "controlVersion": 1,
+        "runtimeInstanceId": "11111111-1111-4111-8111-111111111111",
+        "settingsRevision": "1e3",
+        "settingsEventSequence": "1e3"
+      },
+      "tlv8Hex": "010400000001022431313131313131312D313131312D343131312D383131312D31313131313131313131313103033165330403316533"
+    },
+    {
+      "name": "fraction",
+      "accepted": false,
+      "json": {
+        "controlVersion": 1,
+        "runtimeInstanceId": "11111111-1111-4111-8111-111111111111",
+        "settingsRevision": "1.5",
+        "settingsEventSequence": "1.5"
+      },
+      "tlv8Hex": "010400000001022431313131313131312D313131312D343131312D383131312D3131313131313131313131310303312E350403312E35"
+    },
+    {
+      "name": "leading_zero",
+      "accepted": false,
+      "json": {
+        "controlVersion": 1,
+        "runtimeInstanceId": "11111111-1111-4111-8111-111111111111",
+        "settingsRevision": "01",
+        "settingsEventSequence": "01"
+      },
+      "tlv8Hex": "010400000001022431313131313131312D313131312D343131312D383131312D3131313131313131313131310302303104023031"
+    },
+    {
+      "name": "overflow",
+      "accepted": false,
+      "json": {
+        "controlVersion": 1,
+        "runtimeInstanceId": "11111111-1111-4111-8111-111111111111",
+        "settingsRevision": "18446744073709551616",
+        "settingsEventSequence": "18446744073709551616"
+      },
+      "tlv8Hex": "010400000001022431313131313131312D313131312D343131312D383131312D3131313131313131313131310314313834343637343430373337303935353136313604143138343436373434303733373039353531363136"
+    },
+    {
+      "name": "empty",
+      "accepted": false,
+      "json": {
+        "controlVersion": 1,
+        "runtimeInstanceId": "11111111-1111-4111-8111-111111111111",
+        "settingsRevision": "",
+        "settingsEventSequence": ""
+      },
+      "tlv8Hex": "010400000001022431313131313131312D313131312D343131312D383131312D31313131313131313131313103000400"
+    },
+    {
+      "name": "whitespace",
+      "accepted": false,
+      "json": {
+        "controlVersion": 1,
+        "runtimeInstanceId": "11111111-1111-4111-8111-111111111111",
+        "settingsRevision": " 1",
+        "settingsEventSequence": " 1"
+      },
+      "tlv8Hex": "010400000001022431313131313131312D313131312D343131312D383131312D3131313131313131313131310302203104022031"
+    },
+    {
+      "name": "plus",
+      "accepted": false,
+      "json": {
+        "controlVersion": 1,
+        "runtimeInstanceId": "11111111-1111-4111-8111-111111111111",
+        "settingsRevision": "+1",
+        "settingsEventSequence": "+1"
+      },
+      "tlv8Hex": "010400000001022431313131313131312D313131312D343131312D383131312D31313131313131313131313103022B3104022B31"
+    }
+  ]
+}

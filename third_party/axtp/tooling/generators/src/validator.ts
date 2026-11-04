@@ -1,6 +1,6 @@
 import { GeneratorError } from "./errors.js";
 import { buildSourceDomainByHighByte, type DomainByHighByte } from "./domainRegistry.js";
-import type { Capability, ErrorCode, Event, Method, Schema, SpecModel } from "./models.js";
+import type { Capability, ErrorCode, Event, Field, Method, Schema, SpecModel } from "./models.js";
 import { hex } from "./util.js";
 
 function assertUniqueIds<T extends { id: number; name: string }>(items: T[], label: string, file: string): void {
@@ -172,6 +172,48 @@ function assertKnownFieldItemType(itemType: string | undefined, schemas: Set<str
   });
 }
 
+function assertValidVariants(field: Field, schema: Schema, schemaNames: Set<string>, objectSchemaNames: Set<string>): void {
+  const variants = field.variants!;
+  const failVariant = (key: string, message: string): never => {
+    throw new GeneratorError({
+      code: "AXTP-GEN-1004",
+      file: "contract/registry/*.yaml",
+      entry: schema.name,
+      field: `${field.name}.${key}`,
+      message
+    });
+  };
+  if (field.type !== "object") {
+    failVariant("variants", `field with variants must use type object: ${field.type}`);
+  }
+  const discriminator = schema.fields.find((item) => item.name === variants.discriminator);
+  if (!discriminator) {
+    failVariant("variants.discriminator", `variants.discriminator must reference a sibling field in the same schema: ${variants.discriminator}`);
+  }
+  const enumValues = Array.isArray(discriminator!.enum)
+    ? discriminator!.enum.map(String)
+    : discriminator!.enum === undefined ? undefined : [String(discriminator!.enum)];
+  if (discriminator!.type !== "enum" || enumValues === undefined || enumValues.length === 0) {
+    failVariant("variants.discriminator", `variants.discriminator must reference an enum field with declared enum values: ${discriminator!.name}`);
+  }
+  for (const key of Object.keys(variants.mapping)) {
+    if (!enumValues!.includes(key)) {
+      failVariant("variants.mapping", `variants.mapping key is not a declared enum value of ${discriminator!.name}: ${key}`);
+    }
+  }
+  for (const value of enumValues!) {
+    if (!(value in variants.mapping)) {
+      failVariant("variants.mapping", `variants.mapping must cover all enum values of ${discriminator!.name}: missing ${value}`);
+    }
+  }
+  for (const target of Object.values(variants.mapping)) {
+    assertKnownSchema(target, schemaNames, schema.name, `${field.name}.variants.mapping`);
+    if (!objectSchemaNames.has(target)) {
+      failVariant("variants.mapping", `variants.mapping must reference an object schema: ${target}`);
+    }
+  }
+}
+
 function assertReservedReferences(spec: SpecModel): void {
   const capabilityByName = new Map(spec.capabilities.map((item) => [item.name, item]));
   const eventByName = new Map(spec.events.map((item) => [item.name, item]));
@@ -306,6 +348,7 @@ export function validateSpec(spec: SpecModel): string[] {
   for (const capability of spec.capabilities) {
     assertKnownSchema(capability.schema, schemaNames, capability.name, "schema");
   }
+  const objectSchemaNames = new Set(spec.schemas.filter((item) => item.type === "object").map((item) => item.name));
   for (const schema of spec.schemas) {
     for (const field of schema.fields) {
       if (field.schema) assertKnownSchema(field.schema, schemaNames, schema.name, field.name);
@@ -320,6 +363,9 @@ export function validateSpec(spec: SpecModel): string[] {
           message: "array field must declare schema, array.item_type, or array.item_schema"
         });
       }
+      if (field.variants) {
+        assertValidVariants(field, schema, schemaNames, objectSchemaNames);
+      }
     }
   }
 
@@ -330,12 +376,23 @@ export function validateSpec(spec: SpecModel): string[] {
   assertMvpItems(spec.capabilities, spec.mvpProfile.capabilities, "capability");
   assertLegacyMappings(spec);
 
+  const warnings: string[] = [];
+  for (const schema of spec.schemas) {
+    const missing = schema.fields
+      .filter((field) => field.type === "enum" && field.enum === undefined)
+      .map((field) => field.name);
+    if (missing.length > 0) {
+      warnings.push(`[WARN] ${schema.name}: ${missing.length} enum field(s) without declared enum values (${missing.join(", ")})`);
+    }
+  }
+
   return [
     `[OK] method_registry.yaml: ${spec.methods.length} methods checked`,
     `[OK] event_registry.yaml: ${spec.events.length} events checked`,
     `[OK] error_code.yaml: ${spec.errors.length} errors checked`,
     `[OK] capability_registry.yaml: ${spec.capabilities.length} capabilities checked`,
     `[OK] schema: ${spec.schemas.length} schemas checked`,
-    `[OK] legacy_mapping.yaml: ${spec.legacyMappings.length} mappings checked`
+    `[OK] legacy_mapping.yaml: ${spec.legacyMappings.length} mappings checked`,
+    ...warnings
   ];
 }

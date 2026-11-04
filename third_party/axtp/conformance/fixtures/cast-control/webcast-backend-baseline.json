@@ -1,0 +1,6392 @@
+{
+  "domain": "cast",
+  "description": "Cast receiver control, legacy single-source status and optional fenced multi-presentation control for HID, AirPlay and WebCast.",
+  "methods": [
+    {
+      "id": 5633,
+      "name": "cast.getSession",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 0,
+      "since": "1.0.0",
+      "description": "Return the current cast receiver phase and active session summary.",
+      "rpc_op": "request_response",
+      "request_schema": "CastGetSessionParams",
+      "response_schema": "CastSessionState",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.session"
+      ],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "id": 5634,
+      "name": "cast.stopSession",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 1,
+      "since": "1.0.0",
+      "description": "Stop the current cast session when one is active.",
+      "rpc_op": "request_response",
+      "request_schema": "CastStopSessionParams",
+      "response_schema": "CastStopSessionResult",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.session"
+      ],
+      "events": [
+        "cast.sessionStateChanged",
+        "cast.sessionStopped"
+      ],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "INVALID_STATE",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "id": 5635,
+      "name": "cast.getAirPlayName",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 2,
+      "since": "1.0.0",
+      "description": "Return the AirPlay receiver display name and publish state.",
+      "rpc_op": "request_response",
+      "request_schema": "Empty",
+      "response_schema": "CastAirPlayNameState",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.session"
+      ],
+      "errors": [
+        "SUCCESS",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "id": 5636,
+      "name": "cast.setAirPlayName",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 3,
+      "since": "1.0.0",
+      "description": "Set the AirPlay receiver display name and request service rediscovery.",
+      "rpc_op": "request_response",
+      "request_schema": "CastSetAirPlayNameParams",
+      "response_schema": "CastAirPlayNameState",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.session"
+      ],
+      "events": [
+        "cast.sessionStateChanged"
+      ],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "id": 5637,
+      "name": "cast.getAudio",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 4,
+      "since": "1.0.0",
+      "description": "Return local cast audio playback and mute state.",
+      "rpc_op": "request_response",
+      "request_schema": "CastGetAudioParams",
+      "response_schema": "CastAudioState",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.audio"
+      ],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "id": 5638,
+      "name": "cast.setAudio",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 5,
+      "since": "1.0.0",
+      "description": "Enable or disable local playback of received cast audio.",
+      "rpc_op": "request_response",
+      "request_schema": "CastSetAudioParams",
+      "response_schema": "CastAudioState",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.audio"
+      ],
+      "events": [
+        "cast.audioChanged"
+      ],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "id": 5639,
+      "name": "cast.setMuted",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 6,
+      "since": "1.0.0",
+      "description": "Mute or unmute local cast audio output.",
+      "rpc_op": "request_response",
+      "request_schema": "CastSetMutedParams",
+      "response_schema": "CastAudioState",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.audio"
+      ],
+      "events": [
+        "cast.audioChanged"
+      ],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "id": 5651,
+      "name": "cast.setAudioDelay",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 18,
+      "since": "1.0.0",
+      "description": "Set receiver-local audio playback delay compensation for cast audio.",
+      "rpc_op": "request_response",
+      "request_schema": "CastSetAudioDelayParams",
+      "response_schema": "CastAudioState",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.audio"
+      ],
+      "events": [
+        "cast.audioChanged"
+      ],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "OUT_OF_RANGE",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "id": 5640,
+      "name": "cast.getPinCodeConfig",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 7,
+      "since": "1.0.0",
+      "description": "Return cast PIN protection state, visibility, and optional secret material.",
+      "rpc_op": "request_response",
+      "request_schema": "CastGetPinCodeConfigParams",
+      "response_schema": "CastPinCodeConfig",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.pinCode"
+      ],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "id": 5641,
+      "name": "cast.setPinCodeConfig",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 8,
+      "since": "1.0.0",
+      "description": "Enable or disable cast PIN protection and update display policy.",
+      "rpc_op": "request_response",
+      "request_schema": "CastSetPinCodeConfigParams",
+      "response_schema": "CastPinCodeConfig",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.pinCode"
+      ],
+      "events": [
+        "cast.pinCodeChanged"
+      ],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "INVALID_STATE",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "id": 5642,
+      "name": "cast.setPinCode",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 9,
+      "since": "1.0.0",
+      "description": "Set the current cast PIN value according to receiver policy.",
+      "rpc_op": "request_response",
+      "request_schema": "CastSetPinCodeParams",
+      "response_schema": "CastPinCodeConfig",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.pinCode"
+      ],
+      "events": [
+        "cast.pinCodeChanged"
+      ],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "INVALID_STATE",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "id": 5643,
+      "name": "cast.getWindowState",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 10,
+      "since": "1.0.0",
+      "description": "Return cast window visibility, mode, and bounds summary.",
+      "rpc_op": "request_response",
+      "request_schema": "Empty",
+      "response_schema": "CastWindowState",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.window"
+      ],
+      "errors": [
+        "SUCCESS",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "id": 5644,
+      "name": "cast.setWindowState",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 11,
+      "since": "1.0.0",
+      "description": "Set cast window mode, fullscreen state, or always-on-top state.",
+      "rpc_op": "request_response",
+      "request_schema": "CastSetWindowStateParams",
+      "response_schema": "CastWindowState",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.window"
+      ],
+      "events": [
+        "cast.windowChanged"
+      ],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "INVALID_STATE",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "id": 5645,
+      "name": "cast.getBackendStatus",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 12,
+      "since": "1.0.0",
+      "description": "Return cast backend process, discoverability, and last-error state.",
+      "rpc_op": "request_response",
+      "request_schema": "CastGetBackendStatusParams",
+      "response_schema": "CastBackendStatus",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.backend"
+      ],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "id": 5646,
+      "name": "cast.restartBackend",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 13,
+      "since": "1.0.0",
+      "description": "Restart the cast backend without restarting the receiver application or device.",
+      "rpc_op": "request_response",
+      "request_schema": "CastRestartBackendParams",
+      "response_schema": "CastRestartBackendResult",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.backend"
+      ],
+      "events": [
+        "cast.backendChanged",
+        "cast.sessionStopped"
+      ],
+      "errors": [
+        "SUCCESS",
+        "BUSY",
+        "INVALID_STATE",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "id": 5647,
+      "name": "cast.getFlowControlState",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 14,
+      "since": "1.0.0",
+      "description": "Return local cast render fps, queue policy, and low-frequency diagnostics.",
+      "rpc_op": "request_response",
+      "request_schema": "CastGetFlowControlStateParams",
+      "response_schema": "CastFlowControlState",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.flowControl"
+      ],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "id": 5648,
+      "name": "cast.setRenderFps",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 15,
+      "since": "1.0.0",
+      "description": "Set the receiver-local target render fps for cast media.",
+      "rpc_op": "request_response",
+      "request_schema": "CastSetRenderFpsParams",
+      "response_schema": "CastFlowControlState",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.flowControl"
+      ],
+      "events": [
+        "cast.flowControlChanged"
+      ],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "OUT_OF_RANGE",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "id": 5649,
+      "name": "cast.setFlowPolicy",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 16,
+      "since": "1.0.0",
+      "description": "Set receiver-local cast queue, late-frame, drop, and overlay policy.",
+      "rpc_op": "request_response",
+      "request_schema": "CastSetFlowPolicyParams",
+      "response_schema": "CastFlowControlState",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.flowControl"
+      ],
+      "events": [
+        "cast.flowControlChanged"
+      ],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "OUT_OF_RANGE",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "id": 5650,
+      "name": "cast.getStatus",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 17,
+      "since": "1.0.0",
+      "description": "Return a current cast receiver snapshot for UI reload, reconnect, or event-loss recovery.",
+      "rpc_op": "request_response",
+      "request_schema": "CastGetStatusParams",
+      "response_schema": "CastStatus",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.status"
+      ],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "UNAVAILABLE",
+        "NOT_SUPPORTED"
+      ]
+    },
+    {
+      "id": 5652,
+      "name": "cast.setVideoStreamParams",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 19,
+      "since": "1.0.0",
+      "description": "Request cast video stream parameter reconfiguration; an active stream is coordinated through close then open, while a source without an active stream is opened directly.",
+      "rpc_op": "request_response",
+      "request_schema": "CastSetVideoStreamParamsParams",
+      "response_schema": "CastSetVideoStreamParamsResult",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.flowControl"
+      ],
+      "events": [
+        "cast.flowControlChanged"
+      ],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "INVALID_STATE",
+        "OUT_OF_RANGE",
+        "NOT_SUPPORTED",
+        "BUSY",
+        "MEDIA_SOURCE_UNAVAILABLE",
+        "MEDIA_FRAMERATE_UNSUPPORTED",
+        "MEDIA_BITRATE_UNSUPPORTED",
+        "MEDIA_STREAM_START_FAILED",
+        "MEDIA_STREAM_STOP_FAILED",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "id": 5653,
+      "name": "cast.getControlCapabilities",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 20,
+      "since": "1.0.0",
+      "description": "Discover supported control versions, runtime epoch and bounded multi-presentation guarantees before selecting a version.",
+      "rpc_op": "request_response",
+      "request_schema": "Empty",
+      "response_schema": "CastControlCapabilities",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.presentation"
+      ],
+      "errors": [
+        "SUCCESS",
+        "NOT_SUPPORTED",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "id": 5654,
+      "name": "cast.stopPresentation",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 21,
+      "since": "1.0.0",
+      "description": "Withdraw one exact presentation after atomic owner-side fence validation; success returns an admitted operation, not receiver shutdown.",
+      "rpc_op": "request_response",
+      "request_schema": "CastStopPresentationParams",
+      "response_schema": "CastControlOperation",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.presentation",
+        "cast.controlOperations"
+      ],
+      "events": [
+        "cast.sessionsChanged",
+        "cast.presentationChanged",
+        "cast.audioPolicyChanged",
+        "cast.controlOperationChanged"
+      ],
+      "errors": [
+        "SUCCESS",
+        "NOT_SUPPORTED",
+        "INVALID_ARGUMENT",
+        "INVALID_STATE",
+        "BUSY",
+        "UNAVAILABLE",
+        "INTERNAL_ERROR"
+      ]
+    },
+    {
+      "id": 5655,
+      "name": "cast.setSessionAudioEnabled",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 22,
+      "since": "1.0.0",
+      "description": "Set explicit enabled intent for one exact presented session; effective audio participation is reported separately.",
+      "rpc_op": "request_response",
+      "request_schema": "CastSetSessionAudioEnabledParams",
+      "response_schema": "CastControlOperation",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.audioPolicy",
+        "cast.controlOperations"
+      ],
+      "events": [
+        "cast.audioPolicyChanged",
+        "cast.controlOperationChanged"
+      ],
+      "errors": [
+        "SUCCESS",
+        "NOT_SUPPORTED",
+        "INVALID_ARGUMENT",
+        "INVALID_STATE",
+        "BUSY",
+        "UNAVAILABLE",
+        "INTERNAL_ERROR"
+      ]
+    },
+    {
+      "id": 5656,
+      "name": "cast.getControlOperation",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 23,
+      "since": "1.0.0",
+      "description": "Query the original intent by runtime, client and command identity; NOT_FOUND means unknown outcome rather than not executed.",
+      "rpc_op": "request_response",
+      "request_schema": "CastGetControlOperationParams",
+      "response_schema": "CastControlOperation",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.controlOperations"
+      ],
+      "errors": [
+        "SUCCESS",
+        "NOT_SUPPORTED",
+        "INVALID_ARGUMENT",
+        "INVALID_STATE",
+        "NOT_FOUND",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "id": 5657,
+      "name": "cast.setPresentationSettings",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 24,
+      "since": "1.0.0",
+      "description": "Set exactly one supported host setting with optimistic revision, bounded dedup and explicit field-only persistence; returns per-stage asynchronous results without automatic restart.",
+      "rpc_op": "request_response",
+      "request_schema": "CastSetPresentationSettingsParams",
+      "response_schema": "CastControlOperation",
+      "recommended_encoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.presentationSettings",
+        "cast.controlOperations"
+      ],
+      "events": [
+        "cast.presentationSettingsChanged",
+        "cast.presentationChanged",
+        "cast.audioPolicyChanged"
+      ],
+      "errors": [
+        "SUCCESS",
+        "NOT_SUPPORTED",
+        "INVALID_ARGUMENT",
+        "INVALID_STATE",
+        "OUT_OF_RANGE",
+        "BUSY",
+        "UNAVAILABLE",
+        "INTERNAL_ERROR"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": 5633,
+      "name": "cast.sessionIncoming",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 0,
+      "since": "1.0.0",
+      "description": "Emitted when a cast source initiates a receiver session.",
+      "event_schema": "CastSessionIncomingEvent",
+      "severity": "info",
+      "trigger": [
+        "source connected",
+        "backend incoming session"
+      ],
+      "capabilities": [
+        "cast.session"
+      ]
+    },
+    {
+      "id": 5634,
+      "name": "cast.sessionStateChanged",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 1,
+      "since": "1.0.0",
+      "description": "Emitted when receiver phase, protocol state, or low-frequency session media state changes.",
+      "event_schema": "CastSessionStateChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "incoming session",
+        "authentication",
+        "stream starting",
+        "media flow started",
+        "interruption",
+        "stopping"
+      ],
+      "capabilities": [
+        "cast.session"
+      ]
+    },
+    {
+      "id": 5635,
+      "name": "cast.sessionStarted",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 2,
+      "since": "1.0.0",
+      "description": "Emitted when a cast session becomes user-visible after first frame or local playback starts.",
+      "event_schema": "CastSessionStartedEvent",
+      "severity": "info",
+      "trigger": [
+        "first frame rendered",
+        "local playback started"
+      ],
+      "capabilities": [
+        "cast.session"
+      ]
+    },
+    {
+      "id": 5636,
+      "name": "cast.sessionStopped",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 3,
+      "since": "1.0.0",
+      "description": "Emitted when a cast session ends normally or is forced to stop.",
+      "event_schema": "CastSessionStoppedEvent",
+      "severity": "info",
+      "trigger": [
+        "cast.stopSession",
+        "source closed",
+        "backend restart",
+        "backend exited"
+      ],
+      "capabilities": [
+        "cast.session"
+      ]
+    },
+    {
+      "id": 5637,
+      "name": "cast.sessionFailed",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 4,
+      "since": "1.0.0",
+      "description": "Emitted when cast connection, authentication, negotiation, or backend handling fails.",
+      "event_schema": "CastSessionFailedEvent",
+      "severity": "error",
+      "trigger": [
+        "connection failed",
+        "authentication failed",
+        "media negotiation failed",
+        "backend failed"
+      ],
+      "capabilities": [
+        "cast.session"
+      ]
+    },
+    {
+      "id": 5638,
+      "name": "cast.audioChanged",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 5,
+      "since": "1.0.0",
+      "description": "Emitted when local cast audio playback, mute, or delay compensation state changes.",
+      "event_schema": "CastAudioChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "cast.setAudio",
+        "cast.setMuted",
+        "cast.setAudioDelay",
+        "local UI",
+        "session started",
+        "session stopped"
+      ],
+      "capabilities": [
+        "cast.audio"
+      ]
+    },
+    {
+      "id": 5639,
+      "name": "cast.pinCodeChanged",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 6,
+      "since": "1.0.0",
+      "description": "Emitted when cast PIN protection configuration or current PIN state changes.",
+      "event_schema": "CastPinCodeChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "cast.setPinCodeConfig",
+        "cast.setPinCode",
+        "generated PIN changed"
+      ],
+      "capabilities": [
+        "cast.pinCode"
+      ]
+    },
+    {
+      "id": 5640,
+      "name": "cast.pinCodeRequired",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 7,
+      "since": "1.0.0",
+      "description": "Emitted when a cast source is waiting for PIN authentication.",
+      "event_schema": "CastPinCodeRequiredEvent",
+      "severity": "info",
+      "trigger": [
+        "incoming session requires PIN"
+      ],
+      "capabilities": [
+        "cast.pinCode"
+      ]
+    },
+    {
+      "id": 5641,
+      "name": "cast.pinCodeAuthFailed",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 8,
+      "since": "1.0.0",
+      "description": "Emitted when PIN authentication fails, times out, or is cancelled.",
+      "event_schema": "CastPinCodeAuthFailedEvent",
+      "severity": "warning",
+      "trigger": [
+        "wrong PIN",
+        "authentication timeout",
+        "authentication cancelled",
+        "too many attempts"
+      ],
+      "capabilities": [
+        "cast.pinCode"
+      ]
+    },
+    {
+      "id": 5642,
+      "name": "cast.windowChanged",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 9,
+      "since": "1.0.0",
+      "description": "Emitted when cast window visibility, mode, topmost state, or bounds changes.",
+      "event_schema": "CastWindowChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "cast.setWindowState",
+        "local UI",
+        "session started",
+        "session stopped"
+      ],
+      "capabilities": [
+        "cast.window"
+      ]
+    },
+    {
+      "id": 5643,
+      "name": "cast.backendChanged",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 10,
+      "since": "1.0.0",
+      "description": "Emitted when cast backend ready, restart, exit, failed, or discoverable state changes.",
+      "event_schema": "CastBackendChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "backend started",
+        "backend restarting",
+        "backend exited",
+        "backend failed",
+        "discovery changed"
+      ],
+      "capabilities": [
+        "cast.backend"
+      ]
+    },
+    {
+      "id": 5644,
+      "name": "cast.flowControlChanged",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 11,
+      "since": "1.0.0",
+      "description": "Emitted when receiver-local cast flow policy, video stream parameters, or low-frequency flow statistics change.",
+      "event_schema": "CastFlowControlChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "cast.setRenderFps",
+        "cast.setFlowPolicy",
+        "cast.setVideoStreamParams",
+        "diagnostics sample"
+      ],
+      "capabilities": [
+        "cast.flowControl"
+      ]
+    },
+    {
+      "id": 5645,
+      "name": "cast.receiversChanged",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 12,
+      "since": "1.0.0",
+      "description": "Replace the receiver section after a logical control commit; not a full status event.",
+      "event_schema": "CastReceiversChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "receiver availability changed"
+      ],
+      "capabilities": [
+        "cast.presentation"
+      ]
+    },
+    {
+      "id": 5646,
+      "name": "cast.sessionsChanged",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 13,
+      "since": "1.0.0",
+      "description": "Replace the current multi-session collection as one part of an atomic control commit group.",
+      "event_schema": "CastSessionsChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "session joined",
+        "session removed",
+        "session media state changed"
+      ],
+      "capabilities": [
+        "cast.presentation"
+      ]
+    },
+    {
+      "id": 5647,
+      "name": "cast.presentationChanged",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 14,
+      "since": "1.0.0",
+      "description": "Replace only presentation slots, layout and capacity after a logical control commit.",
+      "event_schema": "CastPresentationChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "presentation binding changed",
+        "lifecycle changed",
+        "capacity changed",
+        "layout changed"
+      ],
+      "capabilities": [
+        "cast.presentation"
+      ]
+    },
+    {
+      "id": 5648,
+      "name": "cast.audioPolicyChanged",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 15,
+      "since": "1.0.0",
+      "description": "Replace audio policy intent and effective participation sets after a control commit.",
+      "event_schema": "CastAudioPolicyChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "enabled intent changed",
+        "effective audio participation changed",
+        "audio policy changed"
+      ],
+      "capabilities": [
+        "cast.audioPolicy"
+      ]
+    },
+    {
+      "id": 5649,
+      "name": "cast.controlOperationChanged",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 16,
+      "since": "1.0.0",
+      "description": "Publish one admitted P0 per-session operation record; P1 settings progress uses RPC/query and its independent settings event, never this sequence.",
+      "event_schema": "CastControlOperationChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "operation admitted",
+        "operation terminal"
+      ],
+      "capabilities": [
+        "cast.controlOperations"
+      ]
+    },
+    {
+      "id": 5650,
+      "name": "cast.presentationSettingsChanged",
+      "domain": "cast",
+      "status": "draft",
+      "bitOffset": 17,
+      "since": "1.0.0",
+      "description": "Replace complete settings state using independent settingsContext/settingsEventSequence; never consumes the P0 eventSequence.",
+      "event_schema": "CastPresentationSettingsChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "desired setting committed",
+        "adopted policy changed",
+        "storage observation changed",
+        "settings issue or lock changed"
+      ],
+      "capabilities": [
+        "cast.presentationSettings"
+      ]
+    }
+  ],
+  "types": {
+    "CastSourceSummary": {
+      "kind": "object",
+      "description": "Summary of a cast source device or local AXTP sender.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "name",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "User-visible source name when known."
+        },
+        {
+          "id": 2,
+          "name": "model",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Source model identifier when known."
+        },
+        {
+          "id": 3,
+          "name": "address",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Network or transport address summary when safe to expose."
+        },
+        {
+          "id": 4,
+          "name": "sourceId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Receiver-local source identifier."
+        },
+        {
+          "id": 5,
+          "name": "protocol",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "airplay",
+            "hid",
+            "unknown"
+          ],
+          "description": "Protocol path that produced the source summary."
+        }
+      ]
+    },
+    "CastMediaSummary": {
+      "kind": "object",
+      "description": "Low-frequency media summary for a cast session.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "firstFrame",
+          "type": "bool",
+          "required": false,
+          "description": "Whether the first visible frame has rendered."
+        },
+        {
+          "id": 2,
+          "name": "width",
+          "type": "uint32",
+          "required": false,
+          "description": "Current media width in pixels."
+        },
+        {
+          "id": 3,
+          "name": "height",
+          "type": "uint32",
+          "required": false,
+          "description": "Current media height in pixels."
+        },
+        {
+          "id": 4,
+          "name": "orientation",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "landscape",
+            "portrait",
+            "unknown"
+          ],
+          "description": "Current media orientation summary."
+        },
+        {
+          "id": 5,
+          "name": "inputFps",
+          "type": "number",
+          "required": false,
+          "min": 0,
+          "description": "Estimated incoming media frame rate."
+        },
+        {
+          "id": 6,
+          "name": "renderFps",
+          "type": "number",
+          "required": false,
+          "min": 0,
+          "description": "Estimated local render frame rate."
+        },
+        {
+          "id": 7,
+          "name": "audioActive",
+          "type": "bool",
+          "required": false,
+          "description": "Whether local receiver audio output is active."
+        }
+      ]
+    },
+    "CastLastError": {
+      "kind": "object",
+      "description": "Redactable backend or receiver error summary.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "code",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Backend-local or AXTP-visible error code."
+        },
+        {
+          "id": 2,
+          "name": "message",
+          "type": "string",
+          "required": false,
+          "max_length": 512,
+          "description": "Human-readable error summary suitable for authorized clients."
+        },
+        {
+          "id": 3,
+          "name": "occurredAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp when the error was observed."
+        },
+        {
+          "id": 4,
+          "name": "redacted",
+          "type": "bool",
+          "required": false,
+          "default": false,
+          "description": "Whether sensitive details were removed from this summary."
+        }
+      ]
+    },
+    "CastGetSessionParams": {
+      "kind": "object",
+      "description": "Selector for cast receiver and active session summary.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "include",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": false,
+          "description": "Optional summary sections, such as source, media, or airPlayName."
+        },
+        {
+          "id": 2,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Optional receiver-local session id to query."
+        }
+      ]
+    },
+    "CastSessionState": {
+      "kind": "object",
+      "description": "Current receiver phase and active session state.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "receiverState",
+          "type": "enum",
+          "required": true,
+          "enum": [
+            "disabled",
+            "starting",
+            "ready",
+            "busy",
+            "failed"
+          ],
+          "description": "Receiver service availability state."
+        },
+        {
+          "id": 2,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Receiver-local active session id."
+        },
+        {
+          "id": 3,
+          "name": "receiverPhase",
+          "type": "enum",
+          "required": true,
+          "enum": [
+            "idle",
+            "incoming",
+            "authenticating",
+            "streamStarting",
+            "streaming",
+            "rendering",
+            "interrupted",
+            "stopping",
+            "ended",
+            "failed"
+          ],
+          "description": "Protocol-neutral receiver phase used by UI and reconnection calibration."
+        },
+        {
+          "id": 4,
+          "name": "sessionState",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "idle",
+            "incoming",
+            "waitingForPassword",
+            "authenticated",
+            "preparing",
+            "casting",
+            "interrupted",
+            "stopping",
+            "ended",
+            "failed"
+          ],
+          "description": "AirPlay or backend-specific session state detail."
+        },
+        {
+          "id": 5,
+          "name": "protocol",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "airplay",
+            "hid",
+            "unknown"
+          ],
+          "description": "Cast protocol path currently represented by this state."
+        },
+        {
+          "id": 6,
+          "name": "airPlayName",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Current published AirPlay receiver display name."
+        },
+        {
+          "id": 7,
+          "name": "source",
+          "type": "CastSourceSummary",
+          "required": false,
+          "description": "Source device summary."
+        },
+        {
+          "id": 8,
+          "name": "media",
+          "type": "CastMediaSummary",
+          "required": false,
+          "description": "Low-frequency media summary."
+        },
+        {
+          "id": 9,
+          "name": "backendState",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "starting",
+            "ready",
+            "restarting",
+            "exited",
+            "failed",
+            "disabled"
+          ],
+          "description": "Current backend state summary."
+        },
+        {
+          "id": 10,
+          "name": "reason",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "sessionStarted",
+            "mediaFlowStarted",
+            "externalRequest",
+            "sourceClosed",
+            "backendRestart",
+            "backendExited",
+            "authFailed",
+            "error",
+            "unknown"
+          ],
+          "description": "Last state transition reason."
+        },
+        {
+          "id": 11,
+          "name": "authRequired",
+          "type": "bool",
+          "required": false,
+          "description": "Whether this session path currently requires authentication."
+        },
+        {
+          "id": 12,
+          "name": "updatedAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp for this state snapshot."
+        }
+      ]
+    },
+    "CastStopSessionParams": {
+      "kind": "object",
+      "description": "Request to stop an active cast session.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Optional receiver-local session id; omitted means current active session."
+        },
+        {
+          "id": 2,
+          "name": "reason",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "externalRequest",
+            "localUi",
+            "backendRestart",
+            "shutdown",
+            "unknown"
+          ],
+          "description": "Caller-visible reason for stopping the session."
+        },
+        {
+          "id": 3,
+          "name": "force",
+          "type": "bool",
+          "required": false,
+          "default": false,
+          "description": "Whether the receiver may force backend/session cleanup."
+        }
+      ]
+    },
+    "CastStopSessionResult": {
+      "kind": "object",
+      "description": "Result of a cast session stop request.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "accepted",
+          "type": "bool",
+          "required": true,
+          "description": "Whether the receiver accepted the stop request."
+        },
+        {
+          "id": 2,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Session affected by the request."
+        },
+        {
+          "id": 3,
+          "name": "previousReceiverPhase",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "idle",
+            "incoming",
+            "authenticating",
+            "streamStarting",
+            "streaming",
+            "rendering",
+            "interrupted",
+            "stopping",
+            "ended",
+            "failed"
+          ],
+          "description": "Receiver phase before the stop transition."
+        },
+        {
+          "id": 4,
+          "name": "receiverPhase",
+          "type": "enum",
+          "required": true,
+          "enum": [
+            "idle",
+            "incoming",
+            "authenticating",
+            "streamStarting",
+            "streaming",
+            "rendering",
+            "interrupted",
+            "stopping",
+            "ended",
+            "failed"
+          ],
+          "description": "Receiver phase after accepting the stop request."
+        },
+        {
+          "id": 5,
+          "name": "previousState",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "idle",
+            "incoming",
+            "waitingForPassword",
+            "authenticated",
+            "preparing",
+            "casting",
+            "interrupted",
+            "stopping",
+            "ended",
+            "failed"
+          ],
+          "description": "Backend-specific state before the stop transition."
+        },
+        {
+          "id": 6,
+          "name": "sessionState",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "idle",
+            "incoming",
+            "waitingForPassword",
+            "authenticated",
+            "preparing",
+            "casting",
+            "interrupted",
+            "stopping",
+            "ended",
+            "failed"
+          ],
+          "description": "Backend-specific state after accepting the stop request."
+        },
+        {
+          "id": 7,
+          "name": "reason",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "externalRequest",
+            "sourceClosed",
+            "backendRestart",
+            "backendExited",
+            "shutdown",
+            "unknown"
+          ],
+          "description": "Applied stop reason."
+        },
+        {
+          "id": 8,
+          "name": "noActiveSession",
+          "type": "bool",
+          "required": false,
+          "description": "Whether no active session existed when the request was processed."
+        },
+        {
+          "id": 9,
+          "name": "updatedAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp for the result."
+        }
+      ]
+    },
+    "CastSetAirPlayNameParams": {
+      "kind": "object",
+      "description": "Request to set the AirPlay receiver display name.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "displayName",
+          "type": "string",
+          "required": true,
+          "max_length": 128,
+          "description": "Target AirPlay display name."
+        },
+        {
+          "id": 2,
+          "name": "apply",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "immediate",
+            "onNextBackendStart"
+          ],
+          "description": "Requested backend apply timing."
+        }
+      ]
+    },
+    "CastAirPlayNameState": {
+      "kind": "object",
+      "description": "AirPlay display name and backend publish state.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "displayName",
+          "type": "string",
+          "required": true,
+          "max_length": 128,
+          "description": "Current AirPlay display name."
+        },
+        {
+          "id": 2,
+          "name": "previousDisplayName",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Previous display name when a change was applied."
+        },
+        {
+          "id": 3,
+          "name": "source",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "configured",
+            "default",
+            "backend",
+            "unknown"
+          ],
+          "description": "Source of the current display name."
+        },
+        {
+          "id": 4,
+          "name": "apply",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "immediate",
+            "onNextBackendStart"
+          ],
+          "description": "Apply timing used for the latest update."
+        },
+        {
+          "id": 5,
+          "name": "publishState",
+          "type": "enum",
+          "required": true,
+          "enum": [
+            "published",
+            "republishing",
+            "pending",
+            "failed",
+            "unpublished"
+          ],
+          "description": "Bonjour or backend service publish state."
+        },
+        {
+          "id": 6,
+          "name": "backendType",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "uxplay",
+            "unknown"
+          ],
+          "description": "Backend that owns the published name."
+        },
+        {
+          "id": 7,
+          "name": "updatedAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp for this name state."
+        }
+      ]
+    },
+    "CastSessionIncomingEvent": {
+      "kind": "object",
+      "description": "Event payload for a new incoming cast session.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Receiver-local session id assigned to the incoming session."
+        },
+        {
+          "id": 2,
+          "name": "receiverPhase",
+          "type": "enum",
+          "required": true,
+          "enum": [
+            "incoming",
+            "authenticating"
+          ],
+          "description": "Receiver phase entered for the incoming session."
+        },
+        {
+          "id": 3,
+          "name": "protocol",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "airplay",
+            "hid",
+            "unknown"
+          ],
+          "description": "Protocol path used by the incoming session."
+        },
+        {
+          "id": 4,
+          "name": "source",
+          "type": "CastSourceSummary",
+          "required": false,
+          "description": "Source summary when available."
+        },
+        {
+          "id": 5,
+          "name": "authRequired",
+          "type": "bool",
+          "required": false,
+          "description": "Whether this incoming session requires authentication."
+        },
+        {
+          "id": 6,
+          "name": "incomingAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp when the incoming session was observed."
+        }
+      ]
+    },
+    "CastSessionStateChangedEvent": {
+      "kind": "object",
+      "description": "Event payload for receiver phase or backend session state changes.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Receiver-local session id."
+        },
+        {
+          "id": 2,
+          "name": "previousReceiverPhase",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "idle",
+            "incoming",
+            "authenticating",
+            "streamStarting",
+            "streaming",
+            "rendering",
+            "interrupted",
+            "stopping",
+            "ended",
+            "failed"
+          ],
+          "description": "Previous receiver phase."
+        },
+        {
+          "id": 3,
+          "name": "receiverPhase",
+          "type": "enum",
+          "required": true,
+          "enum": [
+            "idle",
+            "incoming",
+            "authenticating",
+            "streamStarting",
+            "streaming",
+            "rendering",
+            "interrupted",
+            "stopping",
+            "ended",
+            "failed"
+          ],
+          "description": "New receiver phase."
+        },
+        {
+          "id": 4,
+          "name": "previousState",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "idle",
+            "incoming",
+            "waitingForPassword",
+            "authenticated",
+            "preparing",
+            "casting",
+            "interrupted",
+            "stopping",
+            "ended",
+            "failed"
+          ],
+          "description": "Previous backend-specific session state."
+        },
+        {
+          "id": 5,
+          "name": "sessionState",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "idle",
+            "incoming",
+            "waitingForPassword",
+            "authenticated",
+            "preparing",
+            "casting",
+            "interrupted",
+            "stopping",
+            "ended",
+            "failed"
+          ],
+          "description": "New backend-specific session state."
+        },
+        {
+          "id": 6,
+          "name": "protocol",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "airplay",
+            "hid",
+            "unknown"
+          ],
+          "description": "Protocol path represented by this event."
+        },
+        {
+          "id": 7,
+          "name": "authRequired",
+          "type": "bool",
+          "required": false,
+          "description": "Whether the current session phase requires authentication."
+        },
+        {
+          "id": 8,
+          "name": "media",
+          "type": "CastMediaSummary",
+          "required": false,
+          "description": "Low-frequency media summary at the time of transition."
+        },
+        {
+          "id": 9,
+          "name": "reason",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "sessionStarted",
+            "mediaFlowStarted",
+            "externalRequest",
+            "sourceClosed",
+            "backendRestart",
+            "backendExited",
+            "authFailed",
+            "error",
+            "unknown"
+          ],
+          "description": "Transition reason."
+        },
+        {
+          "id": 10,
+          "name": "updatedAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp for the transition."
+        }
+      ]
+    },
+    "CastSessionStartedEvent": {
+      "kind": "object",
+      "description": "Event payload for a user-visible cast session start.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "sessionId",
+          "type": "string",
+          "required": true,
+          "max_length": 128,
+          "description": "Receiver-local started session id."
+        },
+        {
+          "id": 2,
+          "name": "receiverPhase",
+          "type": "enum",
+          "required": true,
+          "enum": [
+            "rendering"
+          ],
+          "description": "Receiver phase after first visible frame or local playback starts."
+        },
+        {
+          "id": 3,
+          "name": "sessionState",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "casting"
+          ],
+          "description": "Backend-specific state after session start."
+        },
+        {
+          "id": 4,
+          "name": "protocol",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "airplay",
+            "hid",
+            "unknown"
+          ],
+          "description": "Protocol path represented by the started session."
+        },
+        {
+          "id": 5,
+          "name": "source",
+          "type": "CastSourceSummary",
+          "required": false,
+          "description": "Source summary when available."
+        },
+        {
+          "id": 6,
+          "name": "media",
+          "type": "CastMediaSummary",
+          "required": false,
+          "description": "Media summary at session start."
+        },
+        {
+          "id": 7,
+          "name": "startedAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp when the session became user-visible."
+        }
+      ]
+    },
+    "CastSessionStoppedEvent": {
+      "kind": "object",
+      "description": "Event payload for a stopped cast session.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Receiver-local stopped session id."
+        },
+        {
+          "id": 2,
+          "name": "previousReceiverPhase",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "idle",
+            "incoming",
+            "authenticating",
+            "streamStarting",
+            "streaming",
+            "rendering",
+            "interrupted",
+            "stopping",
+            "ended",
+            "failed"
+          ],
+          "description": "Receiver phase before stop completion."
+        },
+        {
+          "id": 3,
+          "name": "receiverPhase",
+          "type": "enum",
+          "required": true,
+          "enum": [
+            "ended",
+            "failed",
+            "idle"
+          ],
+          "description": "Receiver phase after stop completion."
+        },
+        {
+          "id": 4,
+          "name": "previousState",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "idle",
+            "incoming",
+            "waitingForPassword",
+            "authenticated",
+            "preparing",
+            "casting",
+            "interrupted",
+            "stopping",
+            "ended",
+            "failed"
+          ],
+          "description": "Backend-specific state before stop completion."
+        },
+        {
+          "id": 5,
+          "name": "sessionState",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "ended",
+            "failed",
+            "idle"
+          ],
+          "description": "Backend-specific state after stop completion."
+        },
+        {
+          "id": 6,
+          "name": "reason",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "externalRequest",
+            "sourceClosed",
+            "backendRestart",
+            "backendExited",
+            "shutdown",
+            "error",
+            "unknown"
+          ],
+          "description": "Stop reason."
+        },
+        {
+          "id": 7,
+          "name": "backendType",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "uxplay",
+            "unknown"
+          ],
+          "description": "Backend type associated with the stopped session."
+        },
+        {
+          "id": 8,
+          "name": "stoppedAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp when the stop was observed."
+        }
+      ]
+    },
+    "CastSessionFailedEvent": {
+      "kind": "object",
+      "description": "Event payload for cast session failure.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Receiver-local failed session id when assigned."
+        },
+        {
+          "id": 2,
+          "name": "receiverPhase",
+          "type": "enum",
+          "required": true,
+          "enum": [
+            "failed"
+          ],
+          "description": "Receiver phase after failure."
+        },
+        {
+          "id": 3,
+          "name": "sessionState",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "failed"
+          ],
+          "description": "Backend-specific failed state."
+        },
+        {
+          "id": 4,
+          "name": "protocol",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "airplay",
+            "hid",
+            "unknown"
+          ],
+          "description": "Protocol path represented by the failed session."
+        },
+        {
+          "id": 5,
+          "name": "source",
+          "type": "CastSourceSummary",
+          "required": false,
+          "description": "Source summary when available."
+        },
+        {
+          "id": 6,
+          "name": "reason",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "connectionFailed",
+            "authFailed",
+            "negotiationFailed",
+            "backendFailed",
+            "mediaFailed",
+            "unknown"
+          ],
+          "description": "Failure reason."
+        },
+        {
+          "id": 7,
+          "name": "error",
+          "type": "CastLastError",
+          "required": false,
+          "description": "Redactable error summary."
+        },
+        {
+          "id": 8,
+          "name": "failedAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp when the failure was observed."
+        }
+      ]
+    },
+    "CastGetAudioParams": {
+      "kind": "object",
+      "description": "Selector for local cast audio state.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "includeEffective",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether to include effective local playback state."
+        },
+        {
+          "id": 2,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Optional receiver-local session id."
+        }
+      ]
+    },
+    "CastSetAudioParams": {
+      "kind": "object",
+      "description": "Request to enable or disable local cast audio playback.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "enabled",
+          "type": "bool",
+          "required": true,
+          "description": "Whether local receiver playback is enabled."
+        },
+        {
+          "id": 2,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Optional receiver-local session id."
+        },
+        {
+          "id": 3,
+          "name": "scope",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "currentSession",
+            "default"
+          ],
+          "description": "State target hint; this is not an authorization scope."
+        }
+      ]
+    },
+    "CastSetMutedParams": {
+      "kind": "object",
+      "description": "Request to mute or unmute local cast audio output.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "muted",
+          "type": "bool",
+          "required": true,
+          "description": "Whether local receiver output is muted."
+        },
+        {
+          "id": 2,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Optional receiver-local session id."
+        },
+        {
+          "id": 3,
+          "name": "scope",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "currentSession",
+            "default"
+          ],
+          "description": "State target hint; this is not an authorization scope."
+        }
+      ]
+    },
+    "CastSetAudioDelayParams": {
+      "kind": "object",
+      "description": "Request to set receiver-local audio playback delay compensation.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "audioDelayMs",
+          "type": "uint32",
+          "required": true,
+          "min": 0,
+          "max": 1000,
+          "description": "Target local audio playback delay in milliseconds; zero disables delay compensation."
+        },
+        {
+          "id": 2,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Optional receiver-local session id."
+        },
+        {
+          "id": 3,
+          "name": "scope",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "currentSession",
+            "default"
+          ],
+          "description": "State target hint; default persists the receiver delay for future sessions."
+        }
+      ]
+    },
+    "CastAudioState": {
+      "kind": "object",
+      "description": "Local cast audio playback and mute state.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "enabled",
+          "type": "bool",
+          "required": true,
+          "default": false,
+          "description": "Whether local receiver playback is enabled."
+        },
+        {
+          "id": 2,
+          "name": "muted",
+          "type": "bool",
+          "required": true,
+          "default": false,
+          "description": "Whether local receiver output is muted."
+        },
+        {
+          "id": 3,
+          "name": "effectivePlayback",
+          "type": "bool",
+          "required": true,
+          "description": "Whether audio is effectively playing locally after state and session conditions are applied."
+        },
+        {
+          "id": 4,
+          "name": "scope",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "currentSession",
+            "default"
+          ],
+          "description": "State target hint represented by this snapshot."
+        },
+        {
+          "id": 5,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Receiver-local session id for session-specific state."
+        },
+        {
+          "id": 6,
+          "name": "source",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "defaultConfig",
+            "externalSet",
+            "localUi",
+            "sessionStarted",
+            "sessionStopped",
+            "unknown"
+          ],
+          "description": "Source of the latest state value."
+        },
+        {
+          "id": 7,
+          "name": "reason",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "receiverDefault",
+            "externalSet",
+            "localUi",
+            "sessionStarted",
+            "sessionStopped",
+            "unknown"
+          ],
+          "description": "Latest audio state transition reason."
+        },
+        {
+          "id": 8,
+          "name": "changedFields",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": false,
+          "description": "Field names changed by the latest operation or event."
+        },
+        {
+          "id": 9,
+          "name": "updatedAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp for this audio state."
+        },
+        {
+          "id": 10,
+          "name": "audioDelayMs",
+          "type": "uint32",
+          "required": false,
+          "min": 0,
+          "max": 1000,
+          "default": 250,
+          "description": "Configured receiver-local audio playback delay in milliseconds; zero disables compensation."
+        }
+      ]
+    },
+    "CastAudioChangedEvent": {
+      "kind": "object",
+      "description": "Event payload for local cast audio state changes.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "changedFields",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Field names changed by this event."
+        },
+        {
+          "id": 2,
+          "name": "state",
+          "type": "CastAudioState",
+          "required": true,
+          "description": "State after the change."
+        },
+        {
+          "id": 3,
+          "name": "reason",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "externalSet",
+            "localUi",
+            "sessionStarted",
+            "sessionStopped",
+            "unknown"
+          ],
+          "description": "Change reason."
+        },
+        {
+          "id": 4,
+          "name": "updatedAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp for this event."
+        }
+      ]
+    },
+    "CastGetPinCodeConfigParams": {
+      "kind": "object",
+      "description": "Selector for cast PIN protection configuration.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "includeSecret",
+          "type": "bool",
+          "required": false,
+          "default": false,
+          "description": "Whether authorized clients request plaintext PIN material."
+        }
+      ]
+    },
+    "CastSetPinCodeConfigParams": {
+      "kind": "object",
+      "description": "Request to update cast PIN protection configuration.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "enabled",
+          "type": "bool",
+          "required": false,
+          "description": "Whether PIN protection is enabled."
+        },
+        {
+          "id": 2,
+          "name": "pinDisplay",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "hidden",
+            "authorizedClients",
+            "localUi",
+            "both"
+          ],
+          "description": "Where the current PIN may be displayed."
+        },
+        {
+          "id": 3,
+          "name": "rotatePin",
+          "type": "bool",
+          "required": false,
+          "default": false,
+          "description": "Whether the receiver should rotate or regenerate the PIN."
+        },
+        {
+          "id": 4,
+          "name": "visibility",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "hidden",
+            "authorizedOnly",
+            "localUi",
+            "both"
+          ],
+          "description": "Visibility policy for responses and events."
+        }
+      ]
+    },
+    "CastSetPinCodeParams": {
+      "kind": "object",
+      "description": "Request to set the active cast PIN value.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "pinCode",
+          "type": "string",
+          "required": true,
+          "description": "Opaque PIN value; concrete format is backend or product policy."
+        },
+        {
+          "id": 2,
+          "name": "expirePrevious",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether prior PIN material should stop being accepted."
+        },
+        {
+          "id": 3,
+          "name": "visibility",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "hidden",
+            "authorizedOnly",
+            "localUi",
+            "both"
+          ],
+          "description": "Visibility policy for the new PIN."
+        }
+      ]
+    },
+    "CastPinCodeConfig": {
+      "kind": "object",
+      "description": "Cast PIN protection state and optional plaintext PIN value.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "enabled",
+          "type": "bool",
+          "required": true,
+          "default": true,
+          "description": "Whether PIN protection is enabled."
+        },
+        {
+          "id": 2,
+          "name": "hasPinCode",
+          "type": "bool",
+          "required": true,
+          "description": "Whether a current PIN exists."
+        },
+        {
+          "id": 3,
+          "name": "pinCode",
+          "type": "string",
+          "required": false,
+          "description": "Plaintext PIN value when visible to the caller."
+        },
+        {
+          "id": 4,
+          "name": "pinDisplay",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "hidden",
+            "authorizedClients",
+            "localUi",
+            "both"
+          ],
+          "description": "Where the current PIN may be displayed."
+        },
+        {
+          "id": 5,
+          "name": "generatedBy",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "nearcast",
+            "uxplay",
+            "external",
+            "unknown"
+          ],
+          "description": "Component or actor that generated the current PIN."
+        },
+        {
+          "id": 6,
+          "name": "visibility",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "hidden",
+            "authorizedOnly",
+            "localUi",
+            "both"
+          ],
+          "description": "Visibility policy for the PIN value."
+        },
+        {
+          "id": 7,
+          "name": "expiresAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Expiration timestamp when applicable."
+        },
+        {
+          "id": 8,
+          "name": "redactionRequired",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether logs, diagnostics, and error summaries must redact the PIN."
+        },
+        {
+          "id": 9,
+          "name": "changedFields",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": false,
+          "description": "Field names changed by the latest operation or event."
+        },
+        {
+          "id": 10,
+          "name": "updatedAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp for this PIN state."
+        },
+        {
+          "id": 11,
+          "name": "redacted",
+          "type": "bool",
+          "required": false,
+          "description": "Whether sensitive fields were withheld in this snapshot."
+        }
+      ]
+    },
+    "CastPinCodeChangedEvent": {
+      "kind": "object",
+      "description": "Event payload for PIN configuration or PIN state changes.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "changedFields",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Field names changed by this event."
+        },
+        {
+          "id": 2,
+          "name": "config",
+          "type": "CastPinCodeConfig",
+          "required": true,
+          "description": "PIN state after the change."
+        },
+        {
+          "id": 3,
+          "name": "reason",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "externalSet",
+            "localUi",
+            "generated",
+            "backendChanged",
+            "unknown"
+          ],
+          "description": "Change reason."
+        },
+        {
+          "id": 4,
+          "name": "updatedAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp for this event."
+        }
+      ]
+    },
+    "CastPinCodeRequiredEvent": {
+      "kind": "object",
+      "description": "Event payload for a session waiting for PIN authentication.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Receiver-local session id."
+        },
+        {
+          "id": 2,
+          "name": "source",
+          "type": "CastSourceSummary",
+          "required": false,
+          "description": "Source waiting for authentication."
+        },
+        {
+          "id": 3,
+          "name": "pinCode",
+          "type": "string",
+          "required": false,
+          "description": "Plaintext PIN value when visible to the event subscriber."
+        },
+        {
+          "id": 4,
+          "name": "visibility",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "hidden",
+            "authorizedOnly",
+            "localUi",
+            "both"
+          ],
+          "description": "Visibility policy for this event payload."
+        },
+        {
+          "id": 5,
+          "name": "redactionRequired",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether logs and diagnostics must redact this PIN value."
+        },
+        {
+          "id": 6,
+          "name": "requestedAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp when PIN input was requested."
+        }
+      ]
+    },
+    "CastPinCodeAuthFailedEvent": {
+      "kind": "object",
+      "description": "Event payload for failed PIN authentication.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Receiver-local session id."
+        },
+        {
+          "id": 2,
+          "name": "source",
+          "type": "CastSourceSummary",
+          "required": false,
+          "description": "Source that failed authentication."
+        },
+        {
+          "id": 3,
+          "name": "authFailureReason",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "wrongPin",
+            "timeout",
+            "cancelled",
+            "tooManyAttempts",
+            "unknown"
+          ],
+          "description": "Authentication failure reason."
+        },
+        {
+          "id": 4,
+          "name": "attemptCount",
+          "type": "uint16",
+          "required": false,
+          "description": "Attempt count visible to the receiver."
+        },
+        {
+          "id": 5,
+          "name": "failedAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp when authentication failed."
+        }
+      ]
+    },
+    "CastRect": {
+      "kind": "object",
+      "description": "Cast window rectangle in screen coordinates.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "x",
+          "type": "int32",
+          "required": true,
+          "description": "Rectangle left coordinate."
+        },
+        {
+          "id": 2,
+          "name": "y",
+          "type": "int32",
+          "required": true,
+          "description": "Rectangle top coordinate."
+        },
+        {
+          "id": 3,
+          "name": "width",
+          "type": "uint32",
+          "required": true,
+          "description": "Rectangle width in pixels."
+        },
+        {
+          "id": 4,
+          "name": "height",
+          "type": "uint32",
+          "required": true,
+          "description": "Rectangle height in pixels."
+        }
+      ]
+    },
+    "CastSetWindowStateParams": {
+      "kind": "object",
+      "description": "Request to update cast window state.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "mode",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "normal",
+            "fullscreen"
+          ],
+          "description": "Target cast window mode."
+        },
+        {
+          "id": 2,
+          "name": "fullscreen",
+          "type": "bool",
+          "required": false,
+          "description": "Whether the cast window should be fullscreen."
+        },
+        {
+          "id": 3,
+          "name": "alwaysOnTop",
+          "type": "bool",
+          "required": false,
+          "description": "Whether the cast window should stay above normal windows."
+        },
+        {
+          "id": 4,
+          "name": "bounds",
+          "type": "CastRect",
+          "required": false,
+          "description": "Optional target normal-mode window bounds."
+        }
+      ]
+    },
+    "CastWindowState": {
+      "kind": "object",
+      "description": "Cast window visibility, mode, and bounds state.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "hasWindow",
+          "type": "bool",
+          "required": true,
+          "description": "Whether a cast window currently exists."
+        },
+        {
+          "id": 2,
+          "name": "visible",
+          "type": "bool",
+          "required": true,
+          "description": "Whether the cast window is visible."
+        },
+        {
+          "id": 3,
+          "name": "mode",
+          "type": "enum",
+          "required": true,
+          "enum": [
+            "normal",
+            "fullscreen"
+          ],
+          "description": "Current cast window mode."
+        },
+        {
+          "id": 4,
+          "name": "fullscreen",
+          "type": "bool",
+          "required": true,
+          "description": "Whether the cast window is fullscreen."
+        },
+        {
+          "id": 5,
+          "name": "alwaysOnTop",
+          "type": "bool",
+          "required": true,
+          "description": "Whether the cast window is topmost."
+        },
+        {
+          "id": 6,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Receiver-local session id associated with the window."
+        },
+        {
+          "id": 7,
+          "name": "bounds",
+          "type": "CastRect",
+          "required": false,
+          "description": "Current window bounds when available."
+        },
+        {
+          "id": 10,
+          "name": "changedFields",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": false,
+          "description": "Field names changed by the latest operation or event."
+        },
+        {
+          "id": 11,
+          "name": "updatedAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp for this window state."
+        }
+      ]
+    },
+    "CastWindowChangedEvent": {
+      "kind": "object",
+      "description": "Event payload for cast window state changes.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "changedFields",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Field names changed by this event."
+        },
+        {
+          "id": 2,
+          "name": "state",
+          "type": "CastWindowState",
+          "required": true,
+          "description": "Window state after the change."
+        },
+        {
+          "id": 3,
+          "name": "reason",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "externalSet",
+            "localUi",
+            "sessionStarted",
+            "sessionStopped",
+            "unknown"
+          ],
+          "description": "Change reason."
+        },
+        {
+          "id": 4,
+          "name": "updatedAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp for this event."
+        },
+        {
+          "id": 5,
+          "name": "controlContext",
+          "type": "CastControlEventContext",
+          "required": false,
+          "description": "Optional v1 commit context; absent legacy events do not advance the multi-control sequence."
+        }
+      ]
+    },
+    "CastGetBackendStatusParams": {
+      "kind": "object",
+      "description": "Selector for cast backend status.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "includeLastError",
+          "type": "bool",
+          "required": false,
+          "default": false,
+          "description": "Whether to include the last backend error summary."
+        }
+      ]
+    },
+    "CastRestartBackendParams": {
+      "kind": "object",
+      "description": "Request to restart the cast backend.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "reason",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "manualRecovery",
+            "configChanged",
+            "backendUnhealthy",
+            "unknown"
+          ],
+          "description": "Caller-visible restart reason."
+        },
+        {
+          "id": 2,
+          "name": "force",
+          "type": "bool",
+          "required": false,
+          "default": false,
+          "description": "Whether the backend adapter may force cleanup before restart."
+        }
+      ]
+    },
+    "CastBackendStatus": {
+      "kind": "object",
+      "description": "Cast backend state, process summary, discoverability, and last error.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "backendType",
+          "type": "enum",
+          "required": true,
+          "enum": [
+            "uxplay",
+            "unknown"
+          ],
+          "description": "Backend implementation type."
+        },
+        {
+          "id": 2,
+          "name": "state",
+          "type": "enum",
+          "required": true,
+          "enum": [
+            "starting",
+            "ready",
+            "restarting",
+            "exited",
+            "failed",
+            "disabled"
+          ],
+          "description": "Backend runtime state."
+        },
+        {
+          "id": 3,
+          "name": "discoverable",
+          "type": "bool",
+          "required": true,
+          "description": "Whether the cast service is discoverable by sources."
+        },
+        {
+          "id": 4,
+          "name": "pid",
+          "type": "uint32",
+          "required": false,
+          "description": "Backend process id when available."
+        },
+        {
+          "id": 5,
+          "name": "version",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Backend version or build identifier."
+        },
+        {
+          "id": 6,
+          "name": "activeSessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Active cast session id currently owned by the backend."
+        },
+        {
+          "id": 7,
+          "name": "restartInProgress",
+          "type": "bool",
+          "required": true,
+          "default": false,
+          "description": "Whether a backend restart is currently in progress."
+        },
+        {
+          "id": 8,
+          "name": "lastError",
+          "type": "CastLastError",
+          "required": false,
+          "description": "Last backend error summary when requested and available."
+        },
+        {
+          "id": 9,
+          "name": "updatedAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp for this backend status."
+        }
+      ]
+    },
+    "CastRestartBackendResult": {
+      "kind": "object",
+      "description": "Result of requesting a cast backend restart.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "accepted",
+          "type": "bool",
+          "required": true,
+          "description": "Whether the receiver accepted the restart request."
+        },
+        {
+          "id": 2,
+          "name": "backendType",
+          "type": "enum",
+          "required": true,
+          "enum": [
+            "uxplay",
+            "unknown"
+          ],
+          "description": "Backend implementation affected by the restart."
+        },
+        {
+          "id": 3,
+          "name": "state",
+          "type": "enum",
+          "required": true,
+          "enum": [
+            "starting",
+            "ready",
+            "restarting",
+            "exited",
+            "failed",
+            "disabled"
+          ],
+          "description": "Backend state after accepting the restart request."
+        },
+        {
+          "id": 4,
+          "name": "restartId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Receiver-local restart operation id."
+        },
+        {
+          "id": 5,
+          "name": "activeSessionEnded",
+          "type": "bool",
+          "required": true,
+          "description": "Whether an active cast session was ended by the restart."
+        },
+        {
+          "id": 6,
+          "name": "endedSessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Session ended by the restart."
+        },
+        {
+          "id": 7,
+          "name": "sessionStopReason",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "backendRestart",
+            "backendExited",
+            "error",
+            "unknown"
+          ],
+          "description": "Session stop reason reported for the ended session."
+        },
+        {
+          "id": 8,
+          "name": "estimatedReadyInMs",
+          "type": "uint32",
+          "required": false,
+          "description": "Estimated backend recovery time in milliseconds."
+        },
+        {
+          "id": 9,
+          "name": "updatedAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp for this restart result."
+        }
+      ]
+    },
+    "CastBackendChangedEvent": {
+      "kind": "object",
+      "description": "Event payload for cast backend state changes.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "changedFields",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Field names changed by this event."
+        },
+        {
+          "id": 2,
+          "name": "state",
+          "type": "CastBackendStatus",
+          "required": true,
+          "description": "Backend status after the change."
+        },
+        {
+          "id": 3,
+          "name": "reason",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "manualRecovery",
+            "configChanged",
+            "backendUnhealthy",
+            "backendExited",
+            "unknown"
+          ],
+          "description": "Change reason."
+        },
+        {
+          "id": 4,
+          "name": "restartId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Restart operation id when this event is restart-related."
+        },
+        {
+          "id": 5,
+          "name": "activeSessionEnded",
+          "type": "bool",
+          "required": false,
+          "description": "Whether this backend change ended an active session."
+        },
+        {
+          "id": 6,
+          "name": "endedSessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Session ended by this backend change."
+        },
+        {
+          "id": 7,
+          "name": "updatedAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp for this event."
+        }
+      ]
+    },
+    "CastGetFlowControlStateParams": {
+      "kind": "object",
+      "description": "Selector for cast receiver flow control state.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "includeStats",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether to include low-frequency diagnostic counters."
+        },
+        {
+          "id": 2,
+          "name": "includePolicy",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether to include current flow policy fields."
+        },
+        {
+          "id": 3,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Optional receiver-local session id."
+        }
+      ]
+    },
+    "CastSetRenderFpsParams": {
+      "kind": "object",
+      "description": "Request to set receiver-local target render fps.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "fps",
+          "type": "number",
+          "required": true,
+          "min": 0,
+          "description": "Target local render fps; zero means uncapped."
+        },
+        {
+          "id": 2,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Optional receiver-local session id."
+        },
+        {
+          "id": 3,
+          "name": "scope",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "currentSession",
+            "default"
+          ],
+          "description": "State target hint; this is not an authorization scope."
+        }
+      ]
+    },
+    "CastSetFlowPolicyParams": {
+      "kind": "object",
+      "description": "Request to update receiver-local queue, late-frame, drop, and overlay policy.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "videoQueueFrames",
+          "type": "uint32",
+          "required": false,
+          "min": 1,
+          "description": "Maximum queued video frames."
+        },
+        {
+          "id": 2,
+          "name": "lateFrameThresholdMs",
+          "type": "uint32",
+          "required": false,
+          "description": "Late-frame threshold in milliseconds."
+        },
+        {
+          "id": 3,
+          "name": "dropMode",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "drop-late",
+            "drop-oldest",
+            "render-latest"
+          ],
+          "description": "Local frame drop policy."
+        },
+        {
+          "id": 4,
+          "name": "overlayEnabled",
+          "type": "bool",
+          "required": false,
+          "description": "Whether receiver diagnostics overlay is enabled."
+        },
+        {
+          "id": 5,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Optional receiver-local session id."
+        },
+        {
+          "id": 6,
+          "name": "scope",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "currentSession",
+            "default"
+          ],
+          "description": "State target hint; this is not an authorization scope."
+        }
+      ]
+    },
+    "CastSetVideoStreamParamsParams": {
+      "kind": "object",
+      "description": "Request to update the active cast video stream frame rate or bitrate, optionally resetting selected fields.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Optional receiver-local cast session id."
+        },
+        {
+          "id": 2,
+          "name": "frameRate",
+          "type": "uint32",
+          "required": false,
+          "min": 1,
+          "description": "Optional target encoded video frame rate; zero is invalid, omission leaves the current session value unchanged or unset if never configured, and only resetFields clears it and restores the source/profile default."
+        },
+        {
+          "id": 3,
+          "name": "bitrateKbps",
+          "type": "uint32",
+          "required": false,
+          "min": 1,
+          "description": "Optional target encoded video bitrate in kbps; zero is invalid, omission leaves the current session value unchanged or unset if never configured, and only resetFields clears it and restores the source/profile default."
+        },
+        {
+          "id": 4,
+          "name": "resetFields",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": false,
+          "description": "Optional video parameter field names to reset to the source or profile default."
+        }
+      ]
+    },
+    "CastSetVideoStreamParamsResult": {
+      "kind": "object",
+      "description": "Result and reconfiguration status for cast video stream parameter changes.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "accepted",
+          "type": "bool",
+          "required": true,
+          "description": "Whether the receiver accepted the requested video parameter change."
+        },
+        {
+          "id": 2,
+          "name": "state",
+          "type": "enum",
+          "required": true,
+          "enum": [
+            "pending",
+            "applied",
+            "failed",
+            "rolledBack",
+            "unchanged"
+          ],
+          "description": "Reconfiguration lifecycle state."
+        },
+        {
+          "id": 3,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Receiver-local cast session id associated with the result."
+        },
+        {
+          "id": 4,
+          "name": "reconfigureId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Identifier for this video stream reconfiguration operation."
+        },
+        {
+          "id": 5,
+          "name": "previousStreamId",
+          "type": "uint32",
+          "required": false,
+          "description": "Previously active video stream id when the operation replaced a stream."
+        },
+        {
+          "id": 6,
+          "name": "activeStreamId",
+          "type": "uint32",
+          "required": false,
+          "description": "Currently active video stream id after the operation."
+        },
+        {
+          "id": 7,
+          "name": "sourceVideo",
+          "type": "CastVideoStreamParamsState",
+          "required": true,
+          "description": "Effective source video stream parameter state after the request."
+        }
+      ]
+    },
+    "CastVideoStreamParamsState": {
+      "kind": "object",
+      "description": "Desired and effective cast source video stream parameters and reconfiguration state.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Receiver-local cast session id."
+        },
+        {
+          "id": 2,
+          "name": "source",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Source identifier whose video stream parameters are represented."
+        },
+        {
+          "id": 3,
+          "name": "desiredFrameRate",
+          "type": "uint32",
+          "required": false,
+          "min": 1,
+          "description": "Requested video encoder frame rate, if one is pending or configured; zero is invalid."
+        },
+        {
+          "id": 4,
+          "name": "desiredBitrateKbps",
+          "type": "uint32",
+          "required": false,
+          "min": 1,
+          "description": "Requested video encoder bitrate in kbps, if one is pending or configured; zero is invalid."
+        },
+        {
+          "id": 5,
+          "name": "effectiveFrameRate",
+          "type": "uint32",
+          "required": false,
+          "min": 1,
+          "description": "Effective encoded video frame rate currently applied by the source."
+        },
+        {
+          "id": 6,
+          "name": "effectiveBitrateKbps",
+          "type": "uint32",
+          "required": false,
+          "min": 1,
+          "description": "Effective encoded video bitrate in kbps currently applied by the source."
+        },
+        {
+          "id": 7,
+          "name": "streamProfile",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Effective video STREAM profile."
+        },
+        {
+          "id": 8,
+          "name": "encoder",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Encoder or encoder profile selected for the source video stream."
+        },
+        {
+          "id": 9,
+          "name": "reconfigureId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Most recent video stream reconfiguration operation id."
+        },
+        {
+          "id": 10,
+          "name": "state",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "idle",
+            "pending",
+            "closing",
+            "opening",
+            "streaming",
+            "failed",
+            "rolledBack"
+          ],
+          "description": "Current source video stream reconfiguration state."
+        },
+        {
+          "id": 11,
+          "name": "phase",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "idle",
+            "pending",
+            "closing",
+            "opening",
+            "streaming",
+            "failed",
+            "rolledBack"
+          ],
+          "description": "Current source video stream lifecycle phase during reconfiguration."
+        },
+        {
+          "id": 12,
+          "name": "previousStreamId",
+          "type": "uint32",
+          "required": false,
+          "description": "Previous active downstream video stream id when a reconfiguration replaces it."
+        },
+        {
+          "id": 13,
+          "name": "activeStreamId",
+          "type": "uint32",
+          "required": false,
+          "description": "Active downstream video stream id, if one is established."
+        },
+        {
+          "id": 14,
+          "name": "rollbackApplied",
+          "type": "bool",
+          "required": false,
+          "description": "Whether the previous stream parameters were restored after a failed reconfiguration."
+        },
+        {
+          "id": 15,
+          "name": "lastError",
+          "type": "CastLastError",
+          "required": false,
+          "description": "Last reconfiguration or stream lifecycle error, when available."
+        },
+        {
+          "id": 16,
+          "name": "changedFields",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": false,
+          "description": "Video parameter fields changed by the most recent operation."
+        }
+      ]
+    },
+    "CastFlowControlState": {
+      "kind": "object",
+      "description": "Receiver-local cast flow control policy and low-frequency statistics.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "targetRenderFps",
+          "type": "number",
+          "required": true,
+          "min": 0,
+          "description": "Configured target render fps; zero means uncapped."
+        },
+        {
+          "id": 2,
+          "name": "inputFps",
+          "type": "number",
+          "required": false,
+          "min": 0,
+          "description": "Estimated incoming media frame rate."
+        },
+        {
+          "id": 3,
+          "name": "renderFps",
+          "type": "number",
+          "required": false,
+          "min": 0,
+          "description": "Estimated local render frame rate."
+        },
+        {
+          "id": 4,
+          "name": "dropMode",
+          "type": "enum",
+          "required": true,
+          "enum": [
+            "drop-late",
+            "drop-oldest",
+            "render-latest"
+          ],
+          "description": "Local frame drop policy."
+        },
+        {
+          "id": 5,
+          "name": "videoQueueFrames",
+          "type": "uint32",
+          "required": true,
+          "min": 1,
+          "description": "Maximum queued video frames."
+        },
+        {
+          "id": 6,
+          "name": "videoQueueDepth",
+          "type": "uint32",
+          "required": false,
+          "description": "Current queued video frame depth."
+        },
+        {
+          "id": 7,
+          "name": "audioQueueDepth",
+          "type": "uint32",
+          "required": false,
+          "description": "Current queued audio frame depth when known."
+        },
+        {
+          "id": 8,
+          "name": "lateFrameThresholdMs",
+          "type": "uint32",
+          "required": true,
+          "description": "Late-frame threshold in milliseconds."
+        },
+        {
+          "id": 9,
+          "name": "overlayEnabled",
+          "type": "bool",
+          "required": true,
+          "description": "Whether diagnostics overlay is enabled."
+        },
+        {
+          "id": 10,
+          "name": "droppedFrames",
+          "type": "uint64",
+          "required": false,
+          "description": "Low-frequency dropped-frame counter."
+        },
+        {
+          "id": 11,
+          "name": "lateFrames",
+          "type": "uint64",
+          "required": false,
+          "description": "Low-frequency late-frame counter."
+        },
+        {
+          "id": 12,
+          "name": "keyframeRequestCount",
+          "type": "uint32",
+          "required": false,
+          "description": "Internal keyframe requests triggered by receiver policy."
+        },
+        {
+          "id": 13,
+          "name": "keyFrameOnDropBurst",
+          "type": "bool",
+          "required": false,
+          "description": "Whether the receiver may internally request a keyframe after a drop burst."
+        },
+        {
+          "id": 14,
+          "name": "changedFields",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": false,
+          "description": "Field names changed by the latest operation or event."
+        },
+        {
+          "id": 15,
+          "name": "sampledAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp for this flow sample."
+        },
+        {
+          "id": 16,
+          "name": "sourceVideo",
+          "type": "CastVideoStreamParamsState",
+          "required": false,
+          "description": "Effective source video stream parameters and reconfiguration state."
+        }
+      ]
+    },
+    "CastFlowControlChangedEvent": {
+      "kind": "object",
+      "description": "Event payload for cast flow control changes or low-frequency diagnostic samples.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "changedFields",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Field names changed or sampled by this event."
+        },
+        {
+          "id": 2,
+          "name": "state",
+          "type": "CastFlowControlState",
+          "required": true,
+          "description": "Flow control state after the change or sample."
+        },
+        {
+          "id": 3,
+          "name": "reason",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "manualFlowControl",
+            "videoStreamParams",
+            "videoStreamReconfigure",
+            "diagnosticsSample",
+            "sessionStarted",
+            "sessionStopped",
+            "unknown"
+          ],
+          "description": "Change or sampling reason."
+        },
+        {
+          "id": 4,
+          "name": "sampledAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Timestamp for this event."
+        },
+        {
+          "id": 5,
+          "name": "sourceVideo",
+          "type": "CastVideoStreamParamsState",
+          "required": false,
+          "description": "Effective source video stream parameter state associated with this event."
+        },
+        {
+          "id": 6,
+          "name": "reconfigureId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Video stream reconfiguration operation id associated with this event."
+        }
+      ]
+    },
+    "CastGetStatusParams": {
+      "kind": "object",
+      "description": "Selector for current cast receiver snapshot.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "include",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": false,
+          "description": "Optional status sections to include."
+        },
+        {
+          "id": 2,
+          "name": "includeSensitive",
+          "type": "bool",
+          "required": false,
+          "default": false,
+          "description": "Whether authorized callers request sensitive summary fields."
+        },
+        {
+          "id": 3,
+          "name": "controlVersion",
+          "type": "uint32",
+          "required": false,
+          "description": "Explicit multi-control version; v1 unifiedControl requires a complete atomic six-section projection. Unknown versions return NOT_SUPPORTED."
+        }
+      ]
+    },
+    "CastReceiverSummary": {
+      "kind": "object",
+      "description": "Snapshot receiver role and protocol-neutral phase summary.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "role",
+          "type": "enum",
+          "required": true,
+          "enum": [
+            "receiver"
+          ],
+          "description": "Cast endpoint role."
+        },
+        {
+          "id": 2,
+          "name": "protocols",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Supported or active cast protocol paths."
+        },
+        {
+          "id": 3,
+          "name": "state",
+          "type": "enum",
+          "required": true,
+          "enum": [
+            "disabled",
+            "starting",
+            "ready",
+            "busy",
+            "failed"
+          ],
+          "description": "Receiver service availability state."
+        },
+        {
+          "id": 4,
+          "name": "receiverPhase",
+          "type": "enum",
+          "required": true,
+          "enum": [
+            "idle",
+            "incoming",
+            "authenticating",
+            "streamStarting",
+            "streaming",
+            "rendering",
+            "interrupted",
+            "stopping",
+            "ended",
+            "failed"
+          ],
+          "description": "Protocol-neutral receiver phase."
+        }
+      ]
+    },
+    "CastSessionStatusSummary": {
+      "kind": "object",
+      "description": "Snapshot active session summary for status views.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "sessionId",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Receiver-local session id."
+        },
+        {
+          "id": 2,
+          "name": "receiverPhase",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "idle",
+            "incoming",
+            "authenticating",
+            "streamStarting",
+            "streaming",
+            "rendering",
+            "interrupted",
+            "stopping",
+            "ended",
+            "failed"
+          ],
+          "description": "Protocol-neutral receiver phase."
+        },
+        {
+          "id": 3,
+          "name": "sessionState",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "idle",
+            "incoming",
+            "waitingForPassword",
+            "authenticated",
+            "preparing",
+            "casting",
+            "interrupted",
+            "stopping",
+            "ended",
+            "failed"
+          ],
+          "description": "Backend-specific session state."
+        },
+        {
+          "id": 4,
+          "name": "protocol",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "airplay",
+            "hid",
+            "unknown"
+          ],
+          "description": "Protocol path represented by the active session."
+        },
+        {
+          "id": 5,
+          "name": "sourceName",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "User-visible source name."
+        }
+      ]
+    },
+    "CastPinCodeStatusSummary": {
+      "kind": "object",
+      "description": "Snapshot PIN summary for status views.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "enabled",
+          "type": "bool",
+          "required": true,
+          "description": "Whether PIN protection is enabled."
+        },
+        {
+          "id": 2,
+          "name": "hasPinCode",
+          "type": "bool",
+          "required": true,
+          "description": "Whether a current PIN exists."
+        },
+        {
+          "id": 3,
+          "name": "pinDisplay",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "hidden",
+            "authorizedClients",
+            "localUi",
+            "both"
+          ],
+          "description": "Where the current PIN may be displayed."
+        },
+        {
+          "id": 4,
+          "name": "pinCode",
+          "type": "string",
+          "required": false,
+          "description": "Plaintext PIN value when visible to the caller."
+        },
+        {
+          "id": 5,
+          "name": "redacted",
+          "type": "bool",
+          "required": false,
+          "description": "Whether sensitive fields were withheld."
+        },
+        {
+          "id": 6,
+          "name": "visibility",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "hidden",
+            "authorizedOnly",
+            "localUi",
+            "both"
+          ],
+          "description": "Visibility policy applied to this summary."
+        }
+      ]
+    },
+    "CastStatus": {
+      "kind": "object",
+      "description": "Current cast receiver snapshot for reconnect and event-loss recovery.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "receiver",
+          "type": "CastReceiverSummary",
+          "required": true,
+          "description": "Receiver role and phase summary."
+        },
+        {
+          "id": 2,
+          "name": "session",
+          "type": "CastSessionStatusSummary",
+          "required": false,
+          "description": "Active session summary."
+        },
+        {
+          "id": 3,
+          "name": "pinCode",
+          "type": "CastPinCodeStatusSummary",
+          "required": false,
+          "description": "PIN protection summary."
+        },
+        {
+          "id": 4,
+          "name": "audio",
+          "type": "CastAudioState",
+          "required": false,
+          "description": "Local audio summary."
+        },
+        {
+          "id": 5,
+          "name": "window",
+          "type": "CastWindowState",
+          "required": false,
+          "description": "Cast window summary."
+        },
+        {
+          "id": 6,
+          "name": "backend",
+          "type": "CastBackendStatus",
+          "required": false,
+          "description": "Backend summary."
+        },
+        {
+          "id": 7,
+          "name": "flowControl",
+          "type": "CastFlowControlState",
+          "required": false,
+          "description": "Flow control summary."
+        },
+        {
+          "id": 8,
+          "name": "sampledAt",
+          "type": "string",
+          "required": true,
+          "max_length": 64,
+          "description": "Timestamp for this status snapshot."
+        },
+        {
+          "id": 9,
+          "name": "redacted",
+          "type": "bool",
+          "required": false,
+          "description": "Whether any sensitive snapshot fields were withheld."
+        },
+        {
+          "id": 10,
+          "name": "controlSync",
+          "type": "CastControlSnapshotCursor",
+          "required": false,
+          "description": "Required with requested v1 sections; atomic capture revision and published event barrier in one runtime epoch."
+        },
+        {
+          "id": 11,
+          "name": "receivers",
+          "type": "array",
+          "array": {
+            "item_type": "CastReceiverState"
+          },
+          "required": false,
+          "description": "Required in v1 unifiedControl; full bounded receiver set including disabled and failed receivers."
+        },
+        {
+          "id": 12,
+          "name": "sessions",
+          "type": "array",
+          "array": {
+            "item_type": "CastMultiSessionState"
+          },
+          "required": false,
+          "description": "Required in v1 unifiedControl; full bounded current session set, possibly empty, captured with slots and audio."
+        },
+        {
+          "id": 13,
+          "name": "presentation",
+          "type": "CastPresentationState",
+          "required": false,
+          "description": "Required in v1 unifiedControl; does not replace old single-source summaries."
+        },
+        {
+          "id": 14,
+          "name": "audioPolicy",
+          "type": "CastAudioPolicyState",
+          "required": false,
+          "description": "Required in v1 unifiedControl; selected intent and effective participation are separate from legacy audio."
+        },
+        {
+          "id": 15,
+          "name": "presentationSettings",
+          "type": "CastPresentationSettingsState",
+          "required": false,
+          "description": "Required only when P1 is supported and explicitly requested; combined P0/P1 capture shares one host commit boundary and keeps independent event barriers."
+        }
+      ]
+    },
+    "CastSessionCapability": {
+      "kind": "object",
+      "description": "Capability descriptor for cast.session.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "protocols",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Cast protocol paths represented by the receiver."
+        },
+        {
+          "id": 2,
+          "name": "receiverPhases",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Supported protocol-neutral receiver phases."
+        },
+        {
+          "id": 3,
+          "name": "supportsAirPlayName",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether AirPlay display name query and update are supported."
+        },
+        {
+          "id": 4,
+          "name": "supportsStopSession",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether active cast sessions can be stopped through cast.stopSession."
+        },
+        {
+          "id": 5,
+          "name": "backendTypes",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": false,
+          "description": "Backend implementations represented by this receiver."
+        }
+      ]
+    },
+    "CastAudioCapability": {
+      "kind": "object",
+      "description": "Capability descriptor for cast.audio.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "defaultEnabled",
+          "type": "bool",
+          "required": false,
+          "default": false,
+          "description": "Default local playback enablement for received cast audio."
+        },
+        {
+          "id": 2,
+          "name": "supportsMute",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether local mute state can be controlled separately."
+        },
+        {
+          "id": 3,
+          "name": "reportsEffectivePlayback",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether the receiver reports effective local playback state."
+        },
+        {
+          "id": 4,
+          "name": "supportsAudioDelay",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether receiver-local audio playback delay compensation can be configured."
+        },
+        {
+          "id": 5,
+          "name": "defaultAudioDelayMs",
+          "type": "uint32",
+          "required": false,
+          "min": 0,
+          "max": 1000,
+          "default": 250,
+          "description": "Default receiver-local audio playback delay in milliseconds."
+        },
+        {
+          "id": 6,
+          "name": "maxAudioDelayMs",
+          "type": "uint32",
+          "required": false,
+          "min": 0,
+          "default": 1000,
+          "description": "Maximum supported receiver-local audio playback delay in milliseconds."
+        }
+      ]
+    },
+    "CastPinCodeCapability": {
+      "kind": "object",
+      "description": "Capability descriptor for cast.pinCode.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "defaultEnabled",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether PIN protection is enabled by default."
+        },
+        {
+          "id": 2,
+          "name": "supportsPlaintextResponse",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether authorized responses or events may carry plaintext PIN values."
+        },
+        {
+          "id": 3,
+          "name": "supportedPinDisplays",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": false,
+          "description": "PIN display policies supported by the receiver."
+        },
+        {
+          "id": 4,
+          "name": "supportsGeneratedPin",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether the receiver can generate a default PIN."
+        },
+        {
+          "id": 5,
+          "name": "redactionRequired",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether logs, diagnostics, and error summaries must redact PIN values."
+        }
+      ]
+    },
+    "CastWindowCapability": {
+      "kind": "object",
+      "description": "Capability descriptor for cast.window.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "supportsFullscreen",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether fullscreen window mode is supported."
+        },
+        {
+          "id": 2,
+          "name": "supportsAlwaysOnTop",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether topmost window state is supported."
+        },
+        {
+          "id": 3,
+          "name": "supportsNormalRestore",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether normal mode can restore remembered normal-mode bounds."
+        },
+        {
+          "id": 4,
+          "name": "noWindowPolicy",
+          "type": "enum",
+          "required": false,
+          "enum": [
+            "reject",
+            "remember",
+            "runtimeDefault"
+          ],
+          "description": "Receiver policy when a window command is received without an active cast window."
+        }
+      ]
+    },
+    "CastBackendCapability": {
+      "kind": "object",
+      "description": "Capability descriptor for cast.backend.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "backendTypes",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Backend implementations controlled by the receiver."
+        },
+        {
+          "id": 2,
+          "name": "supportsRestart",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether cast.restartBackend is supported."
+        },
+        {
+          "id": 3,
+          "name": "reportsProcess",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether backend process metadata such as pid may be reported."
+        },
+        {
+          "id": 4,
+          "name": "supportsLastError",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether last backend error summaries are available."
+        }
+      ]
+    },
+    "CastFlowControlCapability": {
+      "kind": "object",
+      "description": "Capability descriptor for cast.flowControl.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "supportsRenderFps",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether receiver-local target render fps can be controlled."
+        },
+        {
+          "id": 2,
+          "name": "supportsQueuePolicy",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether queue and late-frame policy can be controlled."
+        },
+        {
+          "id": 3,
+          "name": "supportsOverlay",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether diagnostics overlay can be controlled."
+        },
+        {
+          "id": 4,
+          "name": "supportsStats",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether low-frequency flow diagnostics are reported."
+        },
+        {
+          "id": 5,
+          "name": "exposesExternalKeyframeRequest",
+          "type": "bool",
+          "required": false,
+          "default": false,
+          "description": "Whether a public keyframe request method is exposed; current draft keeps this false."
+        },
+        {
+          "id": 6,
+          "name": "supportsVideoStreamParams",
+          "type": "bool",
+          "required": false,
+          "default": false,
+          "description": "Whether cast.setVideoStreamParams can update source video frame rate or bitrate."
+        },
+        {
+          "id": 7,
+          "name": "supportsActiveVideoReconfigure",
+          "type": "bool",
+          "required": false,
+          "default": false,
+          "description": "Whether active video stream parameter changes may reconfigure or replace the current stream."
+        },
+        {
+          "id": 8,
+          "name": "supportedVideoStreamProfiles",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": false,
+          "description": "Video STREAM profiles supported by cast.setVideoStreamParams; each profile may declare source-specific support and frame-rate/bitrate ranges."
+        },
+        {
+          "id": 9,
+          "name": "supportedVideoEncoders",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": false,
+          "description": "Encoder or encoder profile identifiers exposed for source video reconfiguration."
+        },
+        {
+          "id": 10,
+          "name": "supportsSourceSpecificVideoParams",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether video parameter support and ranges may vary by source and are described by the selected video profile."
+        }
+      ]
+    },
+    "CastStatusCapability": {
+      "kind": "object",
+      "description": "Capability descriptor for cast.status snapshot query.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "sections",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Status snapshot sections the receiver can report; v1 adds unifiedControl, controlSync, receivers, sessions, presentation and audioPolicy and reuses window; P1 adds explicitly requested presentationSettings."
+        },
+        {
+          "id": 2,
+          "name": "supportsSensitiveRedaction",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "Whether sensitive status fields can be withheld and marked redacted."
+        },
+        {
+          "id": 3,
+          "name": "supportedControlVersions",
+          "type": "array",
+          "array": {
+            "item_type": "uint32"
+          },
+          "required": false,
+          "description": "Explicit supported multi-control versions; absence is unknown rather than v1 support."
+        },
+        {
+          "id": 4,
+          "name": "supportsAtomicUnifiedSnapshot",
+          "type": "bool",
+          "required": false,
+          "description": "Whether unifiedControl is captured atomically in full; absence is not a verified false or true value."
+        }
+      ]
+    },
+    "CastSessionRef": {
+      "kind": "object",
+      "description": "Shared runtime session identity, distinct from a protocol-local legacy sessionId.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "id",
+          "type": "string",
+          "required": true,
+          "max_length": 128,
+          "description": "Nonempty opaque shared runtime session ID."
+        },
+        {
+          "id": 2,
+          "name": "generation",
+          "type": "string",
+          "required": true,
+          "max_length": 20,
+          "description": "Canonical decimal uint64 string (0 or nonzero-leading digits, at most 18446744073709551615); encoded as UTF-8 in TLV."
+        }
+      ]
+    },
+    "CastControlTarget": {
+      "kind": "object",
+      "description": "Exact presentation fences; params.runtimeInstanceId completes the target and all fences are rechecked atomically at mutation.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "session",
+          "type": "CastSessionRef",
+          "required": true,
+          "description": "Shared runtime session and generation."
+        },
+        {
+          "id": 2,
+          "name": "slotId",
+          "type": "uint32",
+          "required": true,
+          "description": "Opaque slot identifier; never an array index."
+        },
+        {
+          "id": 3,
+          "name": "bindingGeneration",
+          "type": "string",
+          "required": true,
+          "max_length": 20,
+          "description": "Canonical decimal uint64 string fencing slot reuse."
+        },
+        {
+          "id": 4,
+          "name": "lifecycleGeneration",
+          "type": "string",
+          "required": true,
+          "max_length": 20,
+          "description": "Canonical decimal uint64 string fencing presentation lifecycle replacement."
+        }
+      ]
+    },
+    "CastControlSnapshotCursor": {
+      "kind": "object",
+      "description": "One atomic logical capture and its complete published-event barrier; counters never wrap within an epoch.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlVersion",
+          "type": "uint32",
+          "required": true,
+          "description": "Selected control version; P0 uses 1."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "max_length": 36,
+          "description": "Canonical lower-case UUID text; fresh for each host start."
+        },
+        {
+          "id": 3,
+          "name": "revision",
+          "type": "string",
+          "required": true,
+          "max_length": 20,
+          "description": "Canonical decimal uint64 logical control revision."
+        },
+        {
+          "id": 4,
+          "name": "eventSequence",
+          "type": "string",
+          "required": true,
+          "max_length": 20,
+          "description": "Canonical decimal uint64 string; snapshot includes every complete published batch through this barrier."
+        }
+      ]
+    },
+    "CastControlEventContext": {
+      "kind": "object",
+      "description": "Atomic feature commit group context; all parts share epoch/version/revision/batchId/partCount.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlVersion",
+          "type": "uint32",
+          "required": true,
+          "description": "Selected control version; P0 uses 1."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "max_length": 36,
+          "description": "Canonical lower-case UUID identifying the current host epoch."
+        },
+        {
+          "id": 3,
+          "name": "revision",
+          "type": "string",
+          "required": true,
+          "max_length": 20,
+          "description": "Canonical decimal uint64 control revision; operation-only batches may retain the current revision."
+        },
+        {
+          "id": 4,
+          "name": "eventSequence",
+          "type": "string",
+          "required": true,
+          "max_length": 20,
+          "description": "Canonical decimal uint64 string equal to batchId plus partIndex."
+        },
+        {
+          "id": 5,
+          "name": "batchId",
+          "type": "string",
+          "required": true,
+          "max_length": 20,
+          "description": "Canonical decimal uint64 string equal to the first eventSequence of the group."
+        },
+        {
+          "id": 6,
+          "name": "partIndex",
+          "type": "uint32",
+          "required": true,
+          "description": "Zero-based part index strictly less than partCount."
+        },
+        {
+          "id": 7,
+          "name": "partCount",
+          "type": "uint32",
+          "required": true,
+          "min": 1,
+          "description": "Positive complete group size; clients apply only after every part is present."
+        }
+      ]
+    },
+    "CastControlCapabilities": {
+      "kind": "object",
+      "description": "Dynamic optional multi-control surface; partial descriptors do not imply complete v1 support. No secrets.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "supportedControlVersions",
+          "type": "array",
+          "array": {
+            "item_type": "uint32"
+          },
+          "required": true,
+          "description": "Explicit supported control versions."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "max_length": 36,
+          "description": "Canonical lower-case UUID for this host lifetime."
+        },
+        {
+          "id": 3,
+          "name": "methods",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Actual registered method names supported by this instance."
+        },
+        {
+          "id": 4,
+          "name": "events",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Actual feature event names supported by this instance."
+        },
+        {
+          "id": 5,
+          "name": "statusSections",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Actual supported status section names."
+        },
+        {
+          "id": 6,
+          "name": "presentation",
+          "type": "CastPresentationCapability",
+          "required": false,
+          "description": "Required when cast.presentation is supported."
+        },
+        {
+          "id": 7,
+          "name": "audioPolicy",
+          "type": "CastAudioPolicyCapability",
+          "required": false,
+          "description": "Required when cast.audioPolicy is supported."
+        },
+        {
+          "id": 8,
+          "name": "operations",
+          "type": "CastControlOperationsCapability",
+          "required": false,
+          "description": "Required when cast.controlOperations is supported."
+        },
+        {
+          "id": 9,
+          "name": "profileHints",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": false,
+          "description": "Non-secret host profile hints; not media profiles or implicit defaults."
+        },
+        {
+          "id": 10,
+          "name": "presentationSettings",
+          "type": "CastPresentationSettingsCapability",
+          "required": false,
+          "description": "Required iff P1 is supported together with its method/event/status section; absence does not imply support."
+        }
+      ]
+    },
+    "CastPresentationCapability": {
+      "kind": "object",
+      "description": "Supported presentation protocols and logical capture/target guarantees; no product layout algorithm.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "protocols",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Supported subset of hid/airplay/webcast; unknown is not a supported protocol."
+        },
+        {
+          "id": 2,
+          "name": "supportsAtomicSnapshot",
+          "type": "bool",
+          "required": true,
+          "description": "Must be true for a complete v1 unifiedControl implementation."
+        },
+        {
+          "id": 3,
+          "name": "supportsStrictTargets",
+          "type": "bool",
+          "required": true,
+          "description": "Must be true for exact per-presentation writes."
+        },
+        {
+          "id": 4,
+          "name": "maxPresentationCapacity",
+          "type": "uint32",
+          "required": true,
+          "min": 1,
+          "description": "Positive host-specific presentation capacity bound."
+        },
+        {
+          "id": 5,
+          "name": "capacityChoices",
+          "type": "array",
+          "array": {
+            "item_type": "uint32"
+          },
+          "required": false,
+          "description": "Positive supported capacities no greater than maxPresentationCapacity."
+        },
+        {
+          "id": 6,
+          "name": "layoutModes",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Supported layout identifiers; geometry remains host-owned."
+        }
+      ]
+    },
+    "CastAudioPolicyCapability": {
+      "kind": "object",
+      "description": "Audio intent and effective-set reporting guarantees.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlModes",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Supported subset of automatic/manual."
+        },
+        {
+          "id": 2,
+          "name": "mixModes",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Supported subset of exclusive/mix."
+        },
+        {
+          "id": 3,
+          "name": "supportsPerSessionEnable",
+          "type": "bool",
+          "required": true,
+          "description": "Whether explicit per-session enabled intent is available."
+        },
+        {
+          "id": 4,
+          "name": "reportsEffectiveSet",
+          "type": "bool",
+          "required": true,
+          "description": "Whether effective participants are reported separately from selected intent."
+        }
+      ]
+    },
+    "CastControlOperationsCapability": {
+      "kind": "object",
+      "description": "Query and deduplication guarantees bounded by declared limits.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "supportsQuery",
+          "type": "bool",
+          "required": true,
+          "description": "Whether original command results can be queried."
+        },
+        {
+          "id": 2,
+          "name": "supportsDedup",
+          "type": "bool",
+          "required": true,
+          "description": "Whether same-key same-value commands return the original operation."
+        },
+        {
+          "id": 3,
+          "name": "limits",
+          "type": "CastControlLimits",
+          "required": true,
+          "description": "Nonzero finite bounds; guaranteed records cannot be silently evicted."
+        }
+      ]
+    },
+    "CastControlLimits": {
+      "kind": "object",
+      "description": "Instance-specific positive uint32 limits; admission reserves result storage and returns BUSY on saturation.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "maxPendingOperations",
+          "type": "uint32",
+          "required": true,
+          "min": 1,
+          "description": "Maximum globally pending admitted operations."
+        },
+        {
+          "id": 2,
+          "name": "maxPendingPerClient",
+          "type": "uint32",
+          "required": true,
+          "min": 1,
+          "description": "Maximum pending operations for one client instance."
+        },
+        {
+          "id": 3,
+          "name": "maxRetainedResults",
+          "type": "uint32",
+          "required": true,
+          "min": 1,
+          "description": "Maximum retained records including reserved pending results."
+        },
+        {
+          "id": 4,
+          "name": "replayWindowMs",
+          "type": "uint32",
+          "required": true,
+          "min": 1,
+          "description": "Guaranteed dedup/result window from admission using host monotonic time; pending records survive until terminal."
+        },
+        {
+          "id": 5,
+          "name": "maxEventBufferEvents",
+          "type": "uint32",
+          "required": true,
+          "min": 1,
+          "description": "Bounded event count used for initial sync and slow-client handling."
+        },
+        {
+          "id": 6,
+          "name": "maxEventBufferBytes",
+          "type": "uint32",
+          "required": true,
+          "min": 1,
+          "description": "Bounded buffered event bytes."
+        },
+        {
+          "id": 7,
+          "name": "maxRequestBytes",
+          "type": "uint32",
+          "required": true,
+          "min": 1,
+          "description": "Maximum admitted request bytes."
+        },
+        {
+          "id": 8,
+          "name": "maxSnapshotBytes",
+          "type": "uint32",
+          "required": true,
+          "min": 1,
+          "description": "Maximum atomic snapshot bytes including bounded collections."
+        }
+      ]
+    },
+    "CastReceiverState": {
+      "kind": "object",
+      "description": "Real receiver availability; historical lastError does not override current state. No secrets.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "receiverId",
+          "type": "string",
+          "required": true,
+          "max_length": 128,
+          "description": "Nonempty opaque receiver identity."
+        },
+        {
+          "id": 2,
+          "name": "protocol",
+          "type": "enum",
+          "enum": [
+            "hid",
+            "airplay",
+            "webcast",
+            "unknown"
+          ],
+          "required": true,
+          "description": "Actual receiver protocol; unknown is not a supported-path alias."
+        },
+        {
+          "id": 3,
+          "name": "state",
+          "type": "enum",
+          "enum": [
+            "disabled",
+            "starting",
+            "ready",
+            "degraded",
+            "stopping",
+            "failed"
+          ],
+          "required": true,
+          "description": "Current receiver availability independent of session media."
+        },
+        {
+          "id": 4,
+          "name": "observedAt",
+          "type": "string",
+          "required": true,
+          "max_length": 64,
+          "description": "UTC RFC3339 observation time for display only."
+        },
+        {
+          "id": 5,
+          "name": "displayName",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Safe user-visible name; not identity or secret material."
+        },
+        {
+          "id": 6,
+          "name": "lastError",
+          "type": "CastLastError",
+          "required": false,
+          "description": "Historical redacted error summary; never passwords/tokens/SDP/ICE/private keys."
+        }
+      ]
+    },
+    "CastMultiSessionState": {
+      "kind": "object",
+      "description": "Current shared runtime session with independent connection, eligibility and media facts.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "session",
+          "type": "CastSessionRef",
+          "required": true,
+          "description": "Shared runtime session reference."
+        },
+        {
+          "id": 2,
+          "name": "receiverId",
+          "type": "string",
+          "required": true,
+          "max_length": 128,
+          "description": "Nonempty reference to a receiver in the same projection."
+        },
+        {
+          "id": 3,
+          "name": "protocol",
+          "type": "enum",
+          "enum": [
+            "hid",
+            "airplay",
+            "webcast",
+            "unknown"
+          ],
+          "required": true,
+          "description": "Actual session protocol; legacy enums remain unchanged."
+        },
+        {
+          "id": 4,
+          "name": "receiverState",
+          "type": "enum",
+          "enum": [
+            "opening",
+            "open",
+            "mediaStarting",
+            "mediaActive",
+            "stopping",
+            "closed",
+            "failed"
+          ],
+          "required": true,
+          "description": "Protocol receiver session state; no frames does not imply disconnection."
+        },
+        {
+          "id": 5,
+          "name": "presentationEligibility",
+          "type": "enum",
+          "enum": [
+            "notEligible",
+            "priming",
+            "mediaReady",
+            "presented",
+            "withdrawing",
+            "notPresented"
+          ],
+          "required": true,
+          "description": "Presentation eligibility distinct from authentication and connection."
+        },
+        {
+          "id": 6,
+          "name": "videoTrackOpen",
+          "type": "bool",
+          "required": true,
+          "description": "Whether the video track is open; not proof of rendered frames."
+        },
+        {
+          "id": 7,
+          "name": "audioTrackOpen",
+          "type": "bool",
+          "required": true,
+          "description": "Whether the audio track is open; not proof of audible output."
+        },
+        {
+          "id": 8,
+          "name": "audioReadiness",
+          "type": "enum",
+          "enum": [
+            "unknown",
+            "absent",
+            "priming",
+            "ready",
+            "recovering"
+          ],
+          "required": false,
+          "description": "Audio readiness when observed."
+        },
+        {
+          "id": 9,
+          "name": "displayName",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Safe user-visible name; not a target identity."
+        }
+      ]
+    },
+    "CastPresentationSlotState": {
+      "kind": "object",
+      "description": "Current slot binding; target is required iff occupied and must match this slot and current lifecycle.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "slotId",
+          "type": "uint32",
+          "required": true,
+          "description": "Unique slot identifier within the presentation."
+        },
+        {
+          "id": 2,
+          "name": "bindingGeneration",
+          "type": "string",
+          "required": true,
+          "max_length": 20,
+          "description": "Canonical decimal uint64 slot-binding generation."
+        },
+        {
+          "id": 3,
+          "name": "occupied",
+          "type": "bool",
+          "required": true,
+          "description": "Whether the slot currently has an exact target."
+        },
+        {
+          "id": 4,
+          "name": "target",
+          "type": "CastControlTarget",
+          "required": false,
+          "description": "Required iff occupied; omitted otherwise; null is invalid."
+        }
+      ]
+    },
+    "CastPresentationState": {
+      "kind": "object",
+      "description": "Atomically captured presentation lifecycle, capacity and slots; zero effective/applied capacity does not imply no media.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "started",
+          "type": "bool",
+          "required": true,
+          "description": "Whether the presentation lifecycle is started."
+        },
+        {
+          "id": 2,
+          "name": "lifecycleGeneration",
+          "type": "string",
+          "required": true,
+          "max_length": 20,
+          "description": "Canonical decimal uint64 lifecycle generation."
+        },
+        {
+          "id": 3,
+          "name": "configuredCapacity",
+          "type": "uint32",
+          "required": true,
+          "min": 1,
+          "description": "Positive configured capacity."
+        },
+        {
+          "id": 4,
+          "name": "validationAvailable",
+          "type": "bool",
+          "required": true,
+          "description": "Whether validatedCapacity is currently known."
+        },
+        {
+          "id": 5,
+          "name": "validatedCapacity",
+          "type": "uint32",
+          "required": false,
+          "min": 1,
+          "description": "Required iff validationAvailable; omitted when unknown."
+        },
+        {
+          "id": 6,
+          "name": "effectiveCapacity",
+          "type": "uint32",
+          "required": true,
+          "description": "Current host capacity-policy result; may be zero."
+        },
+        {
+          "id": 7,
+          "name": "appliedCapacity",
+          "type": "uint32",
+          "required": true,
+          "description": "Capacity currently applied to presentation; may be zero."
+        },
+        {
+          "id": 8,
+          "name": "layoutMode",
+          "type": "string",
+          "required": true,
+          "max_length": 64,
+          "description": "One of the layout identifiers advertised by this instance."
+        },
+        {
+          "id": 9,
+          "name": "layoutSettling",
+          "type": "bool",
+          "required": true,
+          "description": "Whether the host reports layout settling."
+        },
+        {
+          "id": 10,
+          "name": "slots",
+          "type": "array",
+          "array": {
+            "item_type": "CastPresentationSlotState"
+          },
+          "required": true,
+          "description": "Full bounded current slot set with no removed-session ghost binding."
+        }
+      ]
+    },
+    "CastAudioPolicyState": {
+      "kind": "object",
+      "description": "Selected intent and effective audio participation captured with the same session/slot projection.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlMode",
+          "type": "enum",
+          "enum": [
+            "automatic",
+            "manual"
+          ],
+          "required": true,
+          "description": "Current control policy; writes do not implicitly reset it."
+        },
+        {
+          "id": 2,
+          "name": "mixMode",
+          "type": "enum",
+          "enum": [
+            "exclusive",
+            "mix"
+          ],
+          "required": true,
+          "description": "Current mixing policy."
+        },
+        {
+          "id": 3,
+          "name": "enabledSessions",
+          "type": "array",
+          "array": {
+            "item_type": "CastSessionRef"
+          },
+          "required": true,
+          "description": "Unique current session references with enabled intent."
+        },
+        {
+          "id": 4,
+          "name": "effectiveAudioSessions",
+          "type": "array",
+          "array": {
+            "item_type": "CastSessionRef"
+          },
+          "required": true,
+          "description": "Unique current effective participants; neither set proves human-audible sound."
+        }
+      ]
+    },
+    "CastStopPresentationParams": {
+      "kind": "object",
+      "description": "One exact withdrawal intent; same runtime/client/command key deduplicates canonical parsed values.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlVersion",
+          "type": "uint32",
+          "required": true,
+          "description": "Explicit selected control version; P0 uses 1."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "max_length": 36,
+          "description": "Canonical lower-case UUID of the targeted runtime epoch."
+        },
+        {
+          "id": 3,
+          "name": "clientInstanceId",
+          "type": "string",
+          "required": true,
+          "max_length": 36,
+          "description": "Canonical lower-case client UUID; not authorization."
+        },
+        {
+          "id": 4,
+          "name": "commandId",
+          "type": "string",
+          "required": true,
+          "max_length": 36,
+          "description": "Canonical lower-case UUID identifying one user intent."
+        },
+        {
+          "id": 5,
+          "name": "target",
+          "type": "CastControlTarget",
+          "required": true,
+          "description": "Original exact target checked atomically at mutation after admission."
+        },
+        {
+          "id": 6,
+          "name": "reason",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Optional non-secret withdrawal reason."
+        }
+      ]
+    },
+    "CastSetSessionAudioEnabledParams": {
+      "kind": "object",
+      "description": "One explicit audio enable intent for an exact presentation; no toggle semantics.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlVersion",
+          "type": "uint32",
+          "required": true,
+          "description": "Explicit selected control version; P0 uses 1."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "max_length": 36,
+          "description": "Canonical lower-case UUID of the targeted runtime epoch."
+        },
+        {
+          "id": 3,
+          "name": "clientInstanceId",
+          "type": "string",
+          "required": true,
+          "max_length": 36,
+          "description": "Canonical lower-case client UUID; not authorization."
+        },
+        {
+          "id": 4,
+          "name": "commandId",
+          "type": "string",
+          "required": true,
+          "max_length": 36,
+          "description": "Canonical lower-case UUID identifying one user intent."
+        },
+        {
+          "id": 5,
+          "name": "target",
+          "type": "CastControlTarget",
+          "required": true,
+          "description": "Original exact target checked atomically at mutation."
+        },
+        {
+          "id": 6,
+          "name": "enabled",
+          "type": "bool",
+          "required": true,
+          "description": "Explicit desired intent; applied does not imply effective playback."
+        }
+      ]
+    },
+    "CastGetControlOperationParams": {
+      "kind": "object",
+      "description": "Original deduplication key query; missing history is unknown outcome.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlVersion",
+          "type": "uint32",
+          "required": true,
+          "description": "Explicit selected control version; P0 uses 1."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "max_length": 36,
+          "description": "Canonical lower-case UUID of the original runtime epoch."
+        },
+        {
+          "id": 3,
+          "name": "clientInstanceId",
+          "type": "string",
+          "required": true,
+          "max_length": 36,
+          "description": "Original canonical lower-case client UUID."
+        },
+        {
+          "id": 4,
+          "name": "commandId",
+          "type": "string",
+          "required": true,
+          "max_length": 36,
+          "description": "Original canonical lower-case command UUID."
+        }
+      ]
+    },
+    "CastControlOperation": {
+      "kind": "object",
+      "description": "Admitted queued or immutable terminal operation; terminal requires completedAt/statusCode/outcomeReason, P0 commit requires appliedRevision and P1 requires settingsResult.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "operationId",
+          "type": "string",
+          "required": true,
+          "max_length": 128,
+          "description": "Nonempty opaque operation record ID; not media session identity."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "max_length": 36,
+          "description": "Canonical lower-case runtime epoch UUID."
+        },
+        {
+          "id": 3,
+          "name": "clientInstanceId",
+          "type": "string",
+          "required": true,
+          "max_length": 36,
+          "description": "Canonical lower-case UUID of the submitting client."
+        },
+        {
+          "id": 4,
+          "name": "commandId",
+          "type": "string",
+          "required": true,
+          "max_length": 36,
+          "description": "Canonical lower-case original intent UUID."
+        },
+        {
+          "id": 5,
+          "name": "kind",
+          "type": "enum",
+          "enum": [
+            "stopPresentation",
+            "setSessionAudioEnabled",
+            "setPresentationSettings"
+          ],
+          "required": true,
+          "description": "Intent kind; settings is a global P1 operation with settingsResult and no presentation target."
+        },
+        {
+          "id": 6,
+          "name": "state",
+          "type": "enum",
+          "enum": [
+            "queued",
+            "applied",
+            "rejected",
+            "failed"
+          ],
+          "required": true,
+          "description": "Admission or truthful terminal result; queued is not media success."
+        },
+        {
+          "id": 7,
+          "name": "submittedAt",
+          "type": "string",
+          "required": true,
+          "max_length": 64,
+          "description": "UTC RFC3339 submission display time; expiry uses host monotonic time."
+        },
+        {
+          "id": 8,
+          "name": "target",
+          "type": "CastControlTarget",
+          "required": false,
+          "description": "Required for both P0 per-session kinds and retains the original exact target; omitted for P1 settings."
+        },
+        {
+          "id": 9,
+          "name": "completedAt",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "UTC RFC3339 time required for applied/rejected/failed."
+        },
+        {
+          "id": 10,
+          "name": "appliedRevision",
+          "type": "string",
+          "required": false,
+          "max_length": 20,
+          "description": "Canonical decimal uint64 string required iff a P0 logical control commit occurred; settings-only metadata uses settingsResult.settingsRevision instead."
+        },
+        {
+          "id": 11,
+          "name": "statusCode",
+          "type": "uint32",
+          "required": false,
+          "description": "Required terminal standard AXTP status code; applied uses SUCCESS and failures use non-success."
+        },
+        {
+          "id": 12,
+          "name": "outcomeReason",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Required terminal bounded business reason; not a new numeric error space and never secret data."
+        },
+        {
+          "id": 13,
+          "name": "ownerCleanup",
+          "type": "enum",
+          "enum": [
+            "notApplicable",
+            "pending",
+            "complete",
+            "failed"
+          ],
+          "required": false,
+          "description": "Cleanup observation at terminalization for the target owner only; not entire receiver exit."
+        },
+        {
+          "id": 14,
+          "name": "settingsResult",
+          "type": "CastPresentationSettingsOperationResult",
+          "required": false,
+          "description": "Required for kind=setPresentationSettings including queued/rejected/failed; reports configuration/application/persistence separately."
+        }
+      ]
+    },
+    "CastSetPresentationSettingsParams": {
+      "kind": "object",
+      "description": "Global one-field settings intent; same-key dedup precedes owner-side optimistic version comparison and persist never saves another temporary field.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlVersion",
+          "type": "uint32",
+          "required": true,
+          "description": "Selected control version; P1 uses 1 with separate capability."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "max_length": 36,
+          "description": "Canonical lower-case runtime UUID; no automatic replay into a new epoch."
+        },
+        {
+          "id": 3,
+          "name": "clientInstanceId",
+          "type": "string",
+          "required": true,
+          "max_length": 36,
+          "description": "Canonical lower-case client UUID; not authorization."
+        },
+        {
+          "id": 4,
+          "name": "commandId",
+          "type": "string",
+          "required": true,
+          "max_length": 36,
+          "description": "Canonical lower-case UUID for this explicit settings intent."
+        },
+        {
+          "id": 5,
+          "name": "expectedSettingsRevision",
+          "type": "string",
+          "required": true,
+          "max_length": 20,
+          "description": "Canonical decimal uint64 optimistic version; rechecked after dedup and queueing."
+        },
+        {
+          "id": 6,
+          "name": "patch",
+          "type": "CastPresentationSettingsPatch",
+          "required": true,
+          "description": "Exactly one known supported setting key; empty/multiple/unknown keys are INVALID_ARGUMENT."
+        },
+        {
+          "id": 7,
+          "name": "persist",
+          "type": "bool",
+          "required": true,
+          "description": "Explicit save choice; true saves only the patch field before configuration commit and live apply."
+        }
+      ]
+    },
+    "CastPresentationSettingsPatch": {
+      "kind": "object",
+      "description": "All fields optional structurally but exactly one key required semantically; unknown patch keys rejected and conditional choices come from capability.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "layoutMode",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Nonempty declared layout identifier."
+        },
+        {
+          "id": 2,
+          "name": "audioControlMode",
+          "type": "enum",
+          "enum": [
+            "automatic",
+            "manual"
+          ],
+          "required": false,
+          "description": "Declared audio control mode; same confirmed value does not reset selection."
+        },
+        {
+          "id": 3,
+          "name": "audioMixMode",
+          "type": "enum",
+          "enum": [
+            "exclusive",
+            "mix"
+          ],
+          "required": false,
+          "description": "Declared audio mix mode; no implicit inverse-mode rollback."
+        },
+        {
+          "id": 4,
+          "name": "capacity",
+          "type": "uint32",
+          "required": false,
+          "min": 1,
+          "description": "One declared capacity choice; no global product maximum or default."
+        },
+        {
+          "id": 5,
+          "name": "enabledProtocols",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": false,
+          "description": "Duplicate-free set from declared hid/airplay/webcast protocols; empty only when minEnabledProtocols is explicitly zero."
+        },
+        {
+          "id": 6,
+          "name": "profileHint",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Nonempty declared opaque product profile identifier; not a wire profile."
+        }
+      ]
+    },
+    "CastPresentationSettingsValues": {
+      "kind": "object",
+      "description": "Supported setting values only; configured/known persisted projections are complete, while unconfirmed applied fields are absent with issues.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "layoutMode",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Declared layout policy identifier."
+        },
+        {
+          "id": 2,
+          "name": "audioControlMode",
+          "type": "enum",
+          "enum": [
+            "automatic",
+            "manual"
+          ],
+          "required": false,
+          "description": "Adopted or desired control policy; not proof of sound."
+        },
+        {
+          "id": 3,
+          "name": "audioMixMode",
+          "type": "enum",
+          "enum": [
+            "exclusive",
+            "mix"
+          ],
+          "required": false,
+          "description": "Adopted or desired audio mixing policy."
+        },
+        {
+          "id": 4,
+          "name": "capacity",
+          "type": "uint32",
+          "required": false,
+          "min": 1,
+          "description": "Desired capacity or actually adopted capacity according to containing projection; applied may be limited."
+        },
+        {
+          "id": 5,
+          "name": "enabledProtocols",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": false,
+          "description": "Adopted or desired enable policy; not receiver readiness."
+        },
+        {
+          "id": 6,
+          "name": "profileHint",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Declared product combination profile identifier."
+        }
+      ]
+    },
+    "CastPresentationStartupSettings": {
+      "kind": "object",
+      "description": "Exactly the capability-declared restart-only intent accepted at this host startup; distinct from effective/applied limits and stored values.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "layoutMode",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Present only if this implementation declares layoutMode restart-only."
+        },
+        {
+          "id": 2,
+          "name": "audioControlMode",
+          "type": "enum",
+          "enum": [
+            "automatic",
+            "manual"
+          ],
+          "required": false,
+          "description": "Present only if audioControlMode is restart-only."
+        },
+        {
+          "id": 3,
+          "name": "audioMixMode",
+          "type": "enum",
+          "enum": [
+            "exclusive",
+            "mix"
+          ],
+          "required": false,
+          "description": "Present only if audioMixMode is restart-only."
+        },
+        {
+          "id": 4,
+          "name": "capacity",
+          "type": "uint32",
+          "required": false,
+          "min": 1,
+          "description": "Startup accepted capacity intent before runtime validation limitations."
+        },
+        {
+          "id": 5,
+          "name": "enabledProtocols",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": false,
+          "description": "Startup accepted receiver enable policy; does not claim Ready."
+        },
+        {
+          "id": 6,
+          "name": "profileHint",
+          "type": "string",
+          "required": false,
+          "max_length": 64,
+          "description": "Startup accepted product profile when declared restart-only."
+        }
+      ]
+    },
+    "CastPresentationSettingsState": {
+      "kind": "object",
+      "description": "Full bounded settings state; desired/adopted/startup/stored facts and two independent event barriers must never be conflated.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "settingsRevision",
+          "type": "string",
+          "required": true,
+          "max_length": 20,
+          "description": "Canonical decimal uint64 settings fact version within the runtime epoch."
+        },
+        {
+          "id": 2,
+          "name": "settingsEventSequence",
+          "type": "string",
+          "required": true,
+          "max_length": 20,
+          "description": "Canonical decimal uint64 settings publication barrier; independent of P0 eventSequence."
+        },
+        {
+          "id": 3,
+          "name": "configured",
+          "type": "CastPresentationSettingsValues",
+          "required": true,
+          "description": "Complete supported desired settings including temporary changes."
+        },
+        {
+          "id": 4,
+          "name": "applied",
+          "type": "CastPresentationSettingsValues",
+          "required": true,
+          "description": "Confirmed actually adopted values; unconfirmed fields omitted with issues."
+        },
+        {
+          "id": 5,
+          "name": "activeStartup",
+          "type": "CastPresentationStartupSettings",
+          "required": true,
+          "description": "Restart-only intent accepted at current startup; used to compute pendingRestart."
+        },
+        {
+          "id": 6,
+          "name": "pendingRestart",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Unique restart-only fields where configured differs from activeStartup; applied capacity limits do not create permanent pending."
+        },
+        {
+          "id": 7,
+          "name": "persisted",
+          "type": "bool",
+          "required": true,
+          "description": "True iff desired settings equal known stored/startup projection; false if unknown and not a disk-write receipt."
+        },
+        {
+          "id": 8,
+          "name": "unsavedFields",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Configured fields differing from known stored values; all supported fields when storage projection unknown."
+        },
+        {
+          "id": 9,
+          "name": "unappliedFields",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Live fields differing from confirmed adopted policy; layout animation alone does not qualify."
+        },
+        {
+          "id": 10,
+          "name": "storageState",
+          "type": "enum",
+          "enum": [
+            "absent",
+            "loaded",
+            "saved",
+            "invalid",
+            "unavailable"
+          ],
+          "required": true,
+          "description": "Truthful store observation; invalid/unknown files are preserved rather than silently overwritten."
+        },
+        {
+          "id": 11,
+          "name": "lockedFields",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Unique supported field names currently locked by explicit deployment/authorization policy."
+        },
+        {
+          "id": 12,
+          "name": "applicationIssues",
+          "type": "array",
+          "array": {
+            "item_type": "CastPresentationSettingIssue"
+          },
+          "required": true,
+          "description": "Safe field-specific limitation/failure/lock observations."
+        },
+        {
+          "id": 13,
+          "name": "persistedValues",
+          "type": "CastPresentationSettingsValues",
+          "required": false,
+          "description": "Complete known persistent startup projection; omitted if invalid/unavailable/unknown."
+        },
+        {
+          "id": 14,
+          "name": "storeRevision",
+          "type": "string",
+          "required": false,
+          "max_length": 20,
+          "description": "Canonical decimal uint64 known valid store version; absent without valid file."
+        },
+        {
+          "id": 15,
+          "name": "appliedControlRevision",
+          "type": "string",
+          "required": false,
+          "max_length": 20,
+          "description": "Associated P0 adopted-policy revision lower bound for cross-stream synchronization."
+        },
+        {
+          "id": 16,
+          "name": "persistError",
+          "type": "string",
+          "required": false,
+          "max_length": 512,
+          "description": "Sanitized bounded storage diagnostic; no raw request/secret/private path."
+        }
+      ]
+    },
+    "CastPresentationSettingIssue": {
+      "kind": "object",
+      "description": "One safe supported-field observation; historical failure and current policy remain distinct.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "field",
+          "type": "string",
+          "required": true,
+          "max_length": 64,
+          "description": "One supported setting field name."
+        },
+        {
+          "id": 2,
+          "name": "kind",
+          "type": "enum",
+          "enum": [
+            "limitedByValidation",
+            "limitedByHardLimit",
+            "liveApplyFailed",
+            "startupFailed",
+            "locked",
+            "unknown"
+          ],
+          "required": true,
+          "description": "Structured limitation/failure classification."
+        },
+        {
+          "id": 3,
+          "name": "reason",
+          "type": "string",
+          "required": false,
+          "max_length": 128,
+          "description": "Bounded sanitized reason; no secret/path leakage."
+        },
+        {
+          "id": 4,
+          "name": "statusCode",
+          "type": "uint32",
+          "required": false,
+          "description": "Optional standard AXTP numeric status."
+        }
+      ]
+    },
+    "CastPresentationSettingsCapability": {
+      "kind": "object",
+      "description": "Optional P1 field and effect partition; conditional choices/modes/minimum are required for corresponding supported keys, never inferred defaults.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "fields",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Unique supported subset of the six settings keys."
+        },
+        {
+          "id": 2,
+          "name": "liveFields",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Live effect subset; disjoint from restartOnlyFields and together exactly fields."
+        },
+        {
+          "id": 3,
+          "name": "restartOnlyFields",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": true,
+          "description": "Restart-only subset; updates never automatically restart current media."
+        },
+        {
+          "id": 4,
+          "name": "supportsPersistence",
+          "type": "bool",
+          "required": true,
+          "description": "Whether explicit field-only save requests are supported."
+        },
+        {
+          "id": 5,
+          "name": "capacityChoices",
+          "type": "array",
+          "array": {
+            "item_type": "uint32"
+          },
+          "required": false,
+          "description": "Nonempty unique positive choices required when capacity supported."
+        },
+        {
+          "id": 6,
+          "name": "layoutModes",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": false,
+          "description": "Nonempty unique bounded mode identifiers required when layoutMode supported."
+        },
+        {
+          "id": 7,
+          "name": "profileHints",
+          "type": "array",
+          "array": {
+            "item_type": "string"
+          },
+          "required": false,
+          "description": "Nonempty unique bounded product profile identifiers required when profileHint supported."
+        },
+        {
+          "id": 8,
+          "name": "minEnabledProtocols",
+          "type": "uint32",
+          "required": false,
+          "description": "Required when enabledProtocols supported; zero explicitly permits empty if control/settings can remain available independently."
+        }
+      ]
+    },
+    "CastPresentationSettingsOperationResult": {
+      "kind": "object",
+      "description": "Truthful independent configuration/application/persistence results; failed may still include stored/configured commits.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "field",
+          "type": "string",
+          "required": true,
+          "max_length": 64,
+          "description": "Unique requested setting field."
+        },
+        {
+          "id": 2,
+          "name": "settingsRevision",
+          "type": "string",
+          "required": true,
+          "max_length": 20,
+          "description": "Canonical decimal uint64 most recently confirmed settings revision; terminal uses completion/check version."
+        },
+        {
+          "id": 3,
+          "name": "configurationStatus",
+          "type": "enum",
+          "enum": [
+            "notCommitted",
+            "unchanged",
+            "committed"
+          ],
+          "required": true,
+          "description": "Whether this intent changed desired configuration."
+        },
+        {
+          "id": 4,
+          "name": "applicationStatus",
+          "type": "enum",
+          "enum": [
+            "notAttempted",
+            "unchanged",
+            "applied",
+            "pendingRestart",
+            "failed"
+          ],
+          "required": true,
+          "description": "Confirmed policy adoption or deferred restart intent; not media audibility/restart proof."
+        },
+        {
+          "id": 5,
+          "name": "persistenceStatus",
+          "type": "enum",
+          "enum": [
+            "notRequested",
+            "pending",
+            "unchanged",
+            "stored",
+            "failed"
+          ],
+          "required": true,
+          "description": "Explicit field-only storage outcome distinct from equality with known persistedValues."
+        },
+        {
+          "id": 6,
+          "name": "appliedControlRevision",
+          "type": "string",
+          "required": false,
+          "max_length": 20,
+          "description": "Optional canonical decimal uint64 associated P0 policy revision."
+        }
+      ]
+    },
+    "CastSettingsEventContext": {
+      "kind": "object",
+      "description": "Independent settings event cursor; payload revision/sequence must match and this event never consumes P0 sequence.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlVersion",
+          "type": "uint32",
+          "required": true,
+          "description": "Selected control version; P1 uses 1."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "max_length": 36,
+          "description": "Canonical lower-case runtime epoch UUID."
+        },
+        {
+          "id": 3,
+          "name": "settingsRevision",
+          "type": "string",
+          "required": true,
+          "max_length": 20,
+          "description": "Canonical decimal uint64 settings state version."
+        },
+        {
+          "id": 4,
+          "name": "settingsEventSequence",
+          "type": "string",
+          "required": true,
+          "max_length": 20,
+          "description": "Canonical decimal uint64 settings publication sequence; snapshot barrier may be zero."
+        }
+      ]
+    },
+    "CastPresentationSettingsChangedEvent": {
+      "kind": "object",
+      "description": "Complete settings state replacement in its own bounded ordered event stream; no P0 context or batch fields.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "settingsContext",
+          "type": "CastSettingsEventContext",
+          "required": true,
+          "description": "Independent required settings cursor matching payload versions."
+        },
+        {
+          "id": 2,
+          "name": "settings",
+          "type": "CastPresentationSettingsState",
+          "required": true,
+          "description": "Full post-commit settings state",
+          "not a patch.": null
+        }
+      ]
+    },
+    "CastReceiversChangedEvent": {
+      "kind": "object",
+      "description": "Full receiver-section replacement in one control group part.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "context",
+          "type": "CastControlEventContext",
+          "required": true,
+          "description": "Required v1 commit context."
+        },
+        {
+          "id": 2,
+          "name": "receivers",
+          "type": "array",
+          "array": {
+            "item_type": "CastReceiverState"
+          },
+          "required": true,
+          "description": "Complete current bounded receiver collection."
+        }
+      ]
+    },
+    "CastSessionsChangedEvent": {
+      "kind": "object",
+      "description": "Full session-section replacement in one control group part.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "context",
+          "type": "CastControlEventContext",
+          "required": true,
+          "description": "Required v1 commit context."
+        },
+        {
+          "id": 2,
+          "name": "sessions",
+          "type": "array",
+          "array": {
+            "item_type": "CastMultiSessionState"
+          },
+          "required": true,
+          "description": "Complete current bounded session collection."
+        }
+      ]
+    },
+    "CastPresentationChangedEvent": {
+      "kind": "object",
+      "description": "Full presentation-section replacement; never a receiver/session/audio aggregate.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "context",
+          "type": "CastControlEventContext",
+          "required": true,
+          "description": "Required v1 commit context."
+        },
+        {
+          "id": 2,
+          "name": "presentation",
+          "type": "CastPresentationState",
+          "required": true,
+          "description": "Complete current presentation state."
+        }
+      ]
+    },
+    "CastAudioPolicyChangedEvent": {
+      "kind": "object",
+      "description": "Full audio-policy-section replacement in one control group part.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "context",
+          "type": "CastControlEventContext",
+          "required": true,
+          "description": "Required v1 commit context."
+        },
+        {
+          "id": 2,
+          "name": "audioPolicy",
+          "type": "CastAudioPolicyState",
+          "required": true,
+          "description": "Complete selected/effective audio policy state."
+        }
+      ]
+    },
+    "CastControlOperationChangedEvent": {
+      "kind": "object",
+      "description": "One P0 per-session operation record with ordered control publication context; setPresentationSettings is excluded from this event stream.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "context",
+          "type": "CastControlEventContext",
+          "required": true,
+          "description": "Required v1 commit context; may be an operation-only group."
+        },
+        {
+          "id": 2,
+          "name": "operation",
+          "type": "CastControlOperation",
+          "required": true,
+          "description": "One admitted queued or terminal operation record."
+        }
+      ]
+    }
+  },
+  "capabilities": [
+    {
+      "id": 5633,
+      "name": "cast.session",
+      "domain": "cast",
+      "status": "draft",
+      "since": "1.0.0",
+      "description": "Device supports cast receiver session phase, AirPlay name, and session stop control.",
+      "type": "object",
+      "schema": "CastSessionCapability"
+    },
+    {
+      "id": 5634,
+      "name": "cast.audio",
+      "domain": "cast",
+      "status": "draft",
+      "since": "1.0.0",
+      "description": "Device supports local cast audio playback and mute control.",
+      "type": "object",
+      "schema": "CastAudioCapability"
+    },
+    {
+      "id": 5635,
+      "name": "cast.pinCode",
+      "domain": "cast",
+      "status": "draft",
+      "since": "1.0.0",
+      "description": "Device supports cast PIN protection, PIN state, and authentication events.",
+      "type": "object",
+      "schema": "CastPinCodeCapability"
+    },
+    {
+      "id": 5636,
+      "name": "cast.window",
+      "domain": "cast",
+      "status": "draft",
+      "since": "1.0.0",
+      "description": "Device supports cast window state query and mode control.",
+      "type": "object",
+      "schema": "CastWindowCapability"
+    },
+    {
+      "id": 5637,
+      "name": "cast.backend",
+      "domain": "cast",
+      "status": "draft",
+      "since": "1.0.0",
+      "description": "Device supports cast backend status query and restart control.",
+      "type": "object",
+      "schema": "CastBackendCapability"
+    },
+    {
+      "id": 5638,
+      "name": "cast.flowControl",
+      "domain": "cast",
+      "status": "draft",
+      "since": "1.0.0",
+      "description": "Device supports receiver-local cast render fps, queue, drop, overlay, and diagnostics control.",
+      "type": "object",
+      "schema": "CastFlowControlCapability"
+    },
+    {
+      "id": 5639,
+      "name": "cast.status",
+      "domain": "cast",
+      "status": "draft",
+      "since": "1.0.0",
+      "description": "Device supports current cast receiver status snapshot query.",
+      "type": "object",
+      "schema": "CastStatusCapability"
+    },
+    {
+      "id": 5640,
+      "name": "cast.presentation",
+      "domain": "cast",
+      "status": "draft",
+      "since": "1.0.0",
+      "description": "Optional concurrent receiver/session projection, atomic snapshots and exact presentation targets.",
+      "type": "object",
+      "schema": "CastPresentationCapability"
+    },
+    {
+      "id": 5641,
+      "name": "cast.audioPolicy",
+      "domain": "cast",
+      "status": "draft",
+      "since": "1.0.0",
+      "description": "Optional explicit per-session audio intent and separate effective participation reporting.",
+      "type": "object",
+      "schema": "CastAudioPolicyCapability"
+    },
+    {
+      "id": 5642,
+      "name": "cast.controlOperations",
+      "domain": "cast",
+      "status": "draft",
+      "since": "1.0.0",
+      "description": "Optional asynchronous operation query and bounded same-intent deduplication/retention guarantees.",
+      "type": "object",
+      "schema": "CastControlOperationsCapability"
+    },
+    {
+      "id": 5643,
+      "name": "cast.presentationSettings",
+      "domain": "cast",
+      "status": "draft",
+      "since": "1.0.0",
+      "description": "Optional one-field host settings with declared live/restart behavior, independent synchronization and truthful field-only persistence/application results.",
+      "type": "object",
+      "schema": "CastPresentationSettingsCapability"
+    }
+  ]
+}

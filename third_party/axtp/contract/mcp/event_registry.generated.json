@@ -744,6 +744,198 @@
       "idHex": "0x160C"
     },
     {
+      "id": 5645,
+      "bitOffset": 12,
+      "name": "cast.receiversChanged",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Replace the receiver section after a logical control commit; not a full status event.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "eventSchema": "CastReceiversChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "receiver availability changed"
+      ],
+      "capabilities": [
+        "cast.presentation"
+      ],
+      "idHex": "0x160D"
+    },
+    {
+      "id": 5646,
+      "bitOffset": 13,
+      "name": "cast.sessionsChanged",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Replace the current multi-session collection as one part of an atomic control commit group.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "eventSchema": "CastSessionsChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "session joined",
+        "session removed",
+        "session media state changed"
+      ],
+      "capabilities": [
+        "cast.presentation"
+      ],
+      "idHex": "0x160E"
+    },
+    {
+      "id": 5647,
+      "bitOffset": 14,
+      "name": "cast.presentationChanged",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Replace only presentation slots, layout and capacity after a logical control commit.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "eventSchema": "CastPresentationChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "presentation binding changed",
+        "lifecycle changed",
+        "capacity changed",
+        "layout changed"
+      ],
+      "capabilities": [
+        "cast.presentation"
+      ],
+      "idHex": "0x160F"
+    },
+    {
+      "id": 5648,
+      "bitOffset": 15,
+      "name": "cast.audioPolicyChanged",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Replace audio policy intent and effective participation sets after a control commit.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "eventSchema": "CastAudioPolicyChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "enabled intent changed",
+        "effective audio participation changed",
+        "audio policy changed"
+      ],
+      "capabilities": [
+        "cast.audioPolicy"
+      ],
+      "idHex": "0x1610"
+    },
+    {
+      "id": 5649,
+      "bitOffset": 16,
+      "name": "cast.controlOperationChanged",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Publish one admitted P0 per-session operation record; P1 settings progress uses RPC/query and its independent settings event, never this sequence.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "eventSchema": "CastControlOperationChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "operation admitted",
+        "operation terminal"
+      ],
+      "capabilities": [
+        "cast.controlOperations"
+      ],
+      "idHex": "0x1611"
+    },
+    {
+      "id": 5650,
+      "bitOffset": 17,
+      "name": "cast.presentationSettingsChanged",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Replace complete settings state using independent settingsContext/settingsEventSequence; never consumes the P0 eventSequence.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "eventSchema": "CastPresentationSettingsChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "desired setting committed",
+        "adopted policy changed",
+        "storage observation changed",
+        "settings issue or lock changed"
+      ],
+      "capabilities": [
+        "cast.presentationSettings"
+      ],
+      "idHex": "0x1612"
+    },
+    {
+      "id": 5651,
+      "bitOffset": 18,
+      "name": "cast.webcastBackendChanged",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Replace complete WebCast backend state using independent backendContext; never consumes P0 or settings event sequences.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "eventSchema": "CastWebCastBackendSnapshot",
+      "severity": "info",
+      "trigger": [
+        "join backend selection changed",
+        "signaling availability changed",
+        "local listener lifecycle changed",
+        "peer connectivity changed",
+        "backend error changed"
+      ],
+      "capabilities": [
+        "cast.webcastBackend"
+      ],
+      "idHex": "0x1613"
+    },
+    {
+      "id": 5652,
+      "bitOffset": 19,
+      "name": "cast.airplayChanged",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Replace secret-free AirPlay discovery and authentication state as a P0 commit part.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "eventSchema": "CastAirPlayChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "discovery changed",
+        "authentication attempt changed"
+      ],
+      "capabilities": [
+        "cast.airplayControl"
+      ],
+      "idHex": "0x1614"
+    },
+    {
+      "id": 5653,
+      "bitOffset": 20,
+      "name": "cast.touchbackChanged",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Emitted when per-target touchback gates, mode, resolution, or geometry fencing changes.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "eventSchema": "CastTouchbackChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "cast.setTouchbackEnabled",
+        "cast.setTouchbackMode",
+        "cast.setTouchbackResolutionPreference",
+        "stream open",
+        "stream close",
+        "disconnect"
+      ],
+      "capabilities": [
+        "cast.touchback"
+      ],
+      "idHex": "0x1615"
+    },
+    {
       "id": 5889,
       "bitOffset": 0,
       "name": "software.configChanged",
@@ -782,6 +974,50 @@
         "software.updatePolicy"
       ],
       "idHex": "0x1702"
+    },
+    {
+      "id": 6145,
+      "bitOffset": 0,
+      "name": "sport.eventDetectionStateChanged",
+      "domain": "sport",
+      "status": "draft",
+      "description": "Emitted when one sport type changes effective enabled state, runtime state, availability, or apply state.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "eventSchema": "SportEventDetectionStateChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "sport.setEventDetectionConfig",
+        "device restart",
+        "restore default",
+        "local policy",
+        "detector availability change"
+      ],
+      "capabilities": [
+        "sport.eventDetection"
+      ],
+      "idHex": "0x1801"
+    },
+    {
+      "id": 6146,
+      "bitOffset": 1,
+      "name": "sport.eventDetected",
+      "domain": "sport",
+      "status": "draft",
+      "description": "Emitted when an enabled sport detector identifies a registered business event using a sport and event type discriminator.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "eventSchema": "SportEventDetectedEvent",
+      "severity": "info",
+      "trigger": [
+        "registered sport event detected",
+        "detector ready",
+        "detector degraded when policy permits"
+      ],
+      "capabilities": [
+        "sport.eventDetection"
+      ],
+      "idHex": "0x1802"
     }
   ]
 }

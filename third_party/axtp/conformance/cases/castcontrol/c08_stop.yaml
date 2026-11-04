@@ -1,0 +1,324 @@
+id: castcontrol.c08_stop
+title: P0 c08 stop
+since: spec/v0.18.0
+level: cast-control
+profiles:
+  - cast-control
+  - websocket-jsonrpc
+given:
+  device_profile: cast_control_receiver
+  oracle: reference/cast-control.mjs
+  source: specs/45-cast-control.md
+scenarios:
+  - name: owner_hid
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params: {}
+            targetIndex: 0
+          expect:
+            status: SUCCESS
+      - id: execute
+        direction: runtime_local
+        control_model:
+          action: execute
+          input: {}
+          expect:
+            operation:
+              state: applied
+              ownerCleanup: pending
+              appliedRevision: "2"
+      - id: isolated
+        direction: runtime_local
+        control_model:
+          action: assert_state
+          input: {}
+          expect:
+            cleanups:
+              - receiverId: receiver-hid
+                session:
+                  id: session-hid
+                  generation: "9007199254740993"
+            state:
+              presentation:
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: false
+                  - slotId: 1
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-airplay
+                        generation: "9007199254740994"
+                      slotId: 1
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 2
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-webcast
+                        generation: "9007199254740995"
+                      slotId: 2
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: owner_airplay
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params: {}
+            targetIndex: 1
+          expect:
+            status: SUCCESS
+      - id: execute
+        direction: runtime_local
+        control_model:
+          action: execute
+          input: {}
+          expect:
+            operation:
+              state: applied
+              ownerCleanup: pending
+              appliedRevision: "2"
+      - id: isolated
+        direction: runtime_local
+        control_model:
+          action: assert_state
+          input: {}
+          expect:
+            cleanups:
+              - receiverId: receiver-airplay
+                session:
+                  id: session-airplay
+                  generation: "9007199254740994"
+            state:
+              presentation:
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-hid
+                        generation: "9007199254740993"
+                      slotId: 0
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 1
+                    bindingGeneration: "1"
+                    occupied: false
+                  - slotId: 2
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-webcast
+                        generation: "9007199254740995"
+                      slotId: 2
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: owner_webcast
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params: {}
+            targetIndex: 2
+          expect:
+            status: SUCCESS
+      - id: execute
+        direction: runtime_local
+        control_model:
+          action: execute
+          input: {}
+          expect:
+            operation:
+              state: applied
+              ownerCleanup: pending
+              appliedRevision: "2"
+      - id: isolated
+        direction: runtime_local
+        control_model:
+          action: assert_state
+          input: {}
+          expect:
+            cleanups:
+              - receiverId: receiver-webcast
+                session:
+                  id: session-webcast
+                  generation: "9007199254740995"
+            state:
+              presentation:
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-hid
+                        generation: "9007199254740993"
+                      slotId: 0
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 1
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-airplay
+                        generation: "9007199254740994"
+                      slotId: 1
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 2
+                    bindingGeneration: "1"
+                    occupied: false
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: partial_execution
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params: {}
+          expect:
+            status: SUCCESS
+      - id: execute
+        direction: runtime_local
+        control_model:
+          action: execute
+          input:
+            partialFailure: true
+          expect:
+            operation:
+              state: failed
+              appliedRevision: "2"
+              outcomeReason: PARTIAL_EXECUTION
+              ownerCleanup: failed
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: owner_unavailable
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params: {}
+          expect:
+            status: SUCCESS
+      - id: execute
+        direction: runtime_local
+        control_model:
+          action: execute
+          input:
+            ownerUnavailable: true
+          expect:
+            operation:
+              state: failed
+              outcomeReason: OWNER_UNAVAILABLE
+      - id: unchanged
+        direction: runtime_local
+        control_model:
+          action: assert_state
+          input: {}
+          expect:
+            state:
+              presentation:
+                started: true
+                lifecycleGeneration: "1"
+                configuredCapacity: 3
+                validationAvailable: false
+                effectiveCapacity: 3
+                appliedCapacity: 3
+                layoutMode: grid
+                layoutSettling: false
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-hid
+                        generation: "9007199254740993"
+                      slotId: 0
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 1
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-airplay
+                        generation: "9007199254740994"
+                      slotId: 1
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 2
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-webcast
+                        generation: "9007199254740995"
+                      slotId: 2
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                contentAdaptation: auto-fit
+            cleanups: []
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: shutdown
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: shutdown
+        direction: runtime_local
+        control_model:
+          action: shutdown
+          input: {}
+          expect:
+            accepting: false
+      - id: new_command
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params: {}
+          expect:
+            status: INVALID_STATE
+    assertions:
+      - The observable result matches specs/45-cast-control.md.

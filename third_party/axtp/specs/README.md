@@ -21,6 +21,9 @@
 | [20-core.md](20-core.md) | Frame、transport profile、CONTROL、RPC、STREAM 和低带宽边界。 |
 | [30-registry.md](30-registry.md) | `domain.feature` 分类，以及 method、event、error、profile 注册规则。 |
 | [40-codec.md](40-codec.md) | 类型、schema、capability 模型、TLV 和字段编号规则。 |
+| [45-cast-control.md](45-cast-control.md) | 可选多路投屏控制 v1：精确目标、原子快照、事件组、操作恢复和兼容保证。 |
+| [46-cast-settings.md](46-cast-settings.md) | 可选呈现配置 v1：单字段 patch、生效/保存部分结果、独立设置流和双屏障快照。 |
+| [47-cast-webcast-backend.md](47-cast-webcast-backend.md) | 可选 WebCast 云端/本地信令状态、独立事件流、重连快照及隐私边界。 |
 | [50-tooling.md](50-tooling.md) | Registry YAML 到 Protocol IR、生成器行为、版本和发布绑定。 |
 
 ## 权威顺序

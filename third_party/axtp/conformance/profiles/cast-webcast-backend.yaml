@@ -1,0 +1,6 @@
+id: cast-webcast-backend
+title: Optional WebCast backend observation
+since: spec/v0.18.0
+description: Independent state snapshots and full-state events; no product fallback or media-quality policy.
+capabilities: [cast.webcastBackend, cast.status]
+oracle: reference/cast-webcast-backend.mjs

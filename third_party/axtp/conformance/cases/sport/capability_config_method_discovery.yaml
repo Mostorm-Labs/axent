@@ -1,0 +1,44 @@
+id: sport.capability_config_method_discovery
+title: Capability discovery advertises sport-specific configuration methods
+since: spec/v0.0.2
+level: sport
+profiles:
+  - sport
+  - websocket-jsonrpc
+
+given:
+  device_profile: vm33pro_multi_device
+  capability: sport.eventDetection
+  sportType: basketball
+
+steps:
+  - id: capabilities_request
+    role: trigger
+    direction: client_to_server
+    rpc:
+      encoding: json
+      op: REQUEST
+      requestId: 1
+      method: sport.getEventDetectionCapabilities
+      params:
+        sportTypes: [basketball]
+
+  - id: capabilities_response
+    responseTo: capabilities_request
+    role: observe
+    direction: server_to_client
+    expect:
+      rpc:
+        op: REQUEST_RESPONSE
+        requestId: 1
+        statusCode: SUCCESS
+        result:
+          capability:
+            type: object
+
+assertions:
+  - capability.supportedSports[basketball].supportedConfigMethods contains sport.getGoalShotWatermarkConfig
+  - capability.supportedSports[basketball].supportedConfigMethods contains sport.setGoalShotWatermarkConfig
+  - capability.supportedSports[basketball].supportedConfigMethods contains sport.getEventClipConfig
+  - capability.supportedSports[basketball].supportedConfigMethods contains sport.setEventClipConfig
+  - capability discovery is read-only and does not change device configuration

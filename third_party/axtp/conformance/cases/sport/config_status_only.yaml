@@ -1,0 +1,67 @@
+id: sport.config_status_only
+title: Sport configuration set methods use status-only success responses
+since: spec/v0.0.2
+level: sport
+profiles:
+  - sport
+  - websocket-jsonrpc
+
+given:
+  device_profile: vm33pro_multi_device
+  capability: sport.eventDetection
+  device: AA:BB:CC:DD:EE:FF
+
+steps:
+  - id: set_watermark
+    role: trigger
+    direction: client_to_server
+    rpc:
+      encoding: json
+      op: REQUEST
+      requestId: 201
+      method: sport.setGoalShotWatermarkConfig
+      params:
+        macAddress: AA:BB:CC:DD:EE:FF
+        sportType: basketball
+        goalVisible: true
+        shotVisible: false
+
+  - id: set_watermark_response
+    responseTo: set_watermark
+    role: observe
+    direction: server_to_client
+    expect:
+      rpc:
+        op: REQUEST_RESPONSE
+        requestId: 201
+        statusCode: SUCCESS
+
+  - id: set_clip
+    triggeredBy: set_watermark_response
+    role: trigger
+    direction: client_to_server
+    rpc:
+      encoding: json
+      op: REQUEST
+      requestId: 202
+      method: sport.setEventClipConfig
+      params:
+        macAddress: AA:BB:CC:DD:EE:FF
+        sportType: basketball
+        beforeOffsetSeconds: 10
+        afterOffsetSeconds: 15
+
+  - id: set_clip_response
+    responseTo: set_clip
+    role: observe
+    direction: server_to_client
+    expect:
+      rpc:
+        op: REQUEST_RESPONSE
+        requestId: 202
+        statusCode: SUCCESS
+
+assertions:
+  - set_watermark_response.result is absent
+  - set_clip_response.result is absent
+  - both set responses communicate success only through standard RPC status

@@ -125,11 +125,23 @@
       "idHex": "0x0902"
     },
     {
+      "id": 2561,
+      "name": "input.stream",
+      "domain": "input",
+      "status": "draft",
+      "description": "Device supports negotiated receiver-to-source input STREAMs with touch and mouse interpretation.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "type": "object",
+      "schema": "InputStreamCapability",
+      "idHex": "0x0A01"
+    },
+    {
       "id": 3329,
       "name": "signage.playlist",
       "domain": "signage",
       "status": "draft",
-      "description": "Device supports digital signage playlist full sync, query, reset, playlist item URL refresh, and playlist config change notification.",
+      "description": "Device supports digital signage playlist full sync, query, reset, playlist item URL refresh, playlist item refresh, and playlist config change notification.",
       "since": "1.0.0",
       "deprecated": false,
       "type": "object",
@@ -269,6 +281,102 @@
       "idHex": "0x1607"
     },
     {
+      "id": 5640,
+      "name": "cast.presentation",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Optional concurrent receiver/session projection, atomic snapshots and exact presentation targets.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "type": "object",
+      "schema": "CastPresentationCapability",
+      "idHex": "0x1608"
+    },
+    {
+      "id": 5641,
+      "name": "cast.audioPolicy",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Optional explicit per-session audio intent and separate effective participation reporting.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "type": "object",
+      "schema": "CastAudioPolicyCapability",
+      "idHex": "0x1609"
+    },
+    {
+      "id": 5642,
+      "name": "cast.controlOperations",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Optional asynchronous operation query and bounded same-intent deduplication/retention guarantees.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "type": "object",
+      "schema": "CastControlOperationsCapability",
+      "idHex": "0x160A"
+    },
+    {
+      "id": 5643,
+      "name": "cast.presentationSettings",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Optional one-field host settings with declared live/restart behavior, independent synchronization and truthful field-only persistence/application results.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "type": "object",
+      "schema": "CastPresentationSettingsCapability",
+      "idHex": "0x160B"
+    },
+    {
+      "id": 5644,
+      "name": "cast.webcastBackend",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Optional secret-free WebCast cloud/local backend state query and independent full-state changes.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "type": "object",
+      "schema": "CastWebCastBackendCapability",
+      "idHex": "0x160C"
+    },
+    {
+      "id": 5645,
+      "name": "cast.meetingPresentation",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Optional fixed main-plus-preview view with exact focus control and independently remembered audio-follow preference.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "type": "object",
+      "schema": "CastMeetingPresentationCapability",
+      "idHex": "0x160D"
+    },
+    {
+      "id": 5646,
+      "name": "cast.airplayControl",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Secret-free AirPlay authentication and discovery observation with live rename.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "type": "object",
+      "schema": "CastAirPlayControlCapability",
+      "idHex": "0x160E"
+    },
+    {
+      "id": 5647,
+      "name": "cast.touchback",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Device supports per-target touchback control and negotiated touch or mouse input; AirPlay is excluded.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "type": "object",
+      "schema": "CastTouchbackCapability",
+      "idHex": "0x160F"
+    },
+    {
       "id": 5889,
       "name": "software.config",
       "domain": "software",
@@ -291,6 +399,30 @@
       "type": "object",
       "schema": "SoftwareUpdatePolicyCapability",
       "idHex": "0x1702"
+    },
+    {
+      "id": 6145,
+      "name": "sport.eventDetection",
+      "domain": "sport",
+      "status": "draft",
+      "description": "Device supports cross-sport event detection capability discovery, per-sport toggle control, runtime state events, and unified sport event delivery.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "type": "object",
+      "schema": "SportEventDetectionCapabilities",
+      "idHex": "0x1801"
+    },
+    {
+      "id": 6146,
+      "name": "sport.basketball",
+      "domain": "sport",
+      "status": "draft",
+      "description": "Device supports basketball shot and goal event semantics through sport.eventDetection.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "type": "object",
+      "schema": "SportBasketballCapability",
+      "idHex": "0x1802"
     }
   ]
 }

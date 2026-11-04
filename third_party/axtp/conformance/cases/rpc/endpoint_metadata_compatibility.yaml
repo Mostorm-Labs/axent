@@ -1,0 +1,73 @@
+id: rpc.endpoint_metadata_compatibility
+title: Object RPC endpoint metadata stays backward and forward compatible
+since: spec/v0.0.2
+level: endpoint-relay
+profiles:
+  - endpoint-relay
+  - websocket-jsonrpc
+
+given:
+  device_profile: minimal_device
+  method: audio.getAlgorithmConfig
+
+steps:
+  - id: legacy_request
+    direction: client_to_server
+    jsonrpc:
+      sid: "12345678"
+      op: REQUEST
+      d:
+        id: 31
+        method: audio.getAlgorithmConfig
+        params: {}
+
+  - id: legacy_response
+    responseTo: legacy_request
+    direction: server_to_client
+    expect:
+      jsonrpc:
+        sid: "12345678"
+        op: REQUEST_RESPONSE
+        d:
+          id: 31
+          status:
+            ok: true
+            code: 0
+
+  - id: extended_request
+    direction: client_to_server
+    jsonrpc:
+      sid: "12345678"
+      op: REQUEST
+      m:
+        src: ep-app-001
+        dst: ep-device-001
+        futureOptionalField:
+          value: 1
+      d:
+        id: 32
+        method: audio.getAlgorithmConfig
+        params: {}
+
+  - id: extended_response
+    responseTo: extended_request
+    direction: server_to_client
+    expect:
+      jsonrpc:
+        sid: "12345678"
+        op: REQUEST_RESPONSE
+        m:
+          src: ep-device-001
+          dst: ep-app-001
+        d:
+          id: 32
+          status:
+            ok: true
+            code: 0
+
+assertions:
+  - legacy_request.m is absent and legacy request remains valid
+  - extended_request.m.futureOptionalField is ignored or preserved without invalidating the request
+  - extended_response.m.src == extended_request.m.dst
+  - extended_response.m.dst == extended_request.m.src
+  - session remains APP_READY after an unknown optional metadata field

@@ -1,0 +1,386 @@
+domain: input
+description: Input control and injection streams, including negotiated touchback pointer input.
+
+methods:
+  - id: 0x0A01
+    name: input.openStream
+    domain: input
+    status: draft
+    bitOffset: 0
+    since: 1.0.0
+    description: Open a negotiated input STREAM for a selected target and return the stream epoch, accepted mode, and canvas fencing tokens.
+    rpc_op: request_response
+    request_schema: InputOpenStreamParams
+    response_schema: InputOpenStreamResult
+    recommended_encoding: [json, tlv]
+    capabilities: [input.stream]
+    errors: [SUCCESS, NOT_SUPPORTED, PERMISSION_DENIED, INVALID_ARGUMENT, INVALID_STATE, BUSY, UNAVAILABLE]
+
+  - id: 0x0A02
+    name: input.closeStream
+    domain: input
+    status: draft
+    bitOffset: 1
+    since: 1.0.0
+    description: Close a previously opened input STREAM and release any pressed contacts or buttons owned by its epoch.
+    rpc_op: request_response
+    request_schema: InputCloseStreamParams
+    response_schema: InputCloseStreamResult
+    recommended_encoding: [json, tlv]
+    capabilities: [input.stream]
+    errors: [SUCCESS, STREAM_NOT_FOUND, STREAM_CLOSED, INVALID_ARGUMENT, INVALID_STATE, UNAVAILABLE]
+
+types:
+  InputStreamTarget:
+    kind: object
+    description: Complete target identity used to fence an input stream against stale sessions and bindings.
+    fields:
+      - id: 0x01
+        name: sessionId
+        type: string
+        required: true
+        max_length: 128
+        description: Stable cast session identifier.
+      - id: 0x02
+        name: sessionGeneration
+        type: string
+        required: true
+        max_length: 32
+        description: Decimal-string session generation.
+      - id: 0x03
+        name: slotId
+        type: string
+        required: true
+        max_length: 128
+        description: Per-route or per-display slot identifier.
+      - id: 0x04
+        name: bindingGeneration
+        type: string
+        required: true
+        max_length: 32
+        description: Decimal-string binding generation for the selected route.
+      - id: 0x05
+        name: lifecycleGeneration
+        type: string
+        required: true
+        max_length: 32
+        description: Decimal-string receiver lifecycle generation.
+
+  InputOpenStreamParams:
+    kind: object
+    description: Request to open the canonical input.stream touchback business stream.
+    fields:
+      - id: 0x01
+        name: controlVersion
+        type: uint32
+        required: true
+        description: Control-plane contract version.
+      - id: 0x02
+        name: runtimeInstanceId
+        type: string
+        required: true
+        max_length: 128
+        description: Runtime instance that owns the request.
+      - id: 0x03
+        name: target
+        type: InputStreamTarget
+        required: true
+        description: Target identity and generation fence.
+      - id: 0x04
+        name: streamKind
+        type: enum
+        enum: [touchback]
+        required: true
+        description: Business stream kind; v1 is touchback.
+      - id: 0x05
+        name: format
+        type: enum
+        enum: [touch-batch-v1]
+        required: true
+        description: Canonical binary payload format after the AXTP STREAM header.
+      - id: 0x06
+        name: preferredMode
+        type: enum
+        enum: [touch, mouse]
+        required: false
+        default: touch
+        description: Preferred input interpretation; touch is the default.
+      - id: 0x07
+        name: supportedModes
+        type: array
+        array:
+          item_type: string
+        required: true
+        description: Modes the requester can consume, normally touch and mouse.
+      - id: 0x08
+        name: canvasRevision
+        type: string
+        required: true
+        max_length: 128
+        description: Canvas revision used to produce normalized coordinates.
+      - id: 0x09
+        name: geometryRevision
+        type: string
+        required: true
+        max_length: 128
+        description: Geometry revision used to map the viewport.
+      - id: 0x0A
+        name: canvasToken
+        type: uint32
+        required: true
+        description: Numeric canvas fence token.
+      - id: 0x0B
+        name: geometryToken
+        type: uint32
+        required: true
+        description: Numeric geometry fence token.
+      - id: 0x0C
+        name: maxBatchEvents
+        type: uint16
+        required: false
+        description: Maximum touch events per batch accepted by the requester.
+      - id: 0x0D
+        name: maxFrameBytes
+        type: uint32
+        required: false
+        description: Maximum complete STREAM frame size accepted by the requester.
+      - id: 0x0E
+        name: maxContacts
+        type: uint16
+        required: false
+        description: Maximum simultaneous contacts supported by the requester.
+      - id: 0x0F
+        name: modeRequirement
+        type: enum
+        enum: [preferred, required]
+        required: false
+        default: preferred
+        description: Whether preferredMode may fall back to another supported mode.
+      - id: 0x10
+        name: commandId
+        type: string
+        required: true
+        max_length: 128
+        description: Idempotency key for the open request.
+
+  InputOpenStreamResult:
+    kind: object
+    description: Result of input.openStream negotiation.
+    fields:
+      - id: 0x01
+        name: streamId
+        type: uint32
+        required: true
+        description: AXTP STREAM identifier.
+      - id: 0x02
+        name: epoch
+        type: uint32
+        required: true
+        description: Input ownership epoch; changes after reset and reopen.
+      - id: 0x03
+        name: acceptedMode
+        type: enum
+        enum: [touch, mouse]
+        required: true
+        description: Mode accepted for this stream.
+      - id: 0x04
+        name: format
+        type: enum
+        enum: [touch-batch-v1]
+        required: true
+        description: Canonical binary payload format.
+      - id: 0x05
+        name: canvasToken
+        type: uint32
+        required: true
+        description: Canvas token bound to this stream epoch.
+      - id: 0x06
+        name: geometryToken
+        type: uint32
+        required: true
+        description: Geometry token bound to this stream epoch.
+      - id: 0x07
+        name: maxBatchEvents
+        type: uint16
+        required: false
+        description: Maximum events per accepted batch.
+      - id: 0x08
+        name: maxFrameBytes
+        type: uint32
+        required: false
+        description: Maximum complete STREAM frame size.
+      - id: 0x09
+        name: maxContacts
+        type: uint16
+        required: false
+        description: Maximum simultaneous contacts.
+      - id: 0x0A
+        name: revision
+        type: string
+        required: true
+        max_length: 128
+        description: Receiver input stream state revision.
+      - id: 0x0B
+        name: accepted
+        type: bool
+        required: true
+        description: Whether the owner lane accepted the request; true does not imply effective touchback enablement.
+
+  InputCloseStreamParams:
+    kind: object
+    description: Request to close an input.stream epoch and release active input state.
+    fields:
+      - id: 0x01
+        name: controlVersion
+        type: uint32
+        required: true
+        description: Control-plane contract version.
+      - id: 0x02
+        name: runtimeInstanceId
+        type: string
+        required: true
+        max_length: 128
+        description: Runtime instance that owns the request.
+      - id: 0x03
+        name: target
+        type: InputStreamTarget
+        required: true
+        description: Target identity and generation fence.
+      - id: 0x04
+        name: streamKind
+        type: enum
+        enum: [touchback]
+        required: true
+        description: Business stream kind; v1 is touchback.
+      - id: 0x05
+        name: streamId
+        type: uint32
+        required: true
+        description: AXTP STREAM identifier to close.
+      - id: 0x06
+        name: epoch
+        type: uint32
+        required: true
+        description: Input ownership epoch to close.
+      - id: 0x07
+        name: reason
+        type: enum
+        enum: [requested, route_changed, disconnect, timeout, reset, shutdown]
+        required: false
+        description: Reason for closing the stream.
+      - id: 0x08
+        name: finalSeqId
+        type: uint32
+        required: false
+        description: Last sequence number accepted before close.
+      - id: 0x09
+        name: commandId
+        type: string
+        required: true
+        max_length: 128
+        description: Idempotency key for the close request.
+
+  InputCloseStreamResult:
+    kind: object
+    description: Result of input.closeStream.
+    fields:
+      - id: 0x01
+        name: streamId
+        type: uint32
+        required: true
+        description: AXTP STREAM identifier.
+      - id: 0x02
+        name: epoch
+        type: uint32
+        required: true
+        description: Closed input ownership epoch.
+      - id: 0x03
+        name: closed
+        type: bool
+        required: true
+        description: Whether the stream is now closed.
+      - id: 0x04
+        name: alreadyClosed
+        type: bool
+        required: false
+        default: false
+        description: Whether the stream was already closed and the operation converged idempotently.
+      - id: 0x05
+        name: revision
+        type: string
+        required: true
+        max_length: 128
+        description: Receiver input stream state revision after close.
+
+  InputStreamCapability:
+    kind: object
+    description: Capability descriptor for input.stream.
+    fields:
+      - id: 0x01
+        name: capability
+        type: string
+        required: true
+        max_length: 32
+        description: Fixed capability name input.stream.
+      - id: 0x02
+        name: direction
+        type: enum
+        enum: [receiver_to_source]
+        required: true
+        description: Touchback data flows from the receiver to the source.
+      - id: 0x03
+        name: formats
+        type: array
+        array:
+          item_type: string
+        required: true
+        description: Supported input stream formats, including touch-batch-v1.
+      - id: 0x04
+        name: inputModes
+        type: array
+        array:
+          item_type: string
+        required: true
+        description: Supported modes, including touch and mouse.
+      - id: 0x05
+        name: reliability
+        type: enum
+        enum: [ordered_reliable]
+        required: true
+        description: Data-channel delivery requirement; ordinary packets have no application ACK.
+      - id: 0x06
+        name: supportsReset
+        type: bool
+        required: true
+        description: Whether ordered reset frames are supported.
+      - id: 0x07
+        name: supportsMoveCoalescing
+        type: bool
+        required: true
+        description: Whether move events may be coalesced while down/up/cancel ordering is preserved.
+      - id: 0x08
+        name: maxBatchEvents
+        type: uint16
+        required: false
+        description: Advertised maximum events per batch.
+      - id: 0x09
+        name: maxFrameBytes
+        type: uint32
+        required: false
+        description: Advertised maximum complete STREAM frame size.
+      - id: 0x0A
+        name: maxContacts
+        type: uint16
+        required: false
+        description: Advertised maximum simultaneous contacts.
+
+capabilities:
+  - id: 0x0A01
+    name: input.stream
+    domain: input
+    status: draft
+    since: 1.0.0
+    description: Device supports negotiated receiver-to-source input STREAMs with touch and mouse interpretation.
+    type: object
+    schema: InputStreamCapability
+

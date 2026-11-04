@@ -17,7 +17,7 @@
 |---|---:|---|---:|---|---|
 | audio | 12 | ASK | 13 | 旁路高覆盖 / P0 stream | `audio.algorithm` 与 `audio.stream` 已进入 generated；后续按修订流程维护并补齐剩余 audio 草案确认。 |
 | auth | 3 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
-| cast | 7 | ASK / generated | 32 | P2 / 投屏接收端控制 | `cast.*` confirmed subset 已进入 generated；`cast.getStatus` 仅保留快照查询。PIN 格式、AirPlay 名称 schema、无窗口行为和快照裁剪策略作为后续修订项。 |
+| cast | 12 | ASK / generated | 47 | P0/P1 多路控制已采纳 | `cast.presentation`、`cast.audioPolicy`、`cast.controlOperations`、`cast.presentationSettings` 已登记；P0 原子快照/提交组及 P1 单字段配置、保存/应用部分结果、独立设置流见 specs/45-cast-control.md 与 specs/46-cast-settings.md。实际产品接入仍需下游实现验收。 |
 | camera | 7 | ASK | 0 | P3/P4 | 补产品/设备/legacy 确认。 |
 | capability | 1 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
 | device | 6 | ASK | 5 | P1 | `device.info`、`device.enrollment` 已进入 generated；继续补 `device.childDevice` 等通用底座确认。 |
@@ -31,8 +31,9 @@
 | output | 1 | ASK | 0 | P2b | 补产品/设备/legacy 确认。 |
 | privacy | 3 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
 | room | 5 | ASK | 0 | P7 | 补产品/设备/legacy 确认。 |
-| signage | 2 | ASK | 6 | P7 | `signage.playlist` 已进入 generated；补产品/设备/legacy 确认。`signage.media`/`signage.osd`/`signage.schedule` 已合并到其他域。 |
+| signage | 2 | ASK | 7 | P7 | `signage.playlist` 已进入 generated；补产品/设备/legacy 确认。`signage.media`/`signage.osd`/`signage.schedule` 已合并到其他域。 |
 | software | 2 | ASK | 8 | P7 | `software.config`、`software.updatePolicy` 已进入 generated，承接应用/launcher 侧配置和更新策略。 |
+| sport | 2 | generated | 9 | P2 | `sport.eventDetection` 与 `sport.basketball` 已进入 generated；新增多设备 Goal/Shot 水印和事件视频片段窗口配置，后续按修订流程维护。 |
 | storage | 6 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
 | stream | 2 | ASK | 12 | P0 data-plane plumbing | Phase 1 需要通用 STREAM open/data/close 语义支撑 audio/video；具体业务参数仍由 audio/video profile 定义。 |
 | system | 6 | ASK | 0 | P1 | 补产品/设备/legacy 确认，优先进入采纳批次。 |

@@ -64,6 +64,7 @@ contract/registry/**/*.yaml
 - event payload references；
 - error/capability/profile references；
 - fieldId、bitOffset、status 和 since consistency；
+- variant 绑定一致性（`variants.discriminator` 解析到同 schema 内已声明合法值的 enum 字段，`mapping` 全覆盖该枚举值且 value 解析到已注册 object schema）；
 - core 和 domain YAML 之间没有 duplicate facts。
 
 `validate-protocol` MUST 根据 source model、core specs 和 generated output 校验 Protocol IR。它也会检查关键协议不变量，例如 Big-Endian / network byte order、required CONTROL opcodes、optional READY、ACK/NACK future status 和 16B STREAM Header。

@@ -1,0 +1,4 @@
+id: sport
+title: AXTP Sport Event Detection Configuration Conformance
+since: spec/v0.0.2
+description: Multi-device sport event detection configuration behavior, including MAC routing, status-only updates, and atomic validation.

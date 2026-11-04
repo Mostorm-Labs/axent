@@ -2,6 +2,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
+import { runControlCase } from "../../conformance/reference/cast-control.mjs";
+import { CastSettingsModel } from "../../conformance/reference/cast-settings.mjs";
 
 const root = path.resolve(process.argv[2] ?? process.cwd());
 const requireFromGenerators = createRequire(path.join(root, "tooling", "generators", "package.json"));
@@ -309,6 +311,14 @@ function validateCaseReferences(label, value, refs) {
     validateKnownStatus(`${stepLabel}.control.statusCode`, step.control?.statusCode, refs.errorNames);
     validateKnownStatus(`${stepLabel}.error.code`, step.error?.code, refs.errorNames);
     validateEvent(`${stepLabel}.event.name`, step.event?.name, refs.eventNames);
+    if (step.control_model) {
+      if (!["cast-control", "cast-settings"].includes(value.level) || step.direction !== "runtime_local") fail(`${stepLabel}.control_model requires cast-control or cast-settings/runtime_local`);
+      validateMethod(`${stepLabel}.control_model.input.method`, step.control_model.input?.method, refs.methodNames);
+      validateEvent(`${stepLabel}.control_model.input.event.name`, step.control_model.input?.event?.name, refs.eventNames);
+      const schema = step.control_model.input?.schema;
+      if (schema && !refs.schemaNames.has(schema)) fail(`${stepLabel} references unknown model schema: ${schema}`);
+      validateKnownStatus(`${stepLabel}.control_model.expect.status`, step.control_model.expect?.status, refs.errorNames);
+    }
 
     if (step.registry_lookup?.capability && !refs.capabilityNames.has(step.registry_lookup.capability)) {
       fail(`${stepLabel}.registry_lookup.capability references unknown capability: ${step.registry_lookup.capability}`);
@@ -378,6 +388,7 @@ const refs = {
   eventNames: new Set((generated.events ?? []).map((item) => item.name)),
   errorNames: new Set((generated.errors ?? []).map((item) => item.name)),
   capabilityNames: new Set((generated.capabilities ?? []).map((item) => item.name)),
+  schemaNames: new Set((generated.schemas ?? []).map((item) => item.name)),
   levelNames: new Set(Object.keys(manifest.levels ?? {})),
   profileLabels: new Set(Object.keys(manifest.levels ?? {})),
   fixtureNames: new Set(),
@@ -405,6 +416,8 @@ if (fs.existsSync(fixturesDir)) {
 
 const caseFiles = walkYaml(path.join(conformanceDir, "cases"));
 const casesById = new Map();
+let controlScenarios = 0;
+let controlObservations = 0;
 for (const file of caseFiles) {
   const label = path.relative(root, file);
   const value = readYaml(file);
@@ -425,6 +438,16 @@ for (const file of caseFiles) {
     if (scenarioNames.has(scenario.name)) fail(`${label} duplicate scenario name: ${scenario.name}`);
     scenarioNames.add(scenario.name);
     validateExecutionMetadata(scenario.steps, `${label}.scenarios.${scenario.name}`);
+  }
+  if (["cast-control", "cast-settings"].includes(value.level)) {
+    try {
+      const source = readYaml(path.join(root, "contract/registry/domains/cast/domain.yaml"));
+      const codes = Object.fromEntries(readYaml(path.join(root, "contract/registry/error/error_code.yaml")).errors.map((item) => [item.name, item.id]));
+      const fixture = refs.fixtureValues.get(value.given?.device_profile);
+      if (!fixture) throw new Error("missing cast control fixture");
+      controlObservations += runControlCase(value, fixture, source.types, codes, fixture.settings ? CastSettingsModel : undefined);
+      controlScenarios += value.scenarios?.length ?? 1;
+    } catch (error) { fail(`${label}: cast control reference oracle failed: ${error.message}`); }
   }
 }
 
@@ -458,6 +481,7 @@ if (errors.length > 0) {
 
 console.log(`[OK] conformance manifest: ${manifest.conformance.version} (${manifest.conformance.spec_min})`);
 console.log(`[OK] conformance cases: ${casesById.size}`);
+if (controlScenarios) console.log(`[OK] cast-control reference: ${controlScenarios} scenarios, ${controlObservations} observations (substitute owners only)`);
 for (const [profile, count] of [...profileCounts.entries()].sort(([a], [b]) => a.localeCompare(b))) {
   console.log(`[OK] profile coverage: ${profile}=${count}`);
 }

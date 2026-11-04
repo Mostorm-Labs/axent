@@ -1,0 +1,24 @@
+id: castwebcastbackend.wb01_state_event
+title: Independent WebCast backend state query and event barrier
+since: spec/v0.18.0
+level: cast-webcast-backend
+profiles: [cast-webcast-backend, websocket-jsonrpc]
+given:
+  method: cast.getWebCastBackendState
+  event: cast.webcastBackendChanged
+  source: specs/47-cast-webcast-backend.md
+steps:
+  - direction: client_to_server
+    jsonrpc:
+      sid: "12345678"
+      op: REQUEST
+      d: {id: 800, method: cast.getWebCastBackendState, params: {controlVersion: 1}}
+  - direction: client_observes
+    expect:
+      rpc: {op: REQUEST_RESPONSE, requestId: 800}
+assertions:
+  - Query and event decode the same complete CastWebCastBackendSnapshot.
+  - Snapshot backendContext is an atomic barrier for buffered backend events in the same host epoch.
+  - selectedBackend identifies new-join authority and does not relabel retained peers on cloud recovery.
+  - No change consumes P0 or settings event sequences; gap or reconnect requires a fresh backend snapshot.
+  - Codes, tokens, credentials, SDP/ICE and raw paths never appear even when sensitive fields are requested.

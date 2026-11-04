@@ -34,6 +34,13 @@ levels:
       - event.unknown_event_ignored
       - event.unsupported_capability_not_emitted
 
+  endpoint-relay:
+    description: Optional object-RPC endpoint addressing and transparent relay behavior using m.src/m.dst.
+    required_cases:
+      - rpc.endpoint_metadata_compatibility
+      - rpc.endpoint_relay_addressing
+      - event.endpoint_fanout_addressing
+
   stream:
     description: Phase 1 Standard Framed STREAM payload behavior.
     required_cases:
@@ -56,6 +63,45 @@ levels:
       - rpc.method_not_found
       - rpc.request_id_match
 
+  sport:
+    description: Sport event detection configuration behavior for multi-device App control.
+    required_cases:
+      - sport.capability_config_method_discovery
+      - sport.config_multi_device_roundtrip
+      - sport.config_status_only
+      - sport.config_validation_atomicity
+
+  cast-control:
+    description: Optional P0 concurrent cast control with atomic snapshots, fenced writes and bounded operation recovery; introduced for planned spec/v0.18.0.
+    required_cases:
+      - castcontrol.c01_capability
+      - castcontrol.c02_snapshot
+      - castcontrol.c03_reconnect
+      - castcontrol.c04_feature_batch
+      - castcontrol.c05_fencing
+      - castcontrol.c06_dedup_result
+      - castcontrol.c07_audio
+      - castcontrol.c08_stop
+      - castcontrol.c09_encoding
+      - castcontrol.c10_legacy
+      - castcontrol.c11_privacy
+
+  cast-settings:
+    description: Optional combined P0/P1 host settings; preserves the independent P0 level and adds C12/PS-01-PS-12 protocol guarantees.
+    required_cases:
+      - castcontrol.c01_capability
+      - castcontrol.c02_snapshot
+      - castcontrol.c03_reconnect
+      - castcontrol.c04_feature_batch
+      - castcontrol.c05_fencing
+      - castcontrol.c06_dedup_result
+      - castcontrol.c07_audio
+      - castcontrol.c08_stop
+      - castcontrol.c09_encoding
+      - castcontrol.c10_legacy
+      - castcontrol.c11_privacy
+      - castcontrol.c12_settings
+
   framed-binary:
     description: Standard framed CONTROL, RPC and STREAM behavior.
     required_cases:
@@ -66,3 +112,8 @@ levels:
       - stream.stream_open
       - stream.stream_data
       - stream.stream_close
+
+  cast-webcast-backend:
+    description: Optional independent WebCast backend state and replacement event cursor.
+    required_cases:
+      - castwebcastbackend.wb01_state_event

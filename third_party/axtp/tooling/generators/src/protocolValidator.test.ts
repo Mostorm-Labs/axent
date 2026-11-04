@@ -41,6 +41,49 @@ describe("protocol source pipeline", () => {
     expect(validateProtocolDefinition(model)).toContain(`[OK] contract/protocol/axtp.protocol.yaml: ${model.methods.length} methods checked`);
   });
 
+  it("registers sport configuration methods for multi-device app control", async () => {
+    const sources = await loadProtocolSources(repoRoot);
+    const methods = new Map(sources.methods.map((method) => [method.name, method]));
+    for (const name of [
+      "sport.getGoalShotWatermarkConfig",
+      "sport.setGoalShotWatermarkConfig",
+      "sport.getEventClipConfig",
+      "sport.setEventClipConfig"
+    ]) {
+      expect(methods.get(name)).toBeDefined();
+    }
+    expect(methods.get("sport.getGoalShotWatermarkConfig")?.requestSchema).toBe("SportConfigTargetParams");
+    expect(methods.get("sport.getGoalShotWatermarkConfig")?.responseSchema).toBe("SportGoalShotWatermarkConfig");
+    expect(methods.get("sport.setGoalShotWatermarkConfig")?.requestSchema).toBe("SportSetGoalShotWatermarkConfigParams");
+    expect(methods.get("sport.setGoalShotWatermarkConfig")?.responseSchema).toBe("Empty");
+    expect(methods.get("sport.getEventClipConfig")?.requestSchema).toBe("SportConfigTargetParams");
+    expect(methods.get("sport.getEventClipConfig")?.responseSchema).toBe("SportEventClipConfig");
+    expect(methods.get("sport.setEventClipConfig")?.requestSchema).toBe("SportSetEventClipConfigParams");
+    expect(methods.get("sport.setEventClipConfig")?.responseSchema).toBe("Empty");
+  });
+
+  it("advertises sport-specific configuration methods in event detection descriptors", async () => {
+    const sources = await loadProtocolSources(repoRoot);
+    const descriptor = sources.schemas.find((schema) => schema.name === "SportEventDetectionSportDescriptor");
+    expect(descriptor).toBeDefined();
+    const configMethods = descriptor?.fields.find((field) => field.name === "supportedConfigMethods");
+    expect(configMethods).toMatchObject({
+      type: "array",
+      required: false,
+      array: { itemType: "string" }
+    });
+
+    const registeredMethods = new Set(sources.methods.filter((method) => method.domain === "sport").map((method) => method.name));
+    for (const name of [
+      "sport.getGoalShotWatermarkConfig",
+      "sport.setGoalShotWatermarkConfig",
+      "sport.getEventClipConfig",
+      "sport.setEventClipConfig"
+    ]) {
+      expect(registeredMethods.has(name)).toBe(true);
+    }
+  });
+
   it("rejects deprecated top-level domain YAML sources", async () => {
     const dir = await mkdtemp(path.join(os.tmpdir(), "axtp-legacy-domains-"));
     try {
@@ -126,6 +169,159 @@ describe("protocol definition validator", () => {
     const response = model.schemas.find((schema) => schema.name === "AudioSetAlgorithmConfigResponse")!;
     response.fields[1].fieldId = response.fields[0].fieldId;
     expect(() => validateProtocolDefinition(model)).toThrow(/duplicate fieldId/);
+  });
+
+  it("accepts a valid variants binding on an object field", async () => {
+    const model = cloneModel(await loadCurrentProtocol());
+    model.schemas.push({
+      name: "VariantCarrier",
+      kind: "object",
+      fields: [
+        { fieldId: 0x01, name: "kind", type: "enum", required: true, enumValues: ["a", "b"] },
+        {
+          fieldId: 0x02,
+          name: "payload",
+          type: "object",
+          required: true,
+          variants: { discriminator: "kind", mapping: { a: "VariantCarrier", b: "VariantCarrier" } }
+        }
+      ]
+    });
+    expect(() => validateProtocolDefinition(model)).not.toThrow();
+  });
+
+  it("rejects variants on a non-object carrier field", async () => {
+    const model = cloneModel(await loadCurrentProtocol());
+    model.schemas.push({
+      name: "VariantCarrier",
+      kind: "object",
+      fields: [
+        { fieldId: 0x01, name: "kind", type: "enum", required: true, enumValues: ["a"] },
+        {
+          fieldId: 0x02,
+          name: "payload",
+          type: "string",
+          required: true,
+          variants: { discriminator: "kind", mapping: { a: "VariantCarrier" } }
+        }
+      ]
+    });
+    expect(() => validateProtocolDefinition(model)).toThrow(/with variants must use type object/);
+  });
+
+  it("rejects a variants discriminator without a matching sibling field", async () => {
+    const model = cloneModel(await loadCurrentProtocol());
+    model.schemas.push({
+      name: "VariantCarrier",
+      kind: "object",
+      fields: [
+        { fieldId: 0x01, name: "kind", type: "enum", required: true, enumValues: ["a"] },
+        {
+          fieldId: 0x02,
+          name: "payload",
+          type: "object",
+          required: true,
+          variants: { discriminator: "missing", mapping: { a: "VariantCarrier" } }
+        }
+      ]
+    });
+    expect(() => validateProtocolDefinition(model)).toThrow(/variants\.discriminator must reference a sibling field/);
+  });
+
+  it("rejects a variants discriminator that is not a declared enum field", async () => {
+    const model = cloneModel(await loadCurrentProtocol());
+    model.schemas.push({
+      name: "VariantCarrier",
+      kind: "object",
+      fields: [
+        { fieldId: 0x01, name: "kind", type: "enum", required: true },
+        {
+          fieldId: 0x02,
+          name: "payload",
+          type: "object",
+          required: true,
+          variants: { discriminator: "kind", mapping: { a: "VariantCarrier" } }
+        }
+      ]
+    });
+    expect(() => validateProtocolDefinition(model)).toThrow(/variants\.discriminator must reference an enum field with declared enum values/);
+  });
+
+  it("rejects a variants mapping key outside the declared enum values", async () => {
+    const model = cloneModel(await loadCurrentProtocol());
+    model.schemas.push({
+      name: "VariantCarrier",
+      kind: "object",
+      fields: [
+        { fieldId: 0x01, name: "kind", type: "enum", required: true, enumValues: ["a"] },
+        {
+          fieldId: 0x02,
+          name: "payload",
+          type: "object",
+          required: true,
+          variants: { discriminator: "kind", mapping: { a: "VariantCarrier", c: "VariantCarrier" } }
+        }
+      ]
+    });
+    expect(() => validateProtocolDefinition(model)).toThrow(/variants\.mapping key is not a declared enum value/);
+  });
+
+  it("rejects a variants mapping that does not cover all enum values", async () => {
+    const model = cloneModel(await loadCurrentProtocol());
+    model.schemas.push({
+      name: "VariantCarrier",
+      kind: "object",
+      fields: [
+        { fieldId: 0x01, name: "kind", type: "enum", required: true, enumValues: ["a", "b"] },
+        {
+          fieldId: 0x02,
+          name: "payload",
+          type: "object",
+          required: true,
+          variants: { discriminator: "kind", mapping: { a: "VariantCarrier" } }
+        }
+      ]
+    });
+    expect(() => validateProtocolDefinition(model)).toThrow(/variants\.mapping must cover all enum values/);
+  });
+
+  it("rejects a variants mapping value without a registered schema", async () => {
+    const model = cloneModel(await loadCurrentProtocol());
+    model.schemas.push({
+      name: "VariantCarrier",
+      kind: "object",
+      fields: [
+        { fieldId: 0x01, name: "kind", type: "enum", required: true, enumValues: ["a"] },
+        {
+          fieldId: 0x02,
+          name: "payload",
+          type: "object",
+          required: true,
+          variants: { discriminator: "kind", mapping: { a: "MissingVariantSchema" } }
+        }
+      ]
+    });
+    expect(() => validateProtocolDefinition(model)).toThrow(/variants\.mapping references missing schema/);
+  });
+
+  it("rejects a variants mapping value that is not an object schema", async () => {
+    const model = cloneModel(await loadCurrentProtocol());
+    model.schemas.push({ name: "NotAnObjectSchema", kind: "enum", fields: [] });
+    model.schemas.push({
+      name: "VariantCarrier",
+      kind: "object",
+      fields: [
+        { fieldId: 0x01, name: "kind", type: "enum", required: true, enumValues: ["a"] },
+        {
+          fieldId: 0x02,
+          name: "payload",
+          type: "object",
+          required: true,
+          variants: { discriminator: "kind", mapping: { a: "NotAnObjectSchema" } }
+        }
+      ]
+    });
+    expect(() => validateProtocolDefinition(model)).toThrow(/variants\.mapping references non-object schema/);
   });
 
   it("rejects error categories outside their code range", async () => {

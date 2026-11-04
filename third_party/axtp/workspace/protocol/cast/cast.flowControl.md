@@ -30,7 +30,7 @@ lastReviewed: 2026-06-22
 | `cast.getFlowControlState` | 查询本地流控配置和统计。 | `CastGetFlowControlStateParams` -> `CastFlowControlState` | query |
 | `cast.setRenderFps` | 设置本地目标渲染 fps。 | `CastSetRenderFpsParams` -> `CastFlowControlState` | command |
 | `cast.setFlowPolicy` | 设置队列、late frame、drop policy 和 overlay。 | `CastSetFlowPolicyParams` -> `CastFlowControlState` | command |
-| `cast.setVideoStreamParams` | 设置当前 cast session 的 NT10/source 编码帧率和码率；必要时协调重开视频 downstream stream。 | `CastSetVideoStreamParamsParams` -> `CastSetVideoStreamParamsResult` | command；可触发 `cast.flowControlChanged` |
+| `cast.setVideoStreamParams` | 设置当前 cast session 的 NT10/source 编码帧率和码率；必要时协调重建完整的音视频 downstream stream 对。 | `CastSetVideoStreamParamsParams` -> `CastSetVideoStreamParamsResult` | command；可触发 `cast.flowControlChanged` |
 | `cast.flowControlChanged` | 流控状态或统计变化。 | `CastFlowControlChangedEvent` | event |
 
 ## 3. Methods
@@ -187,6 +187,8 @@ success:
 
 `resetFields` 的元素只能是 `frameRate` 或 `bitrateKbps`，同一字段不得同时出现在请求字段和 `resetFields` 中。显式 `0` 对这两个字段均非法。省略 `frameRate` 或 `bitrateKbps` 表示保持当前 session 的对应字段不变；若该字段在当前 session 中从未设置，则继续保持 unset。只有将字段放入 `resetFields` 才会清除 session 值，并恢复按 source/profile 默认值协商。
 
+活动投屏的参数变更是一个完整的音视频事务，而不是仅替换视频 stream。事务阶段使用已有的 `CastVideoStreamParamsState.state` / `phase` 值，按 `pending` -> `closing` -> `opening` -> `streaming` 推进；不得为该事务新增 schema 或枚举值。
+
 #### 3.4.1 请求参数 Params：`CastSetVideoStreamParamsParams`
 
 | 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
@@ -223,7 +225,7 @@ request:
 }
 ```
 
-当视频流正在传输时，控制面可以先同步返回 `pending`，随后通过 `cast.flowControlChanged` 报告 `closing`、`opening` 和 `streaming` 阶段：
+当音视频流正在传输时，控制面可以先同步返回 `pending`，随后通过 `cast.flowControlChanged` 报告 `closing`、`opening` 和 `streaming` 阶段。异步路径中，这个 `pending` 是 `cast.setVideoStreamParams` 唯一的 RPC result，不会再发送第二个 result；完成状态通过 `cast.flowControlChanged` 的 `sourceVideo.state=streaming` 和状态查询确认：
 
 success:
 
@@ -260,7 +262,7 @@ success:
 }
 ```
 
-最终应用成功时，`state=applied`，`sourceVideo.state=streaming`，并返回新 `activeStreamId`；如果 open 失败但旧参数和旧流恢复成功，则返回 `state=rolledBack`、`sourceVideo.rollbackApplied=true`。没有活动视频流时，成功请求直接触发下一次 `video.openStream`，不需要先发送 close。
+只有新的 video/audio open 都成功且 NT10 编码参数已实际生效，事务才进入 `streaming`。如果整个事务在返回 RPC 前同步完成，`cast.setVideoStreamParams` 的唯一 result 可以是 `state=applied` 并返回新 `activeStreamId`；如果先返回 `pending`，则不得补发 `state=applied` result，调用方应从 `cast.flowControlChanged` 的 `sourceVideo.state=streaming` 及状态查询确认完成。`previousStreamId` 和 `activeStreamId` 始终是 video stream ID；audio 的旧、新 stream ID 通过 `audio.closeStream` / `audio.openStream` 响应或 `audio.streamStateChanged` 观察，不扩展 cast result schema。这里的 `idle` 严格表示当前不存在任何 audio 或 video downstream stream；只有这种状态才可不发送 close、直接使用同一个新 `syncGroupId` 打开完整 video/audio 对。若存在单边或其他 partial media state，必须先 cleanup/normalize，不能按 idle direct-open；该过程若未能在 RPC 返回前完成，同样保持初始 result 为 `pending`。
 
 #### 3.4.4 参数优先级与重配置规则
 
@@ -270,10 +272,12 @@ success:
 | 2 | 当前 session 的 `cast.setVideoStreamParams` | 当前 session 后续 open 的默认目标。session 结束后清除。 |
 | 3 | source/profile 默认值 | 前两者都未提供时使用。 |
 
-- 活动视频 downstream stream 变更时，Nearcast/NA20 必须以旧 `streamId` 发送 `video.closeStream(reason=encodingReconfigure)`，等待旧流进入 terminal state，再用 `peerRole=transmitter` 和新参数发送 `video.openStream`。
-- `source`、`codec`、`streamProfile`、`syncGroupId` 等上下文保持不变；只重开视频，不自动重启音频。
-- 成功 open 必须生成新的 `streamId`；旧 streamId 立即失效，不得继续接受媒体包。
-- open 失败时恢复旧 session 参数并尝试用旧参数重新 open；回退成功报告 `rolledBack`，回退失败报告 `failed`，并在 `lastError` 中保留诊断信息。
+- 活动音视频 downstream stream 对变更时，Nearcast/NA20 进入 `closing`：对旧 video stream 发送 `video.closeStream(reason=encodingReconfigure)`，并对旧 audio stream 发送 `audio.closeStream`。audio close 的 `reason` 可以省略；不得把 `encodingReconfigure` 加入 audio 的既有 reason 枚举。两个 close 的调用顺序不作规范性要求，但旧 video/audio 都达到 terminal `closed` 是进入 `opening` 的屏障。
+- 旧 video/audio `streamId` 和旧 `syncGroupId` 在关闭后全部退役。Nearcast/NA20 必须分配新的 `syncGroupId`，并以该组分别调用 `video.openStream` 和 `audio.openStream`；两次成功 open 都必须产生新的 `streamId`。
+- 新 `video.openStream` 使用新的 `frameRate` / `bitrateKbps`，并保持原有 video source、codec/format、stream/profile、cursor、PTS、packetization 和时钟等上下文；新 `audio.openStream` 保持原有 AAC codec/transport、采样、packetization、PTS 和时钟等 media/timing 语义。两者都携带新的 `syncGroupId`。
+- 任一新 open 失败时，已经成功打开的 replacement stream 属于不完整音视频对，必须先关闭。随后恢复旧 session 编码参数，并以旧 encoder/audio 语义重开完整音视频对；回退使用各自全新的 video/audio `streamId` 和另一个全新的 `syncGroupId`，不得复用退役标识。
+- 仅当回退的 video/audio 都恢复成功时才报告 `rolledBack`、`sourceVideo.rollbackApplied=true`；否则报告 `failed`，关闭任何部分恢复的 stream，确保当前没有完整的活动音视频对，并在 `lastError` 中保留诊断信息。
+- 仅当 session 完全没有任何 audio 或 video downstream stream 时才视为 idle，可省略 close，直接进入 `opening` 并创建完整的新音视频对；若存在单边或其他 partial media state，必须先 cleanup/normalize，不能直接 open。只有两个 open 都成功且 NT10 新编码参数实际生效后才进入 `streaming`。同步完成的调用可在唯一 RPC result 中报告 `state=applied`，异步调用则保留初始 `pending`，由 `cast.flowControlChanged` 和状态查询报告完成。
 
 #### 3.4.5 错误
 
@@ -283,7 +287,7 @@ success:
 | `INVALID_ARGUMENT` | 未设置字段且未提供 `resetFields`，字段重复 reset，或 reset 字段名非法。 |
 | `INVALID_STATE` | 没有可用的当前 cast session。 |
 | `OUT_OF_RANGE` | 请求值不在 source/profile 声明的范围内。 |
-| `BUSY` | 另一项视频重配置正在进行。 |
+| `BUSY` | 另一项音视频重配置事务正在进行。 |
 | `MEDIA_SOURCE_UNAVAILABLE` | NT10 source 当前不可用。 |
 | `MEDIA_FRAMERATE_UNSUPPORTED` / `MEDIA_BITRATE_UNSUPPORTED` | source 不支持请求的帧率或码率。 |
 | `MEDIA_STREAM_START_FAILED` / `MEDIA_STREAM_STOP_FAILED` | close/open 或回退过程中的 stream 生命周期失败。 |
@@ -346,9 +350,9 @@ event:
           "frameRate",
           "bitrateKbps"
         ]
-      },
-      "reconfigureId": "vr-20260716-001"
+      }
     },
+    "reconfigureId": "vr-20260716-001",
     "reason": "videoStreamReconfigure",
     "sampledAt": "2026-06-22T10:31:00Z"
   }

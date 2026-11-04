@@ -1,5 +1,5 @@
 id: stream.video_stream_params_active_reconfigure
-title: Active NT10 video stream is replaced through close then open
+title: Active NT10 audio/video streams are replaced through a close barrier then open
 since: spec/v0.0.2
 level: stream
 profiles:
@@ -26,7 +26,21 @@ given:
       supportsActiveVideoReconfigure: true
   audio:
     streamId: 8193
+    source: wireless_cast_audio
     syncGroupId: cast-av-17
+    codec: aac
+    transportFormat: adts
+    sampleFormat: aac
+    streamProfile: media.audio
+    cursorUnit: sourceCaptureTimestampUs
+    audioPtsMode: derivedFromSeq
+    timebase: 48000
+    sampleRate: 48000
+    channels: 2
+    samplesPerPacket: 1024
+    firstMediaSeqId: 0
+    audioPtsBase: 0
+    packetizationMode: fixedSamplesPerPacket
 
 steps:
   - id: set_params
@@ -56,7 +70,7 @@ steps:
           sourceVideo:
             type: object
 
-  - id: close_old
+  - id: close_video
     role: observe
     triggeredBy: set_pending
     direction: server_to_client
@@ -68,9 +82,9 @@ steps:
         streamId: 4097
         reason: encodingReconfigure
 
-  - id: close_old_result
+  - id: close_video_result
     role: observe
-    responseTo: close_old
+    responseTo: close_video
     direction: client_to_server
     expect:
       rpc:
@@ -82,32 +96,56 @@ steps:
           state: closed
           reason: encodingReconfigure
 
-  - id: open_new
+  - id: close_audio
     role: observe
-    triggeredBy: close_old_result
+    triggeredBy: close_video_result
     direction: server_to_client
     rpc:
       op: REQUEST
       requestId: 632
+      method: audio.closeStream
+      params:
+        streamId: 8193
+
+  - id: close_audio_result
+    role: observe
+    responseTo: close_audio
+    direction: client_to_server
+    expect:
+      rpc:
+        op: REQUEST_RESPONSE
+        requestId: 632
+        statusCode: SUCCESS
+        result:
+          streamId: 8193
+          state: closed
+
+  - id: open_video
+    role: observe
+    triggeredBy: close_audio_result
+    direction: server_to_client
+    rpc:
+      op: REQUEST
+      requestId: 633
       method: video.openStream
       params:
         source: wireless_cast_video
         peerRole: transmitter
         codec: h264
         streamProfile: media.video
-        syncGroupId: cast-av-17
+        syncGroupId: cast-av-18
         castSessionId: cast-session-17
         frameRate: 30
         bitrateKbps: 6000
 
-  - id: open_new_result
+  - id: open_video_result
     role: observe
-    responseTo: open_new
+    responseTo: open_video
     direction: client_to_server
     expect:
       rpc:
         op: REQUEST_RESPONSE
-        requestId: 632
+        requestId: 633
         statusCode: SUCCESS
         result:
           streamId: 4098
@@ -117,18 +155,115 @@ steps:
           peerRole: transmitter
           codec: h264
           streamProfile: media.video
-          syncGroupId: cast-av-17
+          syncGroupId: cast-av-18
           frameRate: 30
           bitrateKbps: 6000
 
+  - id: open_audio
+    role: observe
+    triggeredBy: open_video_result
+    direction: server_to_client
+    rpc:
+      op: REQUEST
+      requestId: 634
+      method: audio.openStream
+      params:
+        source: wireless_cast_audio
+        peerRole: transmitter
+        codec: aac
+        transportFormat: adts
+        sampleFormat: aac
+        streamProfile: media.audio
+        syncGroupId: cast-av-18
+        castSessionId: cast-session-17
+        cursorUnit: sourceCaptureTimestampUs
+        audioPtsMode: derivedFromSeq
+        timebase: 48000
+        sampleRate: 48000
+        channels: 2
+        samplesPerPacket: 1024
+        firstMediaSeqId: 0
+        audioPtsBase: 0
+        packetizationMode: fixedSamplesPerPacket
+
+  - id: open_audio_result
+    role: observe
+    responseTo: open_audio
+    direction: client_to_server
+    expect:
+      rpc:
+        op: REQUEST_RESPONSE
+        requestId: 634
+        statusCode: SUCCESS
+        result:
+          streamId: 8194
+          state:
+            oneOf: [opening, streaming]
+          source: wireless_cast_audio
+          peerRole: transmitter
+          codec: aac
+          transportFormat: adts
+          sampleFormat: aac
+          streamProfile: media.audio
+          syncGroupId: cast-av-18
+          castSessionId: cast-session-17
+          cursorUnit: sourceCaptureTimestampUs
+          audioPtsMode: derivedFromSeq
+          timebase: 48000
+          sampleRate: 48000
+          channels: 2
+          samplesPerPacket: 1024
+          firstMediaSeqId: 0
+          audioPtsBase: 0
+          packetizationMode: fixedSamplesPerPacket
+
+  - id: flow_control_applied
+    role: observe
+    triggeredBy: open_audio_result
+    direction: server_to_client
+    expect:
+      event:
+        name: cast.flowControlChanged
+        data:
+          changedFields:
+            type: array
+          reason: videoStreamReconfigure
+          state:
+            type: object
+          sourceVideo:
+            state: streaming
+            activeStreamId: 4098
+            effectiveFrameRate: 30
+            effectiveBitrateKbps: 6000
+
 assertions:
-  - close_old.params.streamId == 4097
-  - close_old.params.reason == encodingReconfigure
-  - close_old_result.result.state == closed
-  - open_new.params.peerRole == transmitter
-  - open_new.params.syncGroupId == cast-av-17
-  - open_new_result.result.streamId == 4098
-  - open_new_result.result.streamId != 4097
-  - old stream 4097 is terminal and no longer accepts media packets
-  - audio.streamId == 8193 and audio.syncGroupId == cast-av-17
-  - video reconfiguration does not restart the audio stream
+  - close_video.params.streamId == 4097
+  - close_video.params.reason == encodingReconfigure
+  - close_video_result.result.streamId == 4097
+  - close_video_result.result.state == closed
+  - close_audio.params.streamId == 8193
+  - close_audio_result.result.streamId == 8193
+  - close_audio_result.result.state == closed
+  - both old streams 4097 and 8193 are terminal and no longer accept media packets
+  - open_video.params.peerRole == transmitter
+  - open_video.params.frameRate == 30
+  - open_video.params.bitrateKbps == 6000
+  - open_audio.params.peerRole == transmitter
+  - open_audio.params.codec == aac
+  - open_audio.params.transportFormat == adts
+  - open_audio.params.streamProfile == media.audio
+  - open_audio.params.audioPtsMode == derivedFromSeq
+  - open_video.params.syncGroupId == cast-av-18
+  - open_audio.params.syncGroupId == cast-av-18
+  - open_video_result.result.streamId == 4098
+  - open_audio_result.result.streamId == 8194
+  - open_video_result.result.streamId != 4097
+  - open_audio_result.result.streamId != 8193
+  - open_video_result.result.syncGroupId == cast-av-18
+  - open_audio_result.result.syncGroupId == cast-av-18
+  - open_video_result.result.syncGroupId == open_audio_result.result.syncGroupId
+  - flow_control_applied.data.sourceVideo.state == streaming
+  - flow_control_applied.data.sourceVideo.activeStreamId == 4098
+  - flow_control_applied.data.sourceVideo.effectiveFrameRate == 30
+  - flow_control_applied.data.sourceVideo.effectiveBitrateKbps == 6000
+  - cast.flowControlChanged applied state is emitted only after both open results

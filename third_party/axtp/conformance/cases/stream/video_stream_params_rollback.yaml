@@ -1,5 +1,5 @@
 id: stream.video_stream_params_rollback
-title: Failed NT10 video reconfiguration rolls back old parameters or reports no active stream
+title: Failed NT10 AV reconfiguration rolls back the complete audio/video pair
 since: spec/v0.0.2
 level: stream
 profiles:
@@ -12,7 +12,7 @@ given:
     id: cast-session-17
   source:
     id: wireless_cast_video
-    frameRates: [1, 24, 30, 60]
+    frameRates: [1, 24, 25, 30, 60]
     bitratesKbps: [256, 4000, 6000, 12000]
     supportsReconfigure: true
   capability:
@@ -31,7 +31,27 @@ scenarios:
         bitrateKbps: 4000
         sessionId: cast-session-17
         castSessionId: cast-session-17
+        streamProfile: media.video
         syncGroupId: cast-av-17
+      active_audio_stream:
+        streamId: 5003
+        source: wireless_cast_audio
+        sessionId: cast-session-17
+        castSessionId: cast-session-17
+        syncGroupId: cast-av-17
+        codec: aac
+        transportFormat: adts
+        sampleFormat: aac
+        streamProfile: media.audio
+        cursorUnit: sourceCaptureTimestampUs
+        audioPtsMode: derivedFromSeq
+        timebase: 48000
+        sampleRate: 48000
+        channels: 2
+        samplesPerPacket: 1024
+        firstMediaSeqId: 0
+        audioPtsBase: 0
+        packetizationMode: fixedSamplesPerPacket
       reopen_failure: MEDIA_BITRATE_UNSUPPORTED
     steps:
       - id: set_params
@@ -83,13 +103,92 @@ scenarios:
               streamId: 5001
               state: closed
 
-      - id: open_new
+      - id: close_old_audio
         role: observe
         triggeredBy: close_old_result
         direction: server_to_client
         rpc:
           op: REQUEST
           requestId: 652
+          method: audio.closeStream
+          params:
+            streamId: 5003
+
+      - id: close_old_audio_result
+        role: observe
+        responseTo: close_old_audio
+        direction: client_to_server
+        expect:
+          rpc:
+            op: REQUEST_RESPONSE
+            requestId: 652
+            statusCode: SUCCESS
+            result:
+              streamId: 5003
+              state: closed
+
+      - id: open_new_audio
+        role: observe
+        triggeredBy: close_old_audio_result
+        direction: server_to_client
+        rpc:
+          op: REQUEST
+          requestId: 653
+          method: audio.openStream
+          params:
+            source: wireless_cast_audio
+            peerRole: transmitter
+            codec: aac
+            transportFormat: adts
+            sampleFormat: aac
+            streamProfile: media.audio
+            syncGroupId: cast-av-rollback-18
+            castSessionId: cast-session-17
+            cursorUnit: sourceCaptureTimestampUs
+            audioPtsMode: derivedFromSeq
+            timebase: 48000
+            sampleRate: 48000
+            channels: 2
+            samplesPerPacket: 1024
+            firstMediaSeqId: 0
+            audioPtsBase: 0
+            packetizationMode: fixedSamplesPerPacket
+
+      - id: open_new_audio_result
+        role: observe
+        responseTo: open_new_audio
+        direction: client_to_server
+        expect:
+          rpc:
+            op: REQUEST_RESPONSE
+            requestId: 653
+            statusCode: SUCCESS
+            result:
+              streamId: 5002
+              state:
+                oneOf: [opening, streaming]
+              syncGroupId: cast-av-rollback-18
+              codec: aac
+              transportFormat: adts
+              sampleFormat: aac
+              streamProfile: media.audio
+              cursorUnit: sourceCaptureTimestampUs
+              audioPtsMode: derivedFromSeq
+              timebase: 48000
+              sampleRate: 48000
+              channels: 2
+              samplesPerPacket: 1024
+              firstMediaSeqId: 0
+              audioPtsBase: 0
+              packetizationMode: fixedSamplesPerPacket
+
+      - id: open_new
+        role: observe
+        triggeredBy: open_new_audio_result
+        direction: server_to_client
+        rpc:
+          op: REQUEST
+          requestId: 654
           method: video.openStream
           params:
             source: wireless_cast_video
@@ -97,7 +196,7 @@ scenarios:
             codec: h264
             streamProfile: media.video
             castSessionId: cast-session-17
-            syncGroupId: cast-av-17
+            syncGroupId: cast-av-rollback-18
             frameRate: 30
             bitrateKbps: 6000
 
@@ -108,16 +207,40 @@ scenarios:
         expect:
           rpc:
             op: REQUEST_RESPONSE
-            requestId: 652
+            requestId: 654
             statusCode: MEDIA_BITRATE_UNSUPPORTED
 
-      - id: rollback_open
+      - id: close_partial_audio
         role: observe
         triggeredBy: open_new_failed
         direction: server_to_client
         rpc:
           op: REQUEST
-          requestId: 653
+          requestId: 655
+          method: audio.closeStream
+          params:
+            streamId: 5002
+
+      - id: close_partial_audio_result
+        role: observe
+        responseTo: close_partial_audio
+        direction: client_to_server
+        expect:
+          rpc:
+            op: REQUEST_RESPONSE
+            requestId: 655
+            statusCode: SUCCESS
+            result:
+              streamId: 5002
+              state: closed
+
+      - id: rollback_open
+        role: observe
+        triggeredBy: close_partial_audio_result
+        direction: server_to_client
+        rpc:
+          op: REQUEST
+          requestId: 656
           method: video.openStream
           params:
             source: wireless_cast_video
@@ -125,7 +248,7 @@ scenarios:
             codec: h264
             streamProfile: media.video
             castSessionId: cast-session-17
-            syncGroupId: cast-av-17
+            syncGroupId: cast-av-rollback-19
             frameRate: 25
             bitrateKbps: 4000
 
@@ -136,20 +259,78 @@ scenarios:
         expect:
           rpc:
             op: REQUEST_RESPONSE
-            requestId: 653
+            requestId: 656
             statusCode: SUCCESS
             result:
-              streamId: 5002
+              streamId: 5004
+              state:
+                oneOf: [opening, streaming]
+              syncGroupId: cast-av-rollback-19
               frameRate: 25
               bitrateKbps: 4000
 
+      - id: rollback_open_audio
+        role: observe
+        triggeredBy: rollback_open_result
+        direction: server_to_client
+        rpc:
+          op: REQUEST
+          requestId: 657
+          method: audio.openStream
+          params:
+            source: wireless_cast_audio
+            peerRole: transmitter
+            codec: aac
+            transportFormat: adts
+            sampleFormat: aac
+            streamProfile: media.audio
+            syncGroupId: cast-av-rollback-19
+            castSessionId: cast-session-17
+            cursorUnit: sourceCaptureTimestampUs
+            audioPtsMode: derivedFromSeq
+            timebase: 48000
+            sampleRate: 48000
+            channels: 2
+            samplesPerPacket: 1024
+            firstMediaSeqId: 0
+            audioPtsBase: 0
+            packetizationMode: fixedSamplesPerPacket
+
+      - id: rollback_open_audio_result
+        role: observe
+        responseTo: rollback_open_audio
+        direction: client_to_server
+        expect:
+          rpc:
+            op: REQUEST_RESPONSE
+            requestId: 657
+            statusCode: SUCCESS
+            result:
+              streamId: 5005
+              state:
+                oneOf: [opening, streaming]
+              syncGroupId: cast-av-rollback-19
+              codec: aac
+              transportFormat: adts
+              sampleFormat: aac
+              streamProfile: media.audio
+              cursorUnit: sourceCaptureTimestampUs
+              audioPtsMode: derivedFromSeq
+              timebase: 48000
+              sampleRate: 48000
+              channels: 2
+              samplesPerPacket: 1024
+              firstMediaSeqId: 0
+              audioPtsBase: 0
+              packetizationMode: fixedSamplesPerPacket
+
       - id: state_request
         role: liveness
-        triggeredBy: rollback_open_result
+        triggeredBy: rollback_open_audio_result
         direction: client_to_server
         rpc:
           op: REQUEST
-          requestId: 654
+          requestId: 658
           method: cast.getFlowControlState
           params: {}
 
@@ -160,20 +341,73 @@ scenarios:
         expect:
           rpc:
             op: REQUEST_RESPONSE
-            requestId: 654
+            requestId: 658
             statusCode: SUCCESS
             result:
               sourceVideo:
                 type: object
 
     assertions:
+      - close_old_result.result.state == closed
+      - close_old_audio_result.result.state == closed
+      - no replacement open is sent until both old streams are terminal closed
+      - open_new.params.syncGroupId == cast-av-rollback-18
+      - open_new.params.syncGroupId != cast-av-17
+      - open_new.params.frameRate == 30
+      - open_new.params.bitrateKbps == 6000
+      - open_new_audio.params.syncGroupId == cast-av-rollback-18
+      - open_new_audio.params.codec == aac
+      - open_new_audio.params.transportFormat == adts
+      - open_new_audio.params.streamProfile == media.audio
+      - open_new_audio.params.audioPtsMode == derivedFromSeq
+      - open_new_audio_result.result.streamId == 5002
       - open_new_failed.statusCode == MEDIA_BITRATE_UNSUPPORTED
+      - close_partial_audio.params.streamId == 5002
+      - close_partial_audio_result.result.state == closed
       - rollback_open.params.frameRate == 25
       - rollback_open.params.bitrateKbps == 4000
-      - rollback_open_result.result.streamId == 5002
+      - rollback_open_audio.params.codec == aac
+      - rollback_open_audio.params.transportFormat == adts
+      - rollback_open_audio.params.streamProfile == media.audio
+      - rollback_open_audio.params.cursorUnit == sourceCaptureTimestampUs
+      - rollback_open_audio.params.audioPtsMode == derivedFromSeq
+      - rollback_open_audio.params.timebase == 48000
+      - rollback_open_audio.params.sampleRate == 48000
+      - rollback_open_audio.params.channels == 2
+      - rollback_open_audio.params.samplesPerPacket == 1024
+      - rollback_open_audio.params.firstMediaSeqId == 0
+      - rollback_open_audio.params.audioPtsBase == 0
+      - rollback_open_audio.params.packetizationMode == fixedSamplesPerPacket
+      - rollback_open.params.syncGroupId == cast-av-rollback-19
+      - rollback_open_audio.params.syncGroupId == cast-av-rollback-19
+      - rollback_open.params.syncGroupId != cast-av-17
+      - rollback_open.params.syncGroupId != cast-av-rollback-18
+      - rollback_open_result.result.streamId == 5004
+      - rollback_open_result.result.frameRate == 25
+      - rollback_open_result.result.bitrateKbps == 4000
+      - rollback_open_audio_result.result.streamId == 5005
+      - rollback_open_audio_result.result.codec == aac
+      - rollback_open_audio_result.result.transportFormat == adts
+      - rollback_open_audio_result.result.streamProfile == media.audio
+      - rollback_open_audio_result.result.audioPtsMode == derivedFromSeq
+      - rollback_open_audio_result.result.cursorUnit == sourceCaptureTimestampUs
+      - rollback_open_audio_result.result.timebase == 48000
+      - rollback_open_audio_result.result.sampleRate == 48000
+      - rollback_open_audio_result.result.channels == 2
+      - rollback_open_audio_result.result.samplesPerPacket == 1024
+      - rollback_open_audio_result.result.firstMediaSeqId == 0
+      - rollback_open_audio_result.result.audioPtsBase == 0
+      - rollback_open_audio_result.result.packetizationMode == fixedSamplesPerPacket
+      - rollback_open_result.result.streamId != 5001
+      - rollback_open_result.result.streamId != 5002
+      - rollback_open_audio_result.result.streamId != 5003
+      - rollback_open_audio_result.result.streamId != 5002
+      - rollback_open_result.result.streamId != rollback_open_audio_result.result.streamId
+      - rollback_open_result.result.syncGroupId == rollback_open_audio_result.result.syncGroupId
       - state_result.result.sourceVideo.state == rolledBack
       - state_result.result.sourceVideo.rollbackApplied == true
-      - state_result.result.sourceVideo.activeStreamId == 5002
+      - state_result.result.sourceVideo.activeStreamId == 5004
+      - rolledBack requires both video and audio rollback opens to succeed
 
   - name: rollback_failure_leaves_stream_inactive
     given:
@@ -185,7 +419,27 @@ scenarios:
         bitrateKbps: 4000
         sessionId: cast-session-17
         castSessionId: cast-session-17
+        streamProfile: media.video
         syncGroupId: cast-av-17
+      active_audio_stream:
+        streamId: 5103
+        source: wireless_cast_audio
+        sessionId: cast-session-17
+        castSessionId: cast-session-17
+        syncGroupId: cast-av-17
+        codec: aac
+        transportFormat: adts
+        sampleFormat: aac
+        streamProfile: media.audio
+        cursorUnit: sourceCaptureTimestampUs
+        audioPtsMode: derivedFromSeq
+        timebase: 48000
+        sampleRate: 48000
+        channels: 2
+        samplesPerPacket: 1024
+        firstMediaSeqId: 0
+        audioPtsBase: 0
+        packetizationMode: fixedSamplesPerPacket
       reopen_failure: MEDIA_STREAM_START_FAILED
       rollback_failure: MEDIA_STREAM_START_FAILED
     steps:
@@ -234,38 +488,37 @@ scenarios:
             op: REQUEST_RESPONSE
             requestId: 661
             statusCode: SUCCESS
+            result:
+              streamId: 5101
+              state: closed
 
-      - id: open_new
+      - id: close_old_audio
         role: observe
         triggeredBy: close_old_result
         direction: server_to_client
         rpc:
           op: REQUEST
           requestId: 662
-          method: video.openStream
+          method: audio.closeStream
           params:
-            source: wireless_cast_video
-            peerRole: transmitter
-            codec: h264
-            streamProfile: media.video
-            castSessionId: cast-session-17
-            syncGroupId: cast-av-17
-            frameRate: 30
-            bitrateKbps: 6000
+            streamId: 5103
 
-      - id: open_new_failed
+      - id: close_old_audio_result
         role: observe
-        responseTo: open_new
+        responseTo: close_old_audio
         direction: client_to_server
         expect:
           rpc:
             op: REQUEST_RESPONSE
             requestId: 662
-            statusCode: MEDIA_STREAM_START_FAILED
+            statusCode: SUCCESS
+            result:
+              streamId: 5103
+              state: closed
 
-      - id: rollback_open
+      - id: open_new
         role: observe
-        triggeredBy: open_new_failed
+        triggeredBy: close_old_audio_result
         direction: server_to_client
         rpc:
           op: REQUEST
@@ -277,27 +530,193 @@ scenarios:
             codec: h264
             streamProfile: media.video
             castSessionId: cast-session-17
-            syncGroupId: cast-av-17
+            syncGroupId: cast-av-rollback-18
+            frameRate: 30
+            bitrateKbps: 6000
+
+      - id: open_new_result
+        role: observe
+        responseTo: open_new
+        direction: client_to_server
+        expect:
+          rpc:
+            op: REQUEST_RESPONSE
+            requestId: 663
+            statusCode: SUCCESS
+            result:
+              streamId: 5102
+              state:
+                oneOf: [opening, streaming]
+              syncGroupId: cast-av-rollback-18
+              frameRate: 30
+              bitrateKbps: 6000
+
+      - id: open_new_audio
+        role: observe
+        triggeredBy: open_new_result
+        direction: server_to_client
+        rpc:
+          op: REQUEST
+          requestId: 664
+          method: audio.openStream
+          params:
+            source: wireless_cast_audio
+            peerRole: transmitter
+            codec: aac
+            transportFormat: adts
+            sampleFormat: aac
+            streamProfile: media.audio
+            syncGroupId: cast-av-rollback-18
+            castSessionId: cast-session-17
+            cursorUnit: sourceCaptureTimestampUs
+            audioPtsMode: derivedFromSeq
+            timebase: 48000
+            sampleRate: 48000
+            channels: 2
+            samplesPerPacket: 1024
+            firstMediaSeqId: 0
+            audioPtsBase: 0
+            packetizationMode: fixedSamplesPerPacket
+
+      - id: open_new_failed
+        role: observe
+        responseTo: open_new_audio
+        direction: client_to_server
+        expect:
+          rpc:
+            op: REQUEST_RESPONSE
+            requestId: 664
+            statusCode: MEDIA_STREAM_START_FAILED
+
+      - id: close_partial_video
+        role: observe
+        triggeredBy: open_new_failed
+        direction: server_to_client
+        rpc:
+          op: REQUEST
+          requestId: 665
+          method: video.closeStream
+          params:
+            streamId: 5102
+            reason: encodingReconfigure
+
+      - id: close_partial_video_result
+        role: observe
+        responseTo: close_partial_video
+        direction: client_to_server
+        expect:
+          rpc:
+            op: REQUEST_RESPONSE
+            requestId: 665
+            statusCode: SUCCESS
+            result:
+              streamId: 5102
+              state: closed
+
+      - id: rollback_open
+        role: observe
+        triggeredBy: close_partial_video_result
+        direction: server_to_client
+        rpc:
+          op: REQUEST
+          requestId: 666
+          method: video.openStream
+          params:
+            source: wireless_cast_video
+            peerRole: transmitter
+            codec: h264
+            streamProfile: media.video
+            castSessionId: cast-session-17
+            syncGroupId: cast-av-rollback-19
             frameRate: 25
             bitrateKbps: 4000
 
-      - id: rollback_open_failed
+      - id: rollback_open_result
         role: observe
         responseTo: rollback_open
         direction: client_to_server
         expect:
           rpc:
             op: REQUEST_RESPONSE
-            requestId: 663
+            requestId: 666
+            statusCode: SUCCESS
+            result:
+              streamId: 5104
+              state:
+                oneOf: [opening, streaming]
+              syncGroupId: cast-av-rollback-19
+              frameRate: 25
+              bitrateKbps: 4000
+
+      - id: rollback_open_audio
+        role: observe
+        triggeredBy: rollback_open_result
+        direction: server_to_client
+        rpc:
+          op: REQUEST
+          requestId: 667
+          method: audio.openStream
+          params:
+            source: wireless_cast_audio
+            peerRole: transmitter
+            codec: aac
+            transportFormat: adts
+            sampleFormat: aac
+            streamProfile: media.audio
+            syncGroupId: cast-av-rollback-19
+            castSessionId: cast-session-17
+            cursorUnit: sourceCaptureTimestampUs
+            audioPtsMode: derivedFromSeq
+            timebase: 48000
+            sampleRate: 48000
+            channels: 2
+            samplesPerPacket: 1024
+            firstMediaSeqId: 0
+            audioPtsBase: 0
+            packetizationMode: fixedSamplesPerPacket
+
+      - id: rollback_open_audio_failed
+        role: observe
+        responseTo: rollback_open_audio
+        direction: client_to_server
+        expect:
+          rpc:
+            op: REQUEST_RESPONSE
+            requestId: 667
             statusCode: MEDIA_STREAM_START_FAILED
+
+      - id: close_rollback_partial_video
+        role: observe
+        triggeredBy: rollback_open_audio_failed
+        direction: server_to_client
+        rpc:
+          op: REQUEST
+          requestId: 668
+          method: video.closeStream
+          params:
+            streamId: 5104
+            reason: encodingReconfigure
+
+      - id: close_rollback_partial_video_result
+        role: observe
+        responseTo: close_rollback_partial_video
+        direction: client_to_server
+        expect:
+          rpc:
+            op: REQUEST_RESPONSE
+            requestId: 668
+            statusCode: SUCCESS
+            result:
+              streamId: 5104
+              state: closed
 
       - id: state_request
         role: liveness
-        triggeredBy: rollback_open_failed
+        triggeredBy: close_rollback_partial_video_result
         direction: client_to_server
         rpc:
           op: REQUEST
-          requestId: 664
+          requestId: 669
           method: cast.getFlowControlState
           params: {}
 
@@ -308,16 +727,43 @@ scenarios:
         expect:
           rpc:
             op: REQUEST_RESPONSE
-            requestId: 664
+            requestId: 669
             statusCode: SUCCESS
             result:
               sourceVideo:
                 type: object
 
     assertions:
+      - close_old_result.result.state == closed
+      - close_old_audio_result.result.state == closed
+      - no replacement open is sent until both old streams are terminal closed
+      - open_new.params.syncGroupId == cast-av-rollback-18
+      - open_new.params.syncGroupId != cast-av-17
+      - open_new.params.frameRate == 30
+      - open_new.params.bitrateKbps == 6000
+      - open_new_audio.params.syncGroupId == cast-av-rollback-18
+      - open_new_result.result.frameRate == 30
+      - open_new_result.result.bitrateKbps == 6000
       - open_new_failed.statusCode == MEDIA_STREAM_START_FAILED
-      - rollback_open_failed.statusCode == MEDIA_STREAM_START_FAILED
+      - close_partial_video.params.streamId == 5102
+      - close_partial_video_result.result.state == closed
+      - rollback_open.params.frameRate == 25
+      - rollback_open.params.bitrateKbps == 4000
+      - rollback_open_audio.params.codec == aac
+      - rollback_open_audio.params.transportFormat == adts
+      - rollback_open_audio.params.streamProfile == media.audio
+      - rollback_open_audio.params.audioPtsMode == derivedFromSeq
+      - rollback_open.params.syncGroupId == cast-av-rollback-19
+      - rollback_open_audio.params.syncGroupId == cast-av-rollback-19
+      - rollback_open.params.syncGroupId != cast-av-17
+      - rollback_open.params.syncGroupId != cast-av-rollback-18
+      - rollback_open_result.result.frameRate == 25
+      - rollback_open_result.result.bitrateKbps == 4000
+      - rollback_open_audio_failed.statusCode == MEDIA_STREAM_START_FAILED
+      - close_rollback_partial_video.params.streamId == 5104
+      - close_rollback_partial_video_result.result.state == closed
       - state_result.result.sourceVideo.state == failed
       - state_result.result.sourceVideo.rollbackApplied == false
       - state_result.result.sourceVideo.activeStreamId is absent
-      - no active video stream remains after rollback failure
+      - no complete active AV pair remains after rollback failure
+      - no partial replacement stream remains after rollback failure

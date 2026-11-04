@@ -4,6 +4,227 @@ This changelog records AXTP Spec releases published with `spec/vMAJOR.MINOR.PATC
 
 Current repository path note: conformance cases now live at the root `conformance/` directory. Older release entries may mention their historical paths.
 
+## spec/v0.18.0
+
+### Protocol
+
+- Adds optional fenced multi-source cast control, atomic snapshots, operation tracking,
+  Presentation and independent content adaptation, WebCast backend state, and
+  scoped AirPlay and WebCast credential queries and events.
+- Adds Presentation automatic entry and primary selection as independent settings.
+  Prepared AirPlay access codes retain existing pending challenge generations.
+
+### Registry
+
+- Registers the multi-source control methods, events and capabilities alongside
+  the existing cast methods and legacy aggregate notifications.
+
+### Schemas
+
+- Defines bounded command, settings, credential, backend and presentation objects;
+  64-bit identities and revisions are encoded as decimal strings in JSON.
+
+### Conformance
+
+- Includes control and settings profiles, executable reference checks and JSON/TLV8
+  vectors. Runtime and product implementations require their own verification.
+
+### Migration
+
+- The unpublished development Layout contract is replaced: `layoutMode` now means
+  grid/presentation, `contentAdaptation` means fixed/auto-fit, and the former
+  `presentationEnabled` field is removed. Consumers of development snapshots must
+  migrate; the legacy aggregate cast interfaces retain their documented projection.
+- Dedicated credential events can contain secrets and require redaction. Explicit
+  sensitive queries must be handled separately from general status and diagnostics.
+
+### Runtime Impact
+
+- Runtime implementations must bind this exact spec tag and regenerate with their
+  own generators. P0/P1 capabilities are optional and do not imply device support.
+
+### Original P0/P1 scope
+
+Optional concurrent cast control P0 and P1 settings extend the published v0.17.0
+contract; protocol 1.0.0, wire 1 and product controlVersion=1 are independent.
+
+- Adds five methods 0x1615–0x1619 (bits 20–24), six events 0x160D–0x1612
+  (bits 12–17) and four capabilities 0x1608–0x160B in their separate ID spaces.
+- Adds 33 object schemas (23 P0, 10 P1). Extends getStatus params with optional field 0x03,
+  CastStatus with optional fields 0x0A–0x0F, windowChanged with optional field
+  0x05 and CastStatusCapability with optional fields 0x03–0x04. All legacy IDs,
+  field shapes and single-source semantics are preserved.
+- Defines atomic six-section snapshots, full feature commit batches, strict
+  runtime/session/slot/binding/lifecycle fences, bounded dedup/result retention,
+  unknown outcomes and scoped owner cleanup in specs/45-cast-control.md.
+- Generates protocol IR, references, MCP metadata and paired JSON/TLV8 decimal
+  string boundary vectors. Introduces optional cast-control conformance C01–C11,
+  fixtures and an executable reference oracle. The separate optional cast-settings
+  profile adds C12/PS-01–PS-12 without expanding the P0 required set.
+- Downstream consumers should use an approved exact spec tag/commit, regenerate
+  runtime metadata/codecs with their own generators, then update Axent and NearCast
+  in that order. This repository does not implement media or product policy.
+- P1 adds field-only persistence before configuration/live application, truthful
+  partial results, startup versus desired/adopted/stored projections and an
+  independent settings stream. Optional fields append at CastControlCapabilities
+  0x0A and CastControlOperation 0x0E; the new operation kind has no session target.
+  Settings cursor JSON/TLV8 vectors preserve decimal strings. See
+  `release/CAST_CONTROL_P0_RELEASE.md` for the local verification
+  boundary and downstream migration contract.
+
+## spec/v0.17.0
+
+Signage playlist item typed settings, PowerBI item support, and full playlist item refresh, merged through PR #39.
+
+### Protocol
+
+- Declares the `SignagePlaylistItem.type` enum (image, website, video, clock, unsplash, powerbi) and splits playlist item settings into per-type `SignageImageItemSettings`, `SignageVideoItemSettings`, `SignageWebsiteItemSettings`, `SignageClockItemSettings`, `SignageUnsplashItemSettings`, and `SignagePowerBiItemSettings`, selected through the new `variants` discriminator binding on `PlaylistItem.settings`.
+- Adds `signage.getPlaylistItem` to fetch the complete playlist item by `itemId`; the device calls it proactively when `settings.expiresAt` approaches expiry and replaces the local playlist item with the returned one.
+- Non-URL resource types (`powerbi`) must use `signage.getPlaylistItem`; URL resource types may use it or `signage.getPlaylistItemUrl`, while `clock` and `powerbi` return `NOT_SUPPORTED` from URL refresh.
+
+### Registry
+
+- Registers `signage.getPlaylistItem` as `0x0D06` with method bit offset `5` in the signage domain.
+- Updates the `signage.playlist` capability description to cover playlist item refresh alongside URL refresh; existing method, event, capability, error, and schema IDs are preserved.
+
+### Schemas
+
+- Adds `SignageGetPlaylistItemParams` (itemId selector) and `SignageGetPlaylistItemResult` (complete refreshed `SignagePlaylistItem`).
+- Adds the `SignagePlaylistItem.type` enum and the six per-type settings schemas, replacing the merged settings object with a variant-selected structure.
+- Extends the codec specification with the object-field `variants: { discriminator, mapping }` binding rule and its compatibility entry for adding a variant (new enum value plus mapping entry).
+
+### Conformance
+
+- Does not add conformance cases; the shared conformance manifest count is unchanged.
+- Extends generator source and protocol validation with variant-binding consistency checks (discriminator resolves to a declared enum field in the same schema, mapping covers all enum values, and mapped values resolve to registered object schemas), covered by new unit tests.
+
+### Migration
+
+- Playlist item settings consumers must read the `type` discriminator and decode the matching settings variant instead of assuming a single merged settings layout; `powerbi` items require `signage.getPlaylistItem` for refresh.
+- Existing runtimes that only implement URL refresh remain compatible for URL-capable item types; `clock` and `powerbi` items now explicitly return `NOT_SUPPORTED` from `signage.getPlaylistItemUrl`.
+
+### Runtime Impact
+
+- Runtime and SDK teams should bind to `spec/v0.17.0`, regenerate protocol metadata, and implement `signage.getPlaylistItem` with the per-type settings variants.
+- No npm, pub, PyPI, Docker, or runtime package registry publish is part of this Spec release.
+
+## spec/v0.16.0
+
+Basketball device configuration controls for watermark display and event clip time windows.
+
+### Protocol
+
+- Adds `sport.getGoalShotWatermarkConfig` and `sport.setGoalShotWatermarkConfig` for per-device Goal/Shot watermark control.
+- Adds `sport.getEventClipConfig` and `sport.setEventClipConfig` for configuring the pre-event and post-event clip window around `shot` / `goal` events.
+- Requests target one connected device using `macAddress` and select the sport with `sportType`; set methods return operation status and the resulting configuration.
+
+### Registry
+
+- Registers the four methods as `0x1804`–`0x1807` with method bit offsets `3`–`6`.
+- Extends the `sport.basketball` capability descriptor with optional `supportedConfigMethods` (`fieldId=0x05`) for capability-driven method discovery.
+- Preserves all existing event-detection method, event, capability, and schema IDs.
+
+### Schemas
+
+- Adds watermark configuration fields for Goal/Shot display state and sport selection.
+- Adds event clip configuration fields for pre-event and post-event seconds, with validation and atomic update semantics.
+- Adds MAC-address device selectors and status-only set response behavior for app-to-device configuration calls.
+
+### Conformance
+
+- Adds four sport cases covering capability discovery, multi-device MAC routing, get/set round trips, status-only set responses, validation, and atomic updates.
+- Expands the shared conformance manifest from 36 to 40 cases.
+- Generator tests, source/protocol validation, generated drift checks, and conformance validation pass.
+
+### Migration
+
+- Existing runtimes remain compatible when they do not advertise the new configuration methods; unsupported calls continue to use normal capability/`NOT_SUPPORTED` handling.
+- Runtime implementations should route configuration by `macAddress` and `sportType`, preserve unrelated device settings, and reject invalid clip windows without partial updates.
+
+### Runtime Impact
+
+- Runtime and SDK teams should bind to `spec/v0.16.0`, regenerate protocol metadata, and verify that `kMethodRegistry` (or equivalent) includes the four new `sport.*` methods.
+- No npm, pub, PyPI, Docker, or runtime package registry publish is part of this Spec release.
+
+## spec/v0.15.0
+
+Object-RPC endpoint relay addressing, merged through PR #11 at authority commit `2d88ff4c369411d8e3afbb551886d423bd63bb82`.
+
+### Protocol
+
+- Adds optional object-RPC endpoint addressing metadata for a caller-selected destination endpoint and a relay-selected source endpoint, while preserving operation on peers that omit endpoint metadata.
+- Defines deterministic endpoint identity keys and endpoint-ID assignment so a relay can address child or virtual endpoints consistently.
+- Defines single-destination RPC relay and event fanout semantics, including source endpoint metadata for relayed events.
+- Clarifies the endpoint-relay codec representation in the core and codec specifications.
+- Incorporates the previously merged cast AV reconfiguration documentation: active NT10 encoder parameter changes rebuild the complete audio/video pair with new stream IDs and a new shared sync group.
+
+### Registry
+
+- Does not add or renumber generated method, event, capability, error, or schema IDs.
+- Keeps endpoint relay metadata optional and compatible with implementations that do not advertise the endpoint-relay profile.
+
+### Schemas
+
+- Extends the conformance case schema to express endpoint metadata and relay addressing expectations without changing existing generated business schemas.
+
+### Conformance
+
+- Adds the `endpoint-relay` profile and cases for endpoint metadata compatibility, single-destination RPC relay addressing, and event fanout addressing.
+- Registers endpoint relay requirements in the conformance-level documentation and manifest.
+- Updates the video-stream parameter reconfiguration cases to reflect full audio/video replacement and rollback semantics.
+
+### Migration
+
+- Existing object-RPC implementations remain valid when endpoint metadata is absent; relays and endpoints that support the optional profile must use the defined deterministic identity and addressing rules.
+- Runtime implementations of `cast.setVideoStreamParams` must treat active reconfiguration as complete AV-pair replacement, invalidating old stream IDs and sync group IDs.
+
+### Runtime Impact
+
+- Runtime and SDK teams that implement object-RPC endpoint relays should bind to `spec/v0.15.0`, add the optional endpoint-relay profile, and run the new relay conformance cases.
+- Runtime implementations of NT10 encoder parameter control should follow the clarified AV replacement lifecycle before advertising active video reconfiguration support.
+- No npm, pub, PyPI, Docker, or runtime package registry publish is part of this Spec release.
+
+## spec/v0.14.0
+
+Cross-sport event detection registry and VM33PRO basketball shot/goal event contract.
+
+### Protocol
+
+- Adds the `sport` domain and the shared `sport.eventDetection` control surface for capability discovery, per-sport detection toggles, runtime state, and unified business events.
+- Adds `sport.getEventDetectionCapabilities`, `sport.getEventDetectionConfig`, and `sport.setEventDetectionConfig`.
+- Adds `sport.eventDetectionStateChanged` and `sport.eventDetected` for device-to-App WebSocket event delivery.
+- Fixes the MVP lifecycle policy for VM33PRO: one active sport at a time, persistent detection toggles, factory-reset default disabled, and no new events after the detector reaches `disabled`.
+
+### Registry
+
+- Registers `sport` at high-byte `0x18` with method IDs `0x1801`-`0x1803`, event IDs `0x1801`-`0x1802`, and capability IDs `0x1801`-`0x1802`.
+- Adds `sport.basketball` as a specialization capability with `shot` and `goal` event types.
+- Reuses common errors; no basketball-specific error code or legacy mapping is added.
+
+### Schemas
+
+- Adds cross-sport capability, state, state-change, and unified event envelope schemas.
+- Adds `SportEventDetails`, `SportBasketballShotDetails`, and `SportBasketballGoalDetails`.
+- Requires `eventId`, `sequence`, `occurredAt`, and `details` in detected-event payloads; `confidence` and `trainingSessionId` remain optional.
+- Requires every basketball `goal` to reference `shotId`; one `shot` produces at most one `goal`.
+
+### Conformance
+
+- Generator source validation, Protocol IR validation, generated drift checks, and the generator test suite pass for the expanded registry.
+- No new hand-written conformance vectors are added in this release; MVP does not promise disconnect replay, history queries, or exactly-once delivery.
+
+### Migration
+
+- Existing runtimes remain compatible when they do not advertise `sport.eventDetection` or `sport.basketball`.
+- Basketball-capable runtimes should use the shared event-detection methods and route `sport.eventDetected` by `sportType` and `eventType`.
+- Any future replay/history capability or legacy adapter requires a separate reviewed amendment.
+
+### Runtime Impact
+
+- Runtime and SDK teams should bind to `spec/v0.14.0`, regenerate protocol metadata, implement or explicitly degrade the new sport capabilities, and run the generated validation/conformance checks.
+- Existing CONTROL/RPC/STREAM wire layout and previously registered domains remain backward compatible with `spec/v0.13.0`.
+- No npm, pub, PyPI, Docker, or runtime package registry publish is part of this Spec release.
+
 ## spec/v0.13.0
 
 NT10 source video encoder parameter control through the Nearcast cast flow-control surface.

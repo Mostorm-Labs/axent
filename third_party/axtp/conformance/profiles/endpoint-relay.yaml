@@ -1,0 +1,4 @@
+id: endpoint-relay
+title: AXTP Object RPC Endpoint Relay Conformance
+since: spec/v0.0.2
+description: Optional object-RPC m.src/m.dst endpoint addressing, relay, and event fanout behavior.

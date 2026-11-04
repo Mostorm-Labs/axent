@@ -57,6 +57,7 @@ Schema 规则：
 5. Array fields MUST 声明 item type，并在适用时声明 item schema。
 6. Empty request/response 使用已注册的 Empty schema。
 7. 生成 SDK SHOULD 区分 wire types 和 host-language types。
+8. Object field MAY 声明 `variants: { discriminator, mapping }` variant 绑定：`discriminator` MUST 指向同一 object schema 内 type 为 `enum` 且已声明合法值的字段；`mapping` 的 key MUST 与该 enum 的合法值一致（全覆盖），value MUST 是已注册 object schema。带 `variants` 的字段 type MUST 为 `object`；编码时由 discriminator 的运行时值选择应用哪个 variant schema；未声明的 enum 值遵循 unknown-enum policy。
 
 ## Capability 模型
 
@@ -73,6 +74,36 @@ Capability 规则：
 Capability/profile compatibility 在 semantic validation 层执行，而不是用 peer 的 `axtpVersion` 选择 codec。Known field 请求当前 capability/profile 不支持的 optional feature 时，包含它的 method MUST 返回 `NOT_SUPPORTED`；decoder MUST 保持 session 可用，并继续处理后续受支持的 message。
 
 完整 capability reflection、capability trees 和复杂 profile negotiation 属于 future 或单独采纳的业务协议，除非已经出现在 generated contract 中。
+
+## RPC 对象 Envelope 编码
+
+JSON、CBOR 和 MSGPACK 使用同一 RPC 对象语义：
+
+```json
+{ "sid": "12345678", "op": 7, "m": { "src": "ep-app-001", "dst": "ep-device-001" }, "d": {} }
+```
+
+`m` 是 optional object；省略 `m` 时，receiver MUST 按既有 `{ sid, op, d }` 规则处理消息。对象编码的 `m` 与业务 `d` 分层：`m` 只承载跨 `op` 的消息级元数据，`d` 继续承载 Request、RequestResponse、Event 等 op-specific 数据。
+
+v1 已定义 metadata field：
+
+| 字段 | JSON/CBOR/MSGPACK 类型 | 规则 |
+|---|---|---|
+| `m.src` | string | Optional logical source Endpoint ID。非空；推荐不超过 128 UTF-8 bytes。 |
+| `m.dst` | string | Optional logical destination Endpoint ID。非空；推荐不超过 128 UTF-8 bytes；MUST NOT 是 array。 |
+
+对象编码 receiver：
+
+1. MUST 接受缺失 `m`；
+2. MUST 在 `m` 存在时要求它是 object；
+3. MUST 在已知 `src` / `dst` 存在时要求其类型为 string 且非空；
+4. MUST 拒绝 array 形式的 `m.dst`，不能把一个 Request 隐式扩展为多目标 Request；
+5. MUST 对 structurally valid 的未知 optional `m` field 使用通用 unknown-field policy：忽略或按 SDK policy 保留，并继续处理已知字段；
+6. MUST NOT 因未知 optional `m` field 关闭 session 或拒绝不相关后续 RPC。
+
+Event fanout 不通过 `m.dst` array 编码。一个 relay MAY 根据 subscription/policy 复制 Event 到多个 outbound sessions；每个对象编码 Event message 的 `m.dst` 仍是单个 string 或缺失。
+
+JSON_BINARY 是独立 fixed binary envelope。当前 15B JSON_BINARY header 不增加 `m`、metadata length、`src` 或 `dst` 字段；对象编码 Endpoint Relay 不得改变 JSON_BINARY v1 wire offset。若未来为 binary RPC 增加 Endpoint metadata，MUST 使用独立版本/profile/codec 设计，而不是在现有 15B header 中原位插入字段。
 
 ## TLV 编码
 
@@ -120,6 +151,7 @@ Schema field id 规则：
 | 新增 optional field | 兼容。 |
 | 新增 required field | 通常 breaking。 |
 | 新增 enum/bitmap value | 只有定义 unknown-value policy 时兼容。 |
+| 新增 variant（新 enum 值 + mapping 项） | 需要 discriminator 字段的 unknown-value policy 配合。 |
 | 修改 type/unit/range/requiredness | 通常 breaking。 |
 | 复用已移除的 field id | 对 stable contracts 禁止。 |
 

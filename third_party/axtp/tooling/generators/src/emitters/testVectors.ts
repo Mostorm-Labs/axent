@@ -2,6 +2,7 @@ import path from "node:path";
 import { rm } from "node:fs/promises";
 import type { SpecModel } from "../models.js";
 import { toJsonStable, writeTextFile } from "../util.js";
+import { castControlEncodingVectors, castSettingsEncodingVectors } from "./castControlVectors.js";
 
 interface Vector {
   name: string;
@@ -38,8 +39,15 @@ export async function emitTestVectorFiles(_spec: SpecModel, dir: string): Promis
     "compact_message_id_overflow.hex": "1211FF01020701000000020500000101015000"
   };
 
+  const controlVectors = castControlEncodingVectors(_spec);
+  const settingsVectors = castSettingsEncodingVectors(_spec);
   await Promise.all([
-    writeTextFile(path.join(dir, "manifest.json"), toJsonStable({ vectors })),
+    writeTextFile(path.join(dir, "manifest.json"), toJsonStable({ vectors, ...(controlVectors ? {
+      schemaVectors: [{ schema: "CastSessionRef", pairsFile: "cast_control_encoding.json" },
+        ...(settingsVectors ? [{ schema: "CastSettingsEventContext", pairsFile: "cast_settings_encoding.json" }] : [])]
+    } : {}) })),
+    ...(controlVectors ? [writeTextFile(path.join(dir, "cast_control_encoding.json"), toJsonStable(controlVectors))] : []),
+    ...(settingsVectors ? [writeTextFile(path.join(dir, "cast_settings_encoding.json"), toJsonStable(settingsVectors))] : []),
     ...Object.entries(hexData).map(([file, content]) => writeTextFile(path.join(dir, file), content))
   ]);
 }

@@ -5,7 +5,7 @@ generated: false
 domain: device
 feature: device.childDevice
 registry:
-lastReviewed: 2026-06-15
+lastReviewed: 2026-08-25
 ---
 
 # device.childDevice
@@ -14,18 +14,26 @@ lastReviewed: 2026-06-15
 
 | 项目 | 内容 |
 |---|---|
-| 这个能力做什么 | 当前 AXTP endpoint 代理、管理或挂载的子设备/级联设备发现、详情读取、可选拓扑读取和子设备状态变化通知。 |
+| 这个能力做什么 | 当前 AXTP endpoint 代理、管理或挂载的子设备/级联设备发现、详情读取、可选拓扑读取和子设备状态变化通知。可寻址 child 同时暴露稳定 `endpointId`，供 Core RPC `m.src` / `m.dst` 使用。 |
 | 当前状态 | draft |
-| 是否可直接实现 | 否。本文是 protocol draft；正式实现以 registry / generated 为准。 |
+| 是否可直接实现 | 否。本文是 protocol draft；正式 method/schema 实现仍以 registry / generated 为准。Core Endpoint Relay 规则见 `specs/20-core.md`。 |
 | 主要交互 | RPC + EVENT |
 | 是否使用 STREAM | 否 |
 | Registry readiness | partial |
-| Conformance | needed |
-| 主要未决问题 | schema 字段、错误模型、legacy 映射和 conformance case 仍需人工确认。 |
+| Conformance | Endpoint Relay 的 envelope 行为由 core conformance 验收；本 feature 的 method/schema 仍需独立采纳。 |
+| 主要未决问题 | method/schema 数值事实、legacy 映射和本 feature 的完整 conformance case 仍需人工确认。 |
 
 ## 1. 功能说明
 
 `device.childDevice` 用于当前 AXTP endpoint 代理、管理或挂载的子设备/级联设备发现、详情读取、可选拓扑读取和子设备状态变化通知。
+
+对于可被 AXTP 单独寻址的 child，本 feature SHOULD 返回稳定 `endpointId`。上层获得该 ID 后，可直接在对象编码 RPC envelope 中使用 `m.dst=<child endpointId>`；Agent/relay 自己维护 `endpointId -> provider` 映射，不向调用方暴露真实的多级 Agent path。
+
+`childId` 与 `endpointId` 不等价：
+
+- `childId` 是当前 parent/provider 视角下的设备、拓扑或 adapter-local 标识，可以用于 topology/detail lookup；
+- `endpointId` 是跨 session/relay 的稳定逻辑地址，遵循 `specs/20-core.md` 的 Endpoint identity 规则；
+- child 能被独立 RPC 寻址时 SHOULD 提供 `endpointId`；无法建立稳定 identity 的 child MAY 暂时缺失 `endpointId`，此时不能作为稳定 `m.dst` 暴露给上游。
 
 ## 2. 能力边界
 
@@ -33,9 +41,36 @@ lastReviewed: 2026-06-15
 |---|---|
 | 包含 | device.childDevice 的能力发现、状态查询、配置或动作控制。 |
 | 包含 | 与 device.childDevice 直接相关的 method/event/schema 草案。 |
+| 包含 | child entry 对稳定 `endpointId` 的暴露，用于与 Core Endpoint Relay 对齐。 |
 | 不包含 | 不承载其他 capability feature 的业务语义；跨域关系通过 schema 字段、引用或数据面 stream/file 表达。 |
+| 不包含 | 不定义 `route`、`routeId`、`nextHop`、`ttl`、`hops`；这些不是 childDevice wire contract。 |
 | 不包含 | method/event 数值 ID 分配；数值以 contract/registry/generated 为准。 |
 | 数据面 | 本 feature 默认不定义 STREAM payload，所有操作均通过 RPC method/event 完成。 |
+
+### 2.1 Endpoint Projection
+
+当 Agent A 管理 Agent B，而 Agent B 管理 Camera 时，Agent A MAY 把 Camera 的最终 `endpointId` 投影到自己的可见 child 集合：
+
+```text
+Cloud
+  -> Agent A
+      -> Agent B
+          -> Camera(ep-camera-001)
+```
+
+Cloud 只需要知道：
+
+```text
+ep-camera-001 -> Agent A session
+```
+
+Agent A 本地再解析：
+
+```text
+ep-camera-001 -> Agent B provider/session
+```
+
+上游 RPC 始终使用单个 `m.dst="ep-camera-001"`，不携带 Agent B 或完整 path。
 
 ## 3. 方法 Methods
 
@@ -45,8 +80,8 @@ lastReviewed: 2026-06-15
 |---|---|---|---|---|---|---|
 | `device.getInfo` | query | 查询设备基础信息摘要 | `GetInfoParams` | `GetInfoResult` | 否 | draft |
 | `device.getTopology` | query | 查询主设备与子设备的拓扑关系 | `GetTopologyParams` | `DeviceTopology` | 否 | draft |
-| `device.getChildren` | query | 查询当前可见的子设备列表 | `GetChildrenParams` | `GetChildrenResult` | 否 | draft |
-| `device.getChildInfo` | query | 查询指定子设备的详细信息 | `GetChildInfoParams` | `ChildDeviceInfo` | 否 | draft |
+| `device.getChildren` | query | 查询当前可见的子设备列表及其可选 `endpointId` | `GetChildrenParams` | `GetChildrenResult` | 否 | draft |
+| `device.getChildInfo` | query | 查询指定子设备的详细信息及可选 `endpointId` | `GetChildInfoParams` | `ChildDeviceInfo` | 否 | draft |
 
 ### 3.1 `device.getInfo`
 
@@ -71,7 +106,7 @@ lastReviewed: 2026-06-15
 
 | 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
 |---|---|---:|---|---|---|
-| `state` | object | yes | see schema | none | 当前结果对象；示例字段包括 `target`、`children`。 |
+| `state` | object | yes | see schema | none | 当前结果对象；示例字段包括 `target`、`children`。可寻址 child SHOULD 包含 `endpointId`。 |
 | `sampledAt` | string timestamp | no | RFC 3339 | omitted | 结果采样时间；客户端可用于缓存和校准。 |
 
 #### 3.1.3 d block 示例
@@ -103,6 +138,7 @@ success:
       "children": [
         {
           "childId": "camera-main",
+          "endpointId": "ep-camera-001",
           "type": "camera",
           "online": true
         }
@@ -151,7 +187,7 @@ success:
 
 | 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
 |---|---|---:|---|---|---|
-| `state` | object | yes | see schema | none | 当前结果对象；示例字段包括 `target`、`children`。 |
+| `state` | object | yes | see schema | none | 当前结果对象；示例字段包括 `target`、`children`。可寻址 child SHOULD 包含 `endpointId`。 |
 | `sampledAt` | string timestamp | no | RFC 3339 | omitted | 结果采样时间；客户端可用于缓存和校准。 |
 
 #### 3.2.3 d block 示例
@@ -183,6 +219,7 @@ success:
       "children": [
         {
           "childId": "camera-main",
+          "endpointId": "ep-camera-001",
           "type": "camera",
           "online": true
         }
@@ -210,7 +247,7 @@ success:
 
 ### 3.3 `device.getChildren`
 
-**用途**：查询设备基础信息摘要。
+**用途**：查询当前可见的子设备列表。对能够稳定寻址的 child，结果 SHOULD 返回 `endpointId`，供调用方后续直接作为对象编码 RPC `m.dst` 使用。
 
 | 项 | 内容 |
 |---|---|
@@ -231,7 +268,7 @@ success:
 
 | 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
 |---|---|---:|---|---|---|
-| `state` | object | yes | see schema | none | 当前结果对象；示例字段包括 `target`、`children`。 |
+| `state` | object | yes | see schema | none | 当前结果对象；`children[]` 中 `childId` 是 provider-local identity，`endpointId` 是可选稳定 AXTP address。 |
 | `sampledAt` | string timestamp | no | RFC 3339 | omitted | 结果采样时间；客户端可用于缓存和校准。 |
 
 #### 3.3.3 d block 示例
@@ -263,12 +300,30 @@ success:
       "children": [
         {
           "childId": "camera-main",
+          "endpointId": "ep-camera-001",
           "type": "camera",
           "online": true
         }
       ]
     },
     "sampledAt": "2026-06-15T08:00:03Z"
+  }
+}
+```
+
+上层拿到 `ep-camera-001` 后的调用示意属于 Core RPC envelope，而不是本 method 的 `d` schema：
+
+```json
+{
+  "sid": "12345678",
+  "op": 7,
+  "m": {
+    "dst": "ep-camera-001"
+  },
+  "d": {
+    "id": 201,
+    "method": "camera.getStatus",
+    "params": {}
   }
 }
 ```
@@ -290,7 +345,7 @@ success:
 
 ### 3.4 `device.getChildInfo`
 
-**用途**：查询设备基础信息摘要。
+**用途**：查询指定子设备的详细信息，并在该 child 可稳定寻址时返回其 `endpointId`。
 
 | 项 | 内容 |
 |---|---|
@@ -311,7 +366,7 @@ success:
 
 | 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
 |---|---|---:|---|---|---|
-| `state` | object | yes | see schema | none | 当前结果对象；示例字段包括 `target`、`children`。 |
+| `state` | object | yes | see schema | none | 当前结果对象；可寻址 child SHOULD 包含 `endpointId`。 |
 | `sampledAt` | string timestamp | no | RFC 3339 | omitted | 结果采样时间；客户端可用于缓存和校准。 |
 
 #### 3.4.3 d block 示例
@@ -343,6 +398,7 @@ success:
       "children": [
         {
           "childId": "camera-main",
+          "endpointId": "ep-camera-001",
           "type": "camera",
           "online": true
         }
@@ -385,7 +441,7 @@ success:
 | 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
 |---|---|---:|---|---|---|
 | `changedFields` | string[] | no | field path array | omitted | 变化字段路径。 |
-| `state` | object | no | see schema | omitted | 变化后的状态、配置或摘要。 |
+| `state` | object | no | see schema | omitted | 变化后的状态、配置或摘要；涉及可寻址 child 时 SHOULD 包含 `endpointId`。 |
 | `source` | string enum | no | `remoteApp`, `localPanel`, `devicePolicy`, `adapter`, `unknown` | `unknown` | 状态变化来源。 |
 | `reason` | string enum | no | feature-specific | `unknown` | 状态变化原因。 |
 | `stateRevision` | uint32 | no | monotonic counter | omitted | 状态版本，用于多端同步和去重。 |
@@ -402,6 +458,7 @@ success:
     ],
     "state": {
       "target": "child-device-bus",
+      "endpointId": "ep-camera-001",
       "discoveryEnabled": true,
       "includeOfflineDevices": false
     },
@@ -425,6 +482,7 @@ success:
 - Event MUST 使用 `op=6`。
 - Event MUST NOT 携带 `d.id`。
 - Event payload MUST 放在 `d.data` 中。
+- Event 的逻辑来源 Endpoint 与 fanout 规则由 Core RPC `m.src` / `m.dst` 定义；本 feature 不重复定义多播地址结构。
 
 ## 5. Capability
 
@@ -444,11 +502,15 @@ Capability name: `device.childDevice`。
 ```text
 ChildDeviceCapability
   capability / supportedTargets
+ChildDeviceEntry
+  childId / endpointId? / type / online / ...
 ChildDeviceState
-  target / status / sampledAt
+  target / children[] / status / sampledAt
 ChildDeviceChangedEvent
   changedFields / state / source / reason / stateRevision
 ```
+
+`ChildDeviceEntry.endpointId` 是本轮与 Core Endpoint Relay 对齐的候选字段：类型为 string、optional，建议最大 128 UTF-8 bytes；当 child 拥有稳定 AXTP address 时 SHOULD present。它不替代 `childId`。
 
 ### 6.2 请求与响应 Schemas
 

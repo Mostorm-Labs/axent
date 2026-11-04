@@ -942,6 +942,67 @@
       "idHex": "0x0913"
     },
     {
+      "id": 2561,
+      "bitOffset": 0,
+      "name": "input.openStream",
+      "domain": "input",
+      "status": "draft",
+      "description": "Open a negotiated input STREAM for a selected target and return the stream epoch, accepted mode, and canvas fencing tokens.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "InputOpenStreamParams",
+      "responseSchema": "InputOpenStreamResult",
+      "recommendedEncoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "input.stream"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "NOT_SUPPORTED",
+        "PERMISSION_DENIED",
+        "INVALID_ARGUMENT",
+        "INVALID_STATE",
+        "BUSY",
+        "UNAVAILABLE"
+      ],
+      "idHex": "0x0A01"
+    },
+    {
+      "id": 2562,
+      "bitOffset": 1,
+      "name": "input.closeStream",
+      "domain": "input",
+      "status": "draft",
+      "description": "Close a previously opened input STREAM and release any pressed contacts or buttons owned by its epoch.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "InputCloseStreamParams",
+      "responseSchema": "InputCloseStreamResult",
+      "recommendedEncoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "input.stream"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "STREAM_NOT_FOUND",
+        "STREAM_CLOSED",
+        "INVALID_ARGUMENT",
+        "INVALID_STATE",
+        "UNAVAILABLE"
+      ],
+      "idHex": "0x0A02"
+    },
+    {
       "id": 3329,
       "bitOffset": 0,
       "name": "signage.getPlaylistCapabilities",
@@ -1060,7 +1121,7 @@
       "name": "signage.getPlaylistItemUrl",
       "domain": "signage",
       "status": "draft",
-      "description": "Fetch the latest resource URL for a playlist item by itemId (URL refresh). The device calls this proactively when an item URL is about to expire. Clock items have no URL resource and return NOT_SUPPORTED.",
+      "description": "Fetch the latest resource URL for a playlist item by itemId (URL refresh). The device calls this proactively when an item URL is about to expire. Clock items have no URL resource and powerbi items carry a non-URL embed-token resource; both return NOT_SUPPORTED (powerbi refresh MUST use signage.getPlaylistItem).",
       "since": "1.0.0",
       "deprecated": false,
       "rpcOp": "request_response",
@@ -1081,6 +1142,34 @@
         "INTERNAL_ERROR"
       ],
       "idHex": "0x0D05"
+    },
+    {
+      "id": 3334,
+      "bitOffset": 5,
+      "name": "signage.getPlaylistItem",
+      "domain": "signage",
+      "status": "draft",
+      "description": "Fetch the complete playlist item by itemId (item refresh). The device calls this proactively when settings.expiresAt is near expiry and replaces the local playlist item with the returned one. Non-URL resource types (powerbi) MUST use this method; URL resource types MAY use this or signage.getPlaylistItemUrl.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "SignageGetPlaylistItemParams",
+      "responseSchema": "SignageGetPlaylistItemResult",
+      "recommendedEncoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "signage.playlist"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "NOT_SUPPORTED",
+        "NOT_FOUND",
+        "INTERNAL_ERROR"
+      ],
+      "idHex": "0x0D06"
     },
     {
       "id": 3586,
@@ -2148,7 +2237,8 @@
       "errors": [
         "SUCCESS",
         "INVALID_ARGUMENT",
-        "UNAVAILABLE"
+        "UNAVAILABLE",
+        "NOT_SUPPORTED"
       ],
       "idHex": "0x1612"
     },
@@ -2219,6 +2309,354 @@
         "UNAVAILABLE"
       ],
       "idHex": "0x1614"
+    },
+    {
+      "id": 5653,
+      "bitOffset": 20,
+      "name": "cast.getControlCapabilities",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Discover supported control versions, runtime epoch and bounded multi-presentation guarantees before selecting a version.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "Empty",
+      "responseSchema": "CastControlCapabilities",
+      "recommendedEncoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.presentation"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "NOT_SUPPORTED",
+        "UNAVAILABLE"
+      ],
+      "idHex": "0x1615"
+    },
+    {
+      "id": 5654,
+      "bitOffset": 21,
+      "name": "cast.stopPresentation",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Withdraw one exact presentation after atomic owner-side fence validation; success returns an admitted operation, not receiver shutdown.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "CastStopPresentationParams",
+      "responseSchema": "CastControlOperation",
+      "recommendedEncoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.presentation",
+        "cast.controlOperations"
+      ],
+      "events": [
+        "cast.sessionsChanged",
+        "cast.presentationChanged",
+        "cast.audioPolicyChanged",
+        "cast.controlOperationChanged"
+      ],
+      "errors": [
+        "SUCCESS",
+        "NOT_SUPPORTED",
+        "INVALID_ARGUMENT",
+        "INVALID_STATE",
+        "BUSY",
+        "UNAVAILABLE",
+        "INTERNAL_ERROR"
+      ],
+      "idHex": "0x1616"
+    },
+    {
+      "id": 5655,
+      "bitOffset": 22,
+      "name": "cast.setSessionAudioEnabled",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Set explicit enabled intent for one exact presented session; effective audio participation is reported separately.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "CastSetSessionAudioEnabledParams",
+      "responseSchema": "CastControlOperation",
+      "recommendedEncoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.audioPolicy",
+        "cast.controlOperations"
+      ],
+      "events": [
+        "cast.audioPolicyChanged",
+        "cast.controlOperationChanged"
+      ],
+      "errors": [
+        "SUCCESS",
+        "NOT_SUPPORTED",
+        "INVALID_ARGUMENT",
+        "INVALID_STATE",
+        "BUSY",
+        "UNAVAILABLE",
+        "INTERNAL_ERROR"
+      ],
+      "idHex": "0x1617"
+    },
+    {
+      "id": 5656,
+      "bitOffset": 23,
+      "name": "cast.getControlOperation",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Query the original intent by runtime, client and command identity; NOT_FOUND means unknown outcome rather than not executed.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "CastGetControlOperationParams",
+      "responseSchema": "CastControlOperation",
+      "recommendedEncoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.controlOperations"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "NOT_SUPPORTED",
+        "INVALID_ARGUMENT",
+        "INVALID_STATE",
+        "NOT_FOUND",
+        "UNAVAILABLE"
+      ],
+      "idHex": "0x1618"
+    },
+    {
+      "id": 5657,
+      "bitOffset": 24,
+      "name": "cast.setPresentationSettings",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Set exactly one supported host setting with optimistic revision, bounded dedup and explicit field-only persistence; returns per-stage asynchronous results without automatic restart.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "CastSetPresentationSettingsParams",
+      "responseSchema": "CastControlOperation",
+      "recommendedEncoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.presentationSettings",
+        "cast.controlOperations"
+      ],
+      "events": [
+        "cast.presentationSettingsChanged",
+        "cast.presentationChanged",
+        "cast.audioPolicyChanged"
+      ],
+      "errors": [
+        "SUCCESS",
+        "NOT_SUPPORTED",
+        "INVALID_ARGUMENT",
+        "INVALID_STATE",
+        "OUT_OF_RANGE",
+        "BUSY",
+        "UNAVAILABLE",
+        "INTERNAL_ERROR"
+      ],
+      "idHex": "0x1619"
+    },
+    {
+      "id": 5658,
+      "bitOffset": 25,
+      "name": "cast.getWebCastBackendState",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Read a secret-free WebCast signaling backend snapshot and independent event barrier; selection for new joins is separate from retained peers.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "CastGetWebCastBackendStateParams",
+      "responseSchema": "CastWebCastBackendSnapshot",
+      "recommendedEncoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.webcastBackend"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "NOT_SUPPORTED",
+        "INVALID_ARGUMENT",
+        "UNAVAILABLE"
+      ],
+      "idHex": "0x161A"
+    },
+    {
+      "id": 5659,
+      "bitOffset": 26,
+      "name": "cast.setPresentationFocus",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Explicit exact-target primary or split intent with optimistic meeting revision and bounded dedup; never toggles or re-admits a source.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "CastSetPresentationFocusParams",
+      "responseSchema": "CastControlOperation",
+      "recommendedEncoding": [
+        "json"
+      ],
+      "capabilities": [
+        "cast.meetingPresentation",
+        "cast.controlOperations"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "NOT_SUPPORTED",
+        "INVALID_ARGUMENT",
+        "INVALID_STATE",
+        "BUSY",
+        "UNAVAILABLE"
+      ],
+      "idHex": "0x161B"
+    },
+    {
+      "id": 5660,
+      "bitOffset": 27,
+      "name": "cast.getTouchbackState",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Return per-target touchback gates, negotiated mode, and geometry fence state.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "CastTouchbackTargetRequest",
+      "responseSchema": "CastTouchbackState",
+      "recommendedEncoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.touchback"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "NOT_FOUND",
+        "UNAVAILABLE"
+      ],
+      "idHex": "0x161C"
+    },
+    {
+      "id": 5661,
+      "bitOffset": 28,
+      "name": "cast.setTouchbackEnabled",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Set the launcher/controller touchback gate for one cast target.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "CastTouchbackEnabledRequest",
+      "responseSchema": "CastTouchbackState",
+      "recommendedEncoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.touchback"
+      ],
+      "events": [
+        "cast.touchbackChanged"
+      ],
+      "errors": [
+        "SUCCESS",
+        "PERMISSION_DENIED",
+        "INVALID_ARGUMENT",
+        "INVALID_STATE",
+        "NOT_FOUND",
+        "UNAVAILABLE"
+      ],
+      "idHex": "0x161D"
+    },
+    {
+      "id": 5662,
+      "bitOffset": 29,
+      "name": "cast.setTouchbackMode",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Request touch or mouse interpretation for one cast target; switching fences and reopens the input stream.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "CastTouchbackModeRequest",
+      "responseSchema": "CastTouchbackState",
+      "recommendedEncoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.touchback"
+      ],
+      "events": [
+        "cast.touchbackChanged"
+      ],
+      "errors": [
+        "SUCCESS",
+        "NOT_SUPPORTED",
+        "INVALID_ARGUMENT",
+        "INVALID_STATE",
+        "BUSY",
+        "NOT_FOUND",
+        "UNAVAILABLE"
+      ],
+      "idHex": "0x161E"
+    },
+    {
+      "id": 5663,
+      "bitOffset": 30,
+      "name": "cast.setTouchbackResolutionPreference",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Set the touchback source-resolution preference for one cast target.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "CastTouchbackResolutionRequest",
+      "responseSchema": "CastTouchbackState",
+      "recommendedEncoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "cast.touchback"
+      ],
+      "events": [
+        "cast.touchbackChanged"
+      ],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "INVALID_STATE",
+        "NOT_FOUND",
+        "UNAVAILABLE"
+      ],
+      "idHex": "0x161F"
     },
     {
       "id": 5889,
@@ -2394,6 +2832,222 @@
         "INVALID_STATE"
       ],
       "idHex": "0x1706"
+    },
+    {
+      "id": 6145,
+      "bitOffset": 0,
+      "name": "sport.getEventDetectionCapabilities",
+      "domain": "sport",
+      "status": "draft",
+      "description": "Return supported sport types, event types, sport-specific detail schemas, and runtime constraints for event detection.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "GetEventDetectionCapabilitiesParams",
+      "responseSchema": "GetEventDetectionCapabilitiesResult",
+      "recommendedEncoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "sport.eventDetection"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "NOT_SUPPORTED",
+        "PERMISSION_DENIED",
+        "UNAVAILABLE"
+      ],
+      "idHex": "0x1801"
+    },
+    {
+      "id": 6146,
+      "bitOffset": 1,
+      "name": "sport.getEventDetectionConfig",
+      "domain": "sport",
+      "status": "draft",
+      "description": "Return the effective event detection configuration and runtime state for one sport type.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "GetEventDetectionConfigParams",
+      "responseSchema": "SportEventDetectionState",
+      "recommendedEncoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "sport.eventDetection"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "NOT_SUPPORTED",
+        "PERMISSION_DENIED",
+        "UNAVAILABLE"
+      ],
+      "idHex": "0x1802"
+    },
+    {
+      "id": 6147,
+      "bitOffset": 2,
+      "name": "sport.setEventDetectionConfig",
+      "domain": "sport",
+      "status": "draft",
+      "description": "Enable or disable event detection for one sport type and return the accepted or effective state.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "SetEventDetectionConfigParams",
+      "responseSchema": "SetEventDetectionConfigResult",
+      "recommendedEncoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "sport.eventDetection"
+      ],
+      "events": [
+        "sport.eventDetectionStateChanged"
+      ],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "NOT_SUPPORTED",
+        "INVALID_STATE",
+        "BUSY",
+        "PERMISSION_DENIED",
+        "UNAVAILABLE"
+      ],
+      "idHex": "0x1803"
+    },
+    {
+      "id": 6148,
+      "bitOffset": 3,
+      "name": "sport.getGoalShotWatermarkConfig",
+      "domain": "sport",
+      "status": "draft",
+      "description": "Return Goal and Shot watermark visibility for one device and sport type.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "SportConfigTargetParams",
+      "responseSchema": "SportGoalShotWatermarkConfig",
+      "recommendedEncoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "sport.eventDetection"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "NOT_SUPPORTED",
+        "NOT_FOUND",
+        "PERMISSION_DENIED",
+        "UNAVAILABLE"
+      ],
+      "idHex": "0x1804"
+    },
+    {
+      "id": 6149,
+      "bitOffset": 4,
+      "name": "sport.setGoalShotWatermarkConfig",
+      "domain": "sport",
+      "status": "draft",
+      "description": "Atomically set Goal and Shot watermark visibility for one device and sport type; success is represented only by the standard RPC status.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "SportSetGoalShotWatermarkConfigParams",
+      "responseSchema": "Empty",
+      "recommendedEncoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "sport.eventDetection"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "NOT_SUPPORTED",
+        "NOT_FOUND",
+        "INVALID_STATE",
+        "BUSY",
+        "PERMISSION_DENIED",
+        "UNAVAILABLE"
+      ],
+      "idHex": "0x1805"
+    },
+    {
+      "id": 6150,
+      "bitOffset": 5,
+      "name": "sport.getEventClipConfig",
+      "domain": "sport",
+      "status": "draft",
+      "description": "Return the video clip window before and after a Goal or Shot event for one device and sport type.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "SportConfigTargetParams",
+      "responseSchema": "SportEventClipConfig",
+      "recommendedEncoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "sport.eventDetection"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "NOT_SUPPORTED",
+        "NOT_FOUND",
+        "PERMISSION_DENIED",
+        "UNAVAILABLE"
+      ],
+      "idHex": "0x1806"
+    },
+    {
+      "id": 6151,
+      "bitOffset": 6,
+      "name": "sport.setEventClipConfig",
+      "domain": "sport",
+      "status": "draft",
+      "description": "Atomically set the video clip window before and after a Goal or Shot event for one device and sport type; success is represented only by the standard RPC status.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "SportSetEventClipConfigParams",
+      "responseSchema": "Empty",
+      "recommendedEncoding": [
+        "json",
+        "tlv"
+      ],
+      "capabilities": [
+        "sport.eventDetection"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "OUT_OF_RANGE",
+        "NOT_SUPPORTED",
+        "NOT_FOUND",
+        "INVALID_STATE",
+        "BUSY",
+        "PERMISSION_DENIED",
+        "UNAVAILABLE"
+      ],
+      "idHex": "0x1807"
     }
   ]
 }

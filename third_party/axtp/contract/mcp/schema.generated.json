@@ -2688,7 +2688,7 @@
           "required": false,
           "deprecated": false,
           "maxLength": 128,
-          "description": "Optional receiver-local session id; omitted means current active session."
+          "description": "Optional receiver-local session id; omitted stops all connections and authentication requests existing at the host execution boundary, without stopping listeners."
         },
         {
           "id": 2,
@@ -3790,6 +3790,35 @@
           "deprecated": false,
           "default": false,
           "description": "Whether authorized clients request plaintext PIN material."
+        },
+        {
+          "id": 2,
+          "name": "protocol",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "airplay",
+            "webcast"
+          ],
+          "description": "Code owner to query; omitted means AirPlay for legacy compatibility."
+        },
+        {
+          "id": 3,
+          "name": "includeSensitive",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Legacy alias of includeSecret; either true requests secret material."
+        },
+        {
+          "id": 4,
+          "name": "attemptId",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Exact AirPlay authentication attempt; canonical decimal uint64 string."
         }
       ]
     },
@@ -3880,6 +3909,57 @@
             "both"
           ],
           "description": "Visibility policy for the new PIN."
+        }
+      ]
+    },
+    {
+      "name": "CastPinCodeChallenge",
+      "type": "object",
+      "description": "One live AirPlay authentication challenge, never a media session.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "attemptId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Authentication attempt identity; canonical decimal uint64 string."
+        },
+        {
+          "id": 2,
+          "name": "challengeId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Exact credential generation; canonical decimal uint64 string."
+        },
+        {
+          "id": 3,
+          "name": "displayRequestId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Display occurrence, independent of credential lifetime; canonical decimal uint64 string."
+        },
+        {
+          "id": 4,
+          "name": "pinCode",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "description": "Live secret, omitted unless explicitly requested or in a dedicated PIN event."
+        },
+        {
+          "id": 5,
+          "name": "codeGeneration",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 prepared or replacement credential generation frozen for this request."
         }
       ]
     },
@@ -4000,6 +4080,63 @@
           "required": false,
           "deprecated": false,
           "description": "Whether sensitive fields were withheld in this snapshot."
+        },
+        {
+          "id": 12,
+          "name": "protocol",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "airplay",
+            "webcast"
+          ],
+          "description": "Credential owner, independent of the currently playing protocol."
+        },
+        {
+          "id": 13,
+          "name": "backend",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "cloud",
+            "local",
+            "none"
+          ],
+          "description": "Selected WebCast backend for new joins; none means no usable backend."
+        },
+        {
+          "id": 14,
+          "name": "challenges",
+          "type": "array",
+          "required": false,
+          "deprecated": false,
+          "array": {
+            "itemType": "CastPinCodeChallenge"
+          },
+          "description": "Active AirPlay challenges; plaintext only when requested or in dedicated PIN events."
+        },
+        {
+          "id": 15,
+          "name": "scope",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "access",
+            "challenge"
+          ],
+          "description": "Access is the prepared code for future joins; challenge is an exact in-flight authentication request."
+        },
+        {
+          "id": 16,
+          "name": "codeGeneration",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 credential generation, independent of repeated digit values."
         }
       ]
     },
@@ -4050,6 +4187,14 @@
           "deprecated": false,
           "maxLength": 64,
           "description": "Timestamp for this event."
+        },
+        {
+          "id": 5,
+          "name": "challenge",
+          "type": "CastPinCodeChallenge",
+          "required": false,
+          "deprecated": false,
+          "description": "Affected AirPlay identity; secret omitted after consumption or expiry."
         }
       ]
     },
@@ -4114,6 +4259,14 @@
           "deprecated": false,
           "maxLength": 64,
           "description": "Timestamp when PIN input was requested."
+        },
+        {
+          "id": 7,
+          "name": "config",
+          "type": "CastPinCodeConfig",
+          "required": false,
+          "deprecated": false,
+          "description": "Exact AirPlay code state for this occurrence, including challenge identity."
         }
       ]
     },
@@ -4390,6 +4543,14 @@
           "deprecated": false,
           "maxLength": 64,
           "description": "Timestamp for this event."
+        },
+        {
+          "id": 5,
+          "name": "controlContext",
+          "type": "CastControlEventContext",
+          "required": false,
+          "deprecated": false,
+          "description": "Optional v1 commit context; absent legacy events do not advance the multi-control sequence."
         }
       ]
     },
@@ -5370,6 +5531,14 @@
           "deprecated": false,
           "default": false,
           "description": "Whether authorized callers request sensitive summary fields."
+        },
+        {
+          "id": 3,
+          "name": "controlVersion",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "description": "Explicit multi-control version; v1 unifiedControl requires a complete atomic six-section projection. Unknown versions return NOT_SUPPORTED."
         }
       ]
     },
@@ -5659,6 +5828,87 @@
           "required": false,
           "deprecated": false,
           "description": "Whether any sensitive snapshot fields were withheld."
+        },
+        {
+          "id": 10,
+          "name": "controlSync",
+          "type": "CastControlSnapshotCursor",
+          "required": false,
+          "deprecated": false,
+          "description": "Required with requested v1 sections; atomic capture revision and published event barrier in one runtime epoch."
+        },
+        {
+          "id": 11,
+          "name": "receivers",
+          "type": "array",
+          "required": false,
+          "deprecated": false,
+          "array": {
+            "itemType": "CastReceiverState"
+          },
+          "description": "Required in v1 unifiedControl; full bounded receiver set including disabled and failed receivers."
+        },
+        {
+          "id": 12,
+          "name": "sessions",
+          "type": "array",
+          "required": false,
+          "deprecated": false,
+          "array": {
+            "itemType": "CastMultiSessionState"
+          },
+          "description": "Required in v1 unifiedControl; full bounded current session set, possibly empty, captured with slots and audio."
+        },
+        {
+          "id": 13,
+          "name": "presentation",
+          "type": "CastPresentationState",
+          "required": false,
+          "deprecated": false,
+          "description": "Required in v1 unifiedControl; does not replace old single-source summaries."
+        },
+        {
+          "id": 14,
+          "name": "audioPolicy",
+          "type": "CastAudioPolicyState",
+          "required": false,
+          "deprecated": false,
+          "description": "Required in v1 unifiedControl; selected intent and effective participation are separate from legacy audio."
+        },
+        {
+          "id": 15,
+          "name": "presentationSettings",
+          "type": "CastPresentationSettingsState",
+          "required": false,
+          "deprecated": false,
+          "description": "Required only when P1 is supported and explicitly requested; combined P0/P1 capture shares one host commit boundary and keeps independent event barriers."
+        },
+        {
+          "id": 16,
+          "name": "webcastBackend",
+          "type": "CastWebCastBackendSnapshot",
+          "required": false,
+          "deprecated": false,
+          "description": "Explicit optional backend snapshot with its own barrier; not implied by unifiedControl or settings."
+        },
+        {
+          "id": 17,
+          "name": "airplay",
+          "type": "CastAirPlayControlState",
+          "required": false,
+          "deprecated": false,
+          "description": "Secret-free discovery and authentication state at the P0 snapshot boundary."
+        },
+        {
+          "id": 18,
+          "name": "touchback",
+          "type": "array",
+          "required": false,
+          "deprecated": false,
+          "array": {
+            "itemType": "CastTouchbackState"
+          },
+          "description": "Per-target Touchback state; omitted for AirPlay-only receivers."
         }
       ]
     },
@@ -6045,7 +6295,7 @@
           "array": {
             "itemType": "string"
           },
-          "description": "Status snapshot sections the receiver can report."
+          "description": "Status snapshot sections the receiver can report; v1 adds unifiedControl, controlSync, receivers, sessions, presentation and audioPolicy and reuses window; P1 adds explicitly requested presentationSettings."
         },
         {
           "id": 2,
@@ -6055,6 +6305,3740 @@
           "deprecated": false,
           "default": true,
           "description": "Whether sensitive status fields can be withheld and marked redacted."
+        },
+        {
+          "id": 3,
+          "name": "supportedControlVersions",
+          "type": "array",
+          "required": false,
+          "deprecated": false,
+          "array": {
+            "itemType": "uint32"
+          },
+          "description": "Explicit supported multi-control versions; absence is unknown rather than v1 support."
+        },
+        {
+          "id": 4,
+          "name": "supportsAtomicUnifiedSnapshot",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Whether unifiedControl is captured atomically in full; absence is not a verified false or true value."
+        }
+      ]
+    },
+    {
+      "name": "CastSessionRef",
+      "type": "object",
+      "description": "Shared runtime session identity, distinct from a protocol-local legacy sessionId.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "id",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Nonempty opaque shared runtime session ID."
+        },
+        {
+          "id": 2,
+          "name": "generation",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 string (0 or nonzero-leading digits, at most 18446744073709551615); encoded as UTF-8 in TLV."
+        }
+      ]
+    },
+    {
+      "name": "CastControlTarget",
+      "type": "object",
+      "description": "Exact presentation fences; params.runtimeInstanceId completes the target and all fences are rechecked atomically at mutation.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "session",
+          "type": "CastSessionRef",
+          "required": true,
+          "deprecated": false,
+          "description": "Shared runtime session and generation."
+        },
+        {
+          "id": 2,
+          "name": "slotId",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Opaque slot identifier; never an array index."
+        },
+        {
+          "id": 3,
+          "name": "bindingGeneration",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 string fencing slot reuse."
+        },
+        {
+          "id": 4,
+          "name": "lifecycleGeneration",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 string fencing presentation lifecycle replacement."
+        }
+      ]
+    },
+    {
+      "name": "CastControlSnapshotCursor",
+      "type": "object",
+      "description": "One atomic logical capture and its complete published-event barrier; counters never wrap within an epoch.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlVersion",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Selected control version; P0 uses 1."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Canonical lower-case UUID text; fresh for each host start."
+        },
+        {
+          "id": 3,
+          "name": "revision",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 logical control revision."
+        },
+        {
+          "id": 4,
+          "name": "eventSequence",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 string; snapshot includes every complete published batch through this barrier."
+        }
+      ]
+    },
+    {
+      "name": "CastControlEventContext",
+      "type": "object",
+      "description": "Atomic feature commit group context; all parts share epoch/version/revision/batchId/partCount.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlVersion",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Selected control version; P0 uses 1."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Canonical lower-case UUID identifying the current host epoch."
+        },
+        {
+          "id": 3,
+          "name": "revision",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 control revision; operation-only batches may retain the current revision."
+        },
+        {
+          "id": 4,
+          "name": "eventSequence",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 string equal to batchId plus partIndex."
+        },
+        {
+          "id": 5,
+          "name": "batchId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 string equal to the first eventSequence of the group."
+        },
+        {
+          "id": 6,
+          "name": "partIndex",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Zero-based part index strictly less than partCount."
+        },
+        {
+          "id": 7,
+          "name": "partCount",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "min": 1,
+          "description": "Positive complete group size; clients apply only after every part is present."
+        }
+      ]
+    },
+    {
+      "name": "CastControlCapabilities",
+      "type": "object",
+      "description": "Dynamic optional multi-control surface; partial descriptors do not imply complete v1 support. No secrets.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "supportedControlVersions",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "uint32"
+          },
+          "description": "Explicit supported control versions."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Canonical lower-case UUID for this host lifetime."
+        },
+        {
+          "id": 3,
+          "name": "methods",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Actual registered method names supported by this instance."
+        },
+        {
+          "id": 4,
+          "name": "events",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Actual feature event names supported by this instance."
+        },
+        {
+          "id": 5,
+          "name": "statusSections",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Actual supported status section names."
+        },
+        {
+          "id": 6,
+          "name": "presentation",
+          "type": "CastPresentationCapability",
+          "required": false,
+          "deprecated": false,
+          "description": "Required when cast.presentation is supported."
+        },
+        {
+          "id": 7,
+          "name": "audioPolicy",
+          "type": "CastAudioPolicyCapability",
+          "required": false,
+          "deprecated": false,
+          "description": "Required when cast.audioPolicy is supported."
+        },
+        {
+          "id": 8,
+          "name": "operations",
+          "type": "CastControlOperationsCapability",
+          "required": false,
+          "deprecated": false,
+          "description": "Required when cast.controlOperations is supported."
+        },
+        {
+          "id": 9,
+          "name": "profileHints",
+          "type": "array",
+          "required": false,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Non-secret host profile hints; not media profiles or implicit defaults."
+        },
+        {
+          "id": 10,
+          "name": "presentationSettings",
+          "type": "CastPresentationSettingsCapability",
+          "required": false,
+          "deprecated": false,
+          "description": "Required iff P1 is supported together with its method/event/status section; absence does not imply support."
+        },
+        {
+          "id": 11,
+          "name": "webcastBackend",
+          "type": "CastWebCastBackendCapability",
+          "required": false,
+          "deprecated": false,
+          "description": "Required iff this independent backend method/event/status section is supported."
+        },
+        {
+          "id": 12,
+          "name": "meetingPresentation",
+          "type": "CastMeetingPresentationCapability",
+          "required": false,
+          "deprecated": false,
+          "description": "Explicit optional meeting focus and policy support."
+        },
+        {
+          "id": 13,
+          "name": "airplayControl",
+          "type": "CastAirPlayControlCapability",
+          "required": false,
+          "deprecated": false,
+          "description": "Secret-free authentication and discovery observation."
+        },
+        {
+          "id": 14,
+          "name": "touchback",
+          "type": "CastTouchbackCapability",
+          "required": false,
+          "deprecated": false,
+          "description": "Required when cast.touchback is supported; never advertised for AirPlay-only presentation targets."
+        }
+      ]
+    },
+    {
+      "name": "CastPresentationCapability",
+      "type": "object",
+      "description": "Supported presentation protocols and logical capture/target guarantees; no product layout algorithm.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "protocols",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Supported subset of hid/airplay/webcast; unknown is not a supported protocol."
+        },
+        {
+          "id": 2,
+          "name": "supportsAtomicSnapshot",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Must be true for a complete v1 unifiedControl implementation."
+        },
+        {
+          "id": 3,
+          "name": "supportsStrictTargets",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Must be true for exact per-presentation writes."
+        },
+        {
+          "id": 4,
+          "name": "maxPresentationCapacity",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "min": 1,
+          "description": "Positive host-specific presentation capacity bound."
+        },
+        {
+          "id": 5,
+          "name": "capacityChoices",
+          "type": "array",
+          "required": false,
+          "deprecated": false,
+          "array": {
+            "itemType": "uint32"
+          },
+          "description": "Positive supported capacities no greater than maxPresentationCapacity."
+        },
+        {
+          "id": 6,
+          "name": "layoutModes",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Supported grid/presentation layouts."
+        },
+        {
+          "id": 7,
+          "name": "contentAdaptations",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Supported fixed/auto-fit content adaptation."
+        }
+      ]
+    },
+    {
+      "name": "CastAudioPolicyCapability",
+      "type": "object",
+      "description": "Audio intent and effective-set reporting guarantees.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlModes",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Supported subset of automatic/manual."
+        },
+        {
+          "id": 2,
+          "name": "mixModes",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Supported subset of exclusive/mix."
+        },
+        {
+          "id": 3,
+          "name": "supportsPerSessionEnable",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether explicit per-session enabled intent is available."
+        },
+        {
+          "id": 4,
+          "name": "reportsEffectiveSet",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether effective participants are reported separately from selected intent."
+        },
+        {
+          "id": 5,
+          "name": "supportsMasterMute",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Untargeted legacy mute controls an independent global output gate."
+        }
+      ]
+    },
+    {
+      "name": "CastControlOperationsCapability",
+      "type": "object",
+      "description": "Query and deduplication guarantees bounded by declared limits.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "supportsQuery",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether original command results can be queried."
+        },
+        {
+          "id": 2,
+          "name": "supportsDedup",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether same-key same-value commands return the original operation."
+        },
+        {
+          "id": 3,
+          "name": "limits",
+          "type": "CastControlLimits",
+          "required": true,
+          "deprecated": false,
+          "description": "Nonzero finite bounds; guaranteed records cannot be silently evicted."
+        }
+      ]
+    },
+    {
+      "name": "CastControlLimits",
+      "type": "object",
+      "description": "Instance-specific positive uint32 limits; admission reserves result storage and returns BUSY on saturation.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "maxPendingOperations",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "min": 1,
+          "description": "Maximum globally pending admitted operations."
+        },
+        {
+          "id": 2,
+          "name": "maxPendingPerClient",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "min": 1,
+          "description": "Maximum pending operations for one client instance."
+        },
+        {
+          "id": 3,
+          "name": "maxRetainedResults",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "min": 1,
+          "description": "Maximum retained records including reserved pending results."
+        },
+        {
+          "id": 4,
+          "name": "replayWindowMs",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "min": 1,
+          "description": "Guaranteed dedup/result window from admission using host monotonic time; pending records survive until terminal."
+        },
+        {
+          "id": 5,
+          "name": "maxEventBufferEvents",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "min": 1,
+          "description": "Bounded event count used for initial sync and slow-client handling."
+        },
+        {
+          "id": 6,
+          "name": "maxEventBufferBytes",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "min": 1,
+          "description": "Bounded buffered event bytes."
+        },
+        {
+          "id": 7,
+          "name": "maxRequestBytes",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "min": 1,
+          "description": "Maximum admitted request bytes."
+        },
+        {
+          "id": 8,
+          "name": "maxSnapshotBytes",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "min": 1,
+          "description": "Maximum atomic snapshot bytes including bounded collections."
+        }
+      ]
+    },
+    {
+      "name": "CastReceiverState",
+      "type": "object",
+      "description": "Real receiver availability; historical lastError does not override current state. No secrets.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "receiverId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Nonempty opaque receiver identity."
+        },
+        {
+          "id": 2,
+          "name": "protocol",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "hid",
+            "airplay",
+            "webcast",
+            "unknown"
+          ],
+          "description": "Actual receiver protocol; unknown is not a supported-path alias."
+        },
+        {
+          "id": 3,
+          "name": "state",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "disabled",
+            "starting",
+            "ready",
+            "degraded",
+            "stopping",
+            "failed"
+          ],
+          "description": "Current receiver availability independent of session media."
+        },
+        {
+          "id": 4,
+          "name": "observedAt",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "UTC RFC3339 observation time for display only."
+        },
+        {
+          "id": 5,
+          "name": "displayName",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Safe user-visible name; not identity or secret material."
+        },
+        {
+          "id": 6,
+          "name": "lastError",
+          "type": "CastLastError",
+          "required": false,
+          "deprecated": false,
+          "description": "Historical redacted error summary; never passwords/tokens/SDP/ICE/private keys."
+        }
+      ]
+    },
+    {
+      "name": "CastMultiSessionState",
+      "type": "object",
+      "description": "Current shared runtime session with independent connection, eligibility and media facts.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "session",
+          "type": "CastSessionRef",
+          "required": true,
+          "deprecated": false,
+          "description": "Shared runtime session reference."
+        },
+        {
+          "id": 2,
+          "name": "receiverId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Nonempty reference to a receiver in the same projection."
+        },
+        {
+          "id": 3,
+          "name": "protocol",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "hid",
+            "airplay",
+            "webcast",
+            "unknown"
+          ],
+          "description": "Actual session protocol; legacy enums remain unchanged."
+        },
+        {
+          "id": 4,
+          "name": "receiverState",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "opening",
+            "open",
+            "mediaStarting",
+            "mediaActive",
+            "stopping",
+            "closed",
+            "failed"
+          ],
+          "description": "Protocol receiver session state; no frames does not imply disconnection."
+        },
+        {
+          "id": 5,
+          "name": "presentationEligibility",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "notEligible",
+            "priming",
+            "mediaReady",
+            "presented",
+            "withdrawing",
+            "notPresented"
+          ],
+          "description": "Presentation eligibility distinct from authentication and connection."
+        },
+        {
+          "id": 6,
+          "name": "videoTrackOpen",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether the video track is open; not proof of rendered frames."
+        },
+        {
+          "id": 7,
+          "name": "audioTrackOpen",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether the audio track is open; not proof of audible output."
+        },
+        {
+          "id": 8,
+          "name": "audioReadiness",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "unknown",
+            "absent",
+            "priming",
+            "ready",
+            "recovering"
+          ],
+          "description": "Audio readiness when observed."
+        },
+        {
+          "id": 9,
+          "name": "displayName",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Safe user-visible name; not a target identity."
+        }
+      ]
+    },
+    {
+      "name": "CastPresentationSlotState",
+      "type": "object",
+      "description": "Current slot binding; target is required iff occupied and must match this slot and current lifecycle.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "slotId",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Unique slot identifier within the presentation."
+        },
+        {
+          "id": 2,
+          "name": "bindingGeneration",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 slot-binding generation."
+        },
+        {
+          "id": 3,
+          "name": "occupied",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether the slot currently has an exact target."
+        },
+        {
+          "id": 4,
+          "name": "target",
+          "type": "CastControlTarget",
+          "required": false,
+          "deprecated": false,
+          "description": "Required iff occupied; omitted otherwise; null is invalid."
+        }
+      ]
+    },
+    {
+      "name": "CastPresentationState",
+      "type": "object",
+      "description": "Atomically captured presentation lifecycle, capacity and slots; zero effective/applied capacity does not imply no media.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "started",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether the presentation lifecycle is started."
+        },
+        {
+          "id": 2,
+          "name": "lifecycleGeneration",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 lifecycle generation."
+        },
+        {
+          "id": 3,
+          "name": "configuredCapacity",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "min": 1,
+          "description": "Positive configured capacity."
+        },
+        {
+          "id": 4,
+          "name": "validationAvailable",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether validatedCapacity is currently known."
+        },
+        {
+          "id": 5,
+          "name": "validatedCapacity",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "min": 1,
+          "description": "Required iff validationAvailable; omitted when unknown."
+        },
+        {
+          "id": 6,
+          "name": "effectiveCapacity",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Current host capacity-policy result; may be zero."
+        },
+        {
+          "id": 7,
+          "name": "appliedCapacity",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Capacity currently applied to presentation; may be zero."
+        },
+        {
+          "id": 8,
+          "name": "layoutMode",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "grid",
+            "presentation"
+          ],
+          "description": "Selected product layout; complete source withdrawal returns to grid."
+        },
+        {
+          "id": 9,
+          "name": "layoutSettling",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether the host reports layout settling."
+        },
+        {
+          "id": 10,
+          "name": "slots",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "CastPresentationSlotState"
+          },
+          "description": "Full bounded current slot set with no removed-session ghost binding."
+        },
+        {
+          "id": 11,
+          "name": "meeting",
+          "type": "CastMeetingPresentationState",
+          "required": false,
+          "deprecated": false,
+          "description": "Present only when meeting capability is advertised; part of the existing P0 presentation commit."
+        },
+        {
+          "id": 12,
+          "name": "contentAdaptation",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "fixed",
+            "auto-fit"
+          ],
+          "description": "Independent content adaptation; never changes the selected layout."
+        }
+      ]
+    },
+    {
+      "name": "CastAudioPolicyState",
+      "type": "object",
+      "description": "Selected intent and effective audio participation captured with the same session/slot projection.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlMode",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "automatic",
+            "manual"
+          ],
+          "description": "Current control policy; writes do not implicitly reset it."
+        },
+        {
+          "id": 2,
+          "name": "mixMode",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "exclusive",
+            "mix"
+          ],
+          "description": "Current mixing policy."
+        },
+        {
+          "id": 3,
+          "name": "enabledSessions",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "CastSessionRef"
+          },
+          "description": "Unique current session references with enabled intent."
+        },
+        {
+          "id": 4,
+          "name": "effectiveAudioSessions",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "CastSessionRef"
+          },
+          "description": "Unique current effective participants; neither set proves human-audible sound."
+        },
+        {
+          "id": 5,
+          "name": "appliedGains",
+          "type": "array",
+          "required": false,
+          "deprecated": false,
+          "array": {
+            "itemType": "CastMeetingAudioGain"
+          },
+          "description": "Successfully applied weights aligned with effective participants; optional meeting extension."
+        },
+        {
+          "id": 6,
+          "name": "masterMuted",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Global output gate including future admissions; does not erase per-session intent."
+        }
+      ]
+    },
+    {
+      "name": "CastStopPresentationParams",
+      "type": "object",
+      "description": "One exact withdrawal intent; same runtime/client/command key deduplicates canonical parsed values.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlVersion",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Explicit selected control version; P0 uses 1."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Canonical lower-case UUID of the targeted runtime epoch."
+        },
+        {
+          "id": 3,
+          "name": "clientInstanceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Canonical lower-case client UUID; not authorization."
+        },
+        {
+          "id": 4,
+          "name": "commandId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Canonical lower-case UUID identifying one user intent."
+        },
+        {
+          "id": 5,
+          "name": "target",
+          "type": "CastControlTarget",
+          "required": true,
+          "deprecated": false,
+          "description": "Original exact target checked atomically at mutation after admission."
+        },
+        {
+          "id": 6,
+          "name": "reason",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "Optional non-secret withdrawal reason."
+        }
+      ]
+    },
+    {
+      "name": "CastSetSessionAudioEnabledParams",
+      "type": "object",
+      "description": "One explicit audio enable intent for an exact presentation; no toggle semantics.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlVersion",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Explicit selected control version; P0 uses 1."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Canonical lower-case UUID of the targeted runtime epoch."
+        },
+        {
+          "id": 3,
+          "name": "clientInstanceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Canonical lower-case client UUID; not authorization."
+        },
+        {
+          "id": 4,
+          "name": "commandId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Canonical lower-case UUID identifying one user intent."
+        },
+        {
+          "id": 5,
+          "name": "target",
+          "type": "CastControlTarget",
+          "required": true,
+          "deprecated": false,
+          "description": "Original exact target checked atomically at mutation."
+        },
+        {
+          "id": 6,
+          "name": "enabled",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Explicit desired intent; applied does not imply effective playback."
+        }
+      ]
+    },
+    {
+      "name": "CastGetControlOperationParams",
+      "type": "object",
+      "description": "Original deduplication key query; missing history is unknown outcome.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlVersion",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Explicit selected control version; P0 uses 1."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Canonical lower-case UUID of the original runtime epoch."
+        },
+        {
+          "id": 3,
+          "name": "clientInstanceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Original canonical lower-case client UUID."
+        },
+        {
+          "id": 4,
+          "name": "commandId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Original canonical lower-case command UUID."
+        }
+      ]
+    },
+    {
+      "name": "CastControlOperation",
+      "type": "object",
+      "description": "Admitted queued or immutable terminal operation; terminal requires completedAt/statusCode/outcomeReason, P0 commit requires appliedRevision and P1 requires settingsResult.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "operationId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Nonempty opaque operation record ID; not media session identity."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Canonical lower-case runtime epoch UUID."
+        },
+        {
+          "id": 3,
+          "name": "clientInstanceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Canonical lower-case UUID of the submitting client."
+        },
+        {
+          "id": 4,
+          "name": "commandId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Canonical lower-case original intent UUID."
+        },
+        {
+          "id": 5,
+          "name": "kind",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "stopPresentation",
+            "setSessionAudioEnabled",
+            "setPresentationSettings",
+            "setPresentationFocus"
+          ],
+          "description": "Intent kind; settings is a global P1 operation with settingsResult and no presentation target."
+        },
+        {
+          "id": 6,
+          "name": "state",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "queued",
+            "applied",
+            "rejected",
+            "failed"
+          ],
+          "description": "Admission or truthful terminal result; queued is not media success."
+        },
+        {
+          "id": 7,
+          "name": "submittedAt",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "UTC RFC3339 submission display time; expiry uses host monotonic time."
+        },
+        {
+          "id": 8,
+          "name": "target",
+          "type": "CastControlTarget",
+          "required": false,
+          "deprecated": false,
+          "description": "Required for both P0 per-session kinds and retains the original exact target; omitted for P1 settings."
+        },
+        {
+          "id": 9,
+          "name": "completedAt",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "UTC RFC3339 time required for applied/rejected/failed."
+        },
+        {
+          "id": 10,
+          "name": "appliedRevision",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 string required iff a P0 logical control commit occurred; settings-only metadata uses settingsResult.settingsRevision instead."
+        },
+        {
+          "id": 11,
+          "name": "statusCode",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "description": "Required terminal standard AXTP status code; applied uses SUCCESS and failures use non-success."
+        },
+        {
+          "id": 12,
+          "name": "outcomeReason",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "Required terminal bounded business reason; not a new numeric error space and never secret data."
+        },
+        {
+          "id": 13,
+          "name": "ownerCleanup",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "notApplicable",
+            "pending",
+            "complete",
+            "failed"
+          ],
+          "description": "Cleanup observation at terminalization for the target owner only; not entire receiver exit."
+        },
+        {
+          "id": 14,
+          "name": "settingsResult",
+          "type": "CastPresentationSettingsOperationResult",
+          "required": false,
+          "deprecated": false,
+          "description": "Required for kind=setPresentationSettings including queued/rejected/failed; reports configuration/application/persistence separately."
+        }
+      ]
+    },
+    {
+      "name": "CastSetPresentationSettingsParams",
+      "type": "object",
+      "description": "Global one-field settings intent; same-key dedup precedes owner-side optimistic version comparison and persist never saves another temporary field.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlVersion",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Selected control version; P1 uses 1 with separate capability."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Canonical lower-case runtime UUID; no automatic replay into a new epoch."
+        },
+        {
+          "id": 3,
+          "name": "clientInstanceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Canonical lower-case client UUID; not authorization."
+        },
+        {
+          "id": 4,
+          "name": "commandId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Canonical lower-case UUID for this explicit settings intent."
+        },
+        {
+          "id": 5,
+          "name": "expectedSettingsRevision",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 optimistic version; rechecked after dedup and queueing."
+        },
+        {
+          "id": 6,
+          "name": "patch",
+          "type": "CastPresentationSettingsPatch",
+          "required": true,
+          "deprecated": false,
+          "description": "Exactly one known supported setting key; empty/multiple/unknown keys are INVALID_ARGUMENT."
+        },
+        {
+          "id": 7,
+          "name": "persist",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Explicit save choice; true saves only the patch field before configuration commit and live apply."
+        }
+      ]
+    },
+    {
+      "name": "CastPresentationSettingsPatch",
+      "type": "object",
+      "description": "All fields optional structurally but exactly one key required semantically; unknown patch keys rejected and conditional choices come from capability.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "layoutMode",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "grid",
+            "presentation"
+          ],
+          "description": "Selected product layout; complete source withdrawal returns to grid."
+        },
+        {
+          "id": 2,
+          "name": "audioControlMode",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "automatic",
+            "manual"
+          ],
+          "description": "Declared audio control mode; same confirmed value does not reset selection."
+        },
+        {
+          "id": 3,
+          "name": "audioMixMode",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "exclusive",
+            "mix"
+          ],
+          "description": "Declared audio mix mode; no implicit inverse-mode rollback."
+        },
+        {
+          "id": 4,
+          "name": "capacity",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "min": 1,
+          "description": "One declared capacity choice; no global product maximum or default."
+        },
+        {
+          "id": 5,
+          "name": "enabledProtocols",
+          "type": "array",
+          "required": false,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Duplicate-free set from declared hid/airplay/webcast protocols; empty only when minEnabledProtocols is explicitly zero."
+        },
+        {
+          "id": 6,
+          "name": "profileHint",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "Nonempty declared opaque product profile identifier; not a wire profile."
+        },
+        {
+          "id": 7,
+          "name": "contentAdaptation",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "fixed",
+            "auto-fit"
+          ],
+          "description": "Content aspect adaptation independent of Layout."
+        },
+        {
+          "id": 8,
+          "name": "presentationMode",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "manual",
+            "automatic"
+          ],
+          "description": "Meeting visual entry policy; not global audio policy."
+        },
+        {
+          "id": 9,
+          "name": "presentationSidebar",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "left",
+            "right"
+          ],
+          "description": "Meeting rail position independent of base layoutMode."
+        },
+        {
+          "id": 10,
+          "name": "presentationAudioFollow",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Remembered follow preference independent of activity and global audio control mode."
+        },
+        {
+          "id": 11,
+          "name": "presentationFocusOnDoubleClick",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Remembered main-body double-click Focus entry preference; default true. Disabling restores Sidebar from Focus."
+        },
+        {
+          "id": 12,
+          "name": "presentationGridOnDoubleClick",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Remembered inclusion of Grid in main-body double-click cycle; default false. Independent of Focus entry."
+        },
+        {
+          "id": 13,
+          "name": "presentationAutoEnter",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Automatic Grid to Sidebar entry at two presented sources; independent of primary selection. Explicit Grid suppresses entry until full withdrawal."
+        },
+        {
+          "id": 14,
+          "name": "canvasMode",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "adaptive",
+            "fixed"
+          ],
+          "description": "Canvas sizing policy for normalized input geometry."
+        },
+        {
+          "id": 15,
+          "name": "baseWidth",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "min": 1,
+          "max": 16384,
+          "description": "Fixed or preferred canvas width in pixels."
+        },
+        {
+          "id": 16,
+          "name": "baseHeight",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "min": 1,
+          "max": 16384,
+          "description": "Fixed or preferred canvas height in pixels."
+        },
+        {
+          "id": 17,
+          "name": "maxWidth",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "min": 1,
+          "max": 16384,
+          "description": "Adaptive canvas maximum width in pixels."
+        },
+        {
+          "id": 18,
+          "name": "maxHeight",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "min": 1,
+          "max": 16384,
+          "description": "Adaptive canvas maximum height in pixels."
+        }
+      ]
+    },
+    {
+      "name": "CastPresentationSettingsValues",
+      "type": "object",
+      "description": "Supported setting values only; configured/known persisted projections are complete, while unconfirmed applied fields are absent with issues.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "layoutMode",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "grid",
+            "presentation"
+          ],
+          "description": "Selected product layout; complete source withdrawal returns to grid."
+        },
+        {
+          "id": 2,
+          "name": "audioControlMode",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "automatic",
+            "manual"
+          ],
+          "description": "Adopted or desired control policy; not proof of sound."
+        },
+        {
+          "id": 3,
+          "name": "audioMixMode",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "exclusive",
+            "mix"
+          ],
+          "description": "Adopted or desired audio mixing policy."
+        },
+        {
+          "id": 4,
+          "name": "capacity",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "min": 1,
+          "description": "Desired capacity or actually adopted capacity according to containing projection; applied may be limited."
+        },
+        {
+          "id": 5,
+          "name": "enabledProtocols",
+          "type": "array",
+          "required": false,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Adopted or desired enable policy; not receiver readiness."
+        },
+        {
+          "id": 6,
+          "name": "profileHint",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "Declared product combination profile identifier."
+        },
+        {
+          "id": 7,
+          "name": "contentAdaptation",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "fixed",
+            "auto-fit"
+          ],
+          "description": "Content aspect adaptation independent of Layout."
+        },
+        {
+          "id": 8,
+          "name": "presentationMode",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "manual",
+            "automatic"
+          ],
+          "description": "Meeting visual entry policy; not global audio policy."
+        },
+        {
+          "id": 9,
+          "name": "presentationSidebar",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "left",
+            "right"
+          ],
+          "description": "Meeting rail position independent of base layoutMode."
+        },
+        {
+          "id": 10,
+          "name": "presentationAudioFollow",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Remembered follow preference independent of activity and global audio control mode."
+        },
+        {
+          "id": 11,
+          "name": "presentationFocusOnDoubleClick",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Remembered main-body double-click Focus entry preference; default true. Disabling restores Sidebar from Focus."
+        },
+        {
+          "id": 12,
+          "name": "presentationGridOnDoubleClick",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Remembered inclusion of Grid in main-body double-click cycle; default false. Independent of Focus entry."
+        },
+        {
+          "id": 13,
+          "name": "presentationAutoEnter",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Automatic Grid to Sidebar entry at two presented sources; independent of primary selection. Explicit Grid suppresses entry until full withdrawal."
+        },
+        {
+          "id": 14,
+          "name": "canvasMode",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "adaptive",
+            "fixed"
+          ],
+          "description": "Canvas sizing policy for normalized input geometry."
+        },
+        {
+          "id": 15,
+          "name": "baseWidth",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "min": 1,
+          "max": 16384,
+          "description": "Fixed or preferred canvas width in pixels."
+        },
+        {
+          "id": 16,
+          "name": "baseHeight",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "min": 1,
+          "max": 16384,
+          "description": "Fixed or preferred canvas height in pixels."
+        },
+        {
+          "id": 17,
+          "name": "maxWidth",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "min": 1,
+          "max": 16384,
+          "description": "Adaptive canvas maximum width in pixels."
+        },
+        {
+          "id": 18,
+          "name": "maxHeight",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "min": 1,
+          "max": 16384,
+          "description": "Adaptive canvas maximum height in pixels."
+        }
+      ]
+    },
+    {
+      "name": "CastPresentationStartupSettings",
+      "type": "object",
+      "description": "Exactly the capability-declared restart-only intent accepted at this host startup; distinct from effective/applied limits and stored values.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "layoutMode",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "grid",
+            "presentation"
+          ],
+          "description": "Selected product layout; complete source withdrawal returns to grid."
+        },
+        {
+          "id": 2,
+          "name": "audioControlMode",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "automatic",
+            "manual"
+          ],
+          "description": "Present only if audioControlMode is restart-only."
+        },
+        {
+          "id": 3,
+          "name": "audioMixMode",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "exclusive",
+            "mix"
+          ],
+          "description": "Present only if audioMixMode is restart-only."
+        },
+        {
+          "id": 4,
+          "name": "capacity",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "min": 1,
+          "description": "Startup accepted capacity intent before runtime validation limitations."
+        },
+        {
+          "id": 5,
+          "name": "enabledProtocols",
+          "type": "array",
+          "required": false,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Startup accepted receiver enable policy; does not claim Ready."
+        },
+        {
+          "id": 6,
+          "name": "profileHint",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "Startup accepted product profile when declared restart-only."
+        },
+        {
+          "id": 7,
+          "name": "contentAdaptation",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "fixed",
+            "auto-fit"
+          ],
+          "description": "Content aspect adaptation independent of Layout."
+        },
+        {
+          "id": 8,
+          "name": "presentationMode",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "manual",
+            "automatic"
+          ],
+          "description": "Meeting visual entry policy; not global audio policy."
+        },
+        {
+          "id": 9,
+          "name": "presentationSidebar",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "left",
+            "right"
+          ],
+          "description": "Meeting rail position independent of base layoutMode."
+        },
+        {
+          "id": 10,
+          "name": "presentationAudioFollow",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Remembered follow preference independent of activity and global audio control mode."
+        },
+        {
+          "id": 11,
+          "name": "presentationFocusOnDoubleClick",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Remembered main-body double-click Focus entry preference; default true. Disabling restores Sidebar from Focus."
+        },
+        {
+          "id": 12,
+          "name": "presentationGridOnDoubleClick",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Remembered inclusion of Grid in main-body double-click cycle; default false. Independent of Focus entry."
+        },
+        {
+          "id": 13,
+          "name": "presentationAutoEnter",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Automatic Grid to Sidebar entry at two presented sources; independent of primary selection. Explicit Grid suppresses entry until full withdrawal."
+        },
+        {
+          "id": 14,
+          "name": "canvasMode",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "adaptive",
+            "fixed"
+          ],
+          "description": "Canvas sizing policy for normalized input geometry."
+        },
+        {
+          "id": 15,
+          "name": "baseWidth",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "min": 1,
+          "max": 16384,
+          "description": "Fixed or preferred canvas width in pixels."
+        },
+        {
+          "id": 16,
+          "name": "baseHeight",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "min": 1,
+          "max": 16384,
+          "description": "Fixed or preferred canvas height in pixels."
+        },
+        {
+          "id": 17,
+          "name": "maxWidth",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "min": 1,
+          "max": 16384,
+          "description": "Adaptive canvas maximum width in pixels."
+        },
+        {
+          "id": 18,
+          "name": "maxHeight",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "min": 1,
+          "max": 16384,
+          "description": "Adaptive canvas maximum height in pixels."
+        }
+      ]
+    },
+    {
+      "name": "CastPresentationSettingsState",
+      "type": "object",
+      "description": "Full bounded settings state; desired/adopted/startup/stored facts and two independent event barriers must never be conflated.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "settingsRevision",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 settings fact version within the runtime epoch."
+        },
+        {
+          "id": 2,
+          "name": "settingsEventSequence",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 settings publication barrier; independent of P0 eventSequence."
+        },
+        {
+          "id": 3,
+          "name": "configured",
+          "type": "CastPresentationSettingsValues",
+          "required": true,
+          "deprecated": false,
+          "description": "Complete supported desired settings including temporary changes."
+        },
+        {
+          "id": 4,
+          "name": "applied",
+          "type": "CastPresentationSettingsValues",
+          "required": true,
+          "deprecated": false,
+          "description": "Confirmed actually adopted values; unconfirmed fields omitted with issues."
+        },
+        {
+          "id": 5,
+          "name": "activeStartup",
+          "type": "CastPresentationStartupSettings",
+          "required": true,
+          "deprecated": false,
+          "description": "Restart-only intent accepted at current startup; used to compute pendingRestart."
+        },
+        {
+          "id": 6,
+          "name": "pendingRestart",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Unique restart-only fields where configured differs from activeStartup; applied capacity limits do not create permanent pending."
+        },
+        {
+          "id": 7,
+          "name": "persisted",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "True iff desired settings equal known stored/startup projection; false if unknown and not a disk-write receipt."
+        },
+        {
+          "id": 8,
+          "name": "unsavedFields",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Configured fields differing from known stored values; all supported fields when storage projection unknown."
+        },
+        {
+          "id": 9,
+          "name": "unappliedFields",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Live fields differing from confirmed adopted policy; layout animation alone does not qualify."
+        },
+        {
+          "id": 10,
+          "name": "storageState",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "absent",
+            "loaded",
+            "saved",
+            "invalid",
+            "unavailable"
+          ],
+          "description": "Truthful store observation; invalid/unknown files are preserved rather than silently overwritten."
+        },
+        {
+          "id": 11,
+          "name": "lockedFields",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Unique supported field names currently locked by explicit deployment/authorization policy."
+        },
+        {
+          "id": 12,
+          "name": "applicationIssues",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "CastPresentationSettingIssue"
+          },
+          "description": "Safe field-specific limitation/failure/lock observations."
+        },
+        {
+          "id": 13,
+          "name": "persistedValues",
+          "type": "CastPresentationSettingsValues",
+          "required": false,
+          "deprecated": false,
+          "description": "Complete known persistent startup projection; omitted if invalid/unavailable/unknown."
+        },
+        {
+          "id": 14,
+          "name": "storeRevision",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 known valid store version; absent without valid file."
+        },
+        {
+          "id": 15,
+          "name": "appliedControlRevision",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Associated P0 adopted-policy revision lower bound for cross-stream synchronization."
+        },
+        {
+          "id": 16,
+          "name": "persistError",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 512,
+          "description": "Sanitized bounded storage diagnostic; no raw request/secret/private path."
+        }
+      ]
+    },
+    {
+      "name": "CastPresentationSettingIssue",
+      "type": "object",
+      "description": "One safe supported-field observation; historical failure and current policy remain distinct.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "field",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "One supported setting field name."
+        },
+        {
+          "id": 2,
+          "name": "kind",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "limitedByValidation",
+            "limitedByHardLimit",
+            "liveApplyFailed",
+            "startupFailed",
+            "locked",
+            "unknown"
+          ],
+          "description": "Structured limitation/failure classification."
+        },
+        {
+          "id": 3,
+          "name": "reason",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Bounded sanitized reason; no secret/path leakage."
+        },
+        {
+          "id": 4,
+          "name": "statusCode",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "description": "Optional standard AXTP numeric status."
+        }
+      ]
+    },
+    {
+      "name": "CastPresentationSettingsCapability",
+      "type": "object",
+      "description": "Optional P1 field and effect partition; conditional choices/modes/minimum are required for corresponding supported keys, never inferred defaults.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "fields",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Unique supported settings keys; meeting extension adds four separately advertised keys."
+        },
+        {
+          "id": 2,
+          "name": "liveFields",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Live effect subset; disjoint from restartOnlyFields and together exactly fields."
+        },
+        {
+          "id": 3,
+          "name": "restartOnlyFields",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Restart-only subset; updates never automatically restart current media."
+        },
+        {
+          "id": 4,
+          "name": "supportsPersistence",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether explicit field-only save requests are supported."
+        },
+        {
+          "id": 5,
+          "name": "capacityChoices",
+          "type": "array",
+          "required": false,
+          "deprecated": false,
+          "array": {
+            "itemType": "uint32"
+          },
+          "description": "Nonempty unique positive choices required when capacity supported."
+        },
+        {
+          "id": 6,
+          "name": "layoutModes",
+          "type": "array",
+          "required": false,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Supported grid/presentation layouts."
+        },
+        {
+          "id": 10,
+          "name": "contentAdaptations",
+          "type": "array",
+          "required": false,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Supported fixed/auto-fit content adaptation."
+        },
+        {
+          "id": 7,
+          "name": "profileHints",
+          "type": "array",
+          "required": false,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Nonempty unique bounded product profile identifiers required when profileHint supported."
+        },
+        {
+          "id": 8,
+          "name": "minEnabledProtocols",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "description": "Required when enabledProtocols supported; zero explicitly permits empty if control/settings can remain available independently."
+        },
+        {
+          "id": 11,
+          "name": "canvasModes",
+          "type": "array",
+          "required": false,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Supported canvas sizing modes"
+        },
+        {
+          "id": 12,
+          "name": "canvasMaxWidth",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "min": 1,
+          "max": 16384,
+          "description": "Maximum supported canvas width in pixels."
+        },
+        {
+          "id": 13,
+          "name": "canvasMaxHeight",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "min": 1,
+          "max": 16384,
+          "description": "Maximum supported canvas height in pixels."
+        }
+      ]
+    },
+    {
+      "name": "CastPresentationSettingsOperationResult",
+      "type": "object",
+      "description": "Truthful independent configuration/application/persistence results; failed may still include stored/configured commits.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "field",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "Unique requested setting field."
+        },
+        {
+          "id": 2,
+          "name": "settingsRevision",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 most recently confirmed settings revision; terminal uses completion/check version."
+        },
+        {
+          "id": 3,
+          "name": "configurationStatus",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "notCommitted",
+            "unchanged",
+            "committed"
+          ],
+          "description": "Whether this intent changed desired configuration."
+        },
+        {
+          "id": 4,
+          "name": "applicationStatus",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "notAttempted",
+            "unchanged",
+            "applied",
+            "pendingRestart",
+            "failed"
+          ],
+          "description": "Confirmed policy adoption or deferred restart intent; not media audibility/restart proof."
+        },
+        {
+          "id": 5,
+          "name": "persistenceStatus",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "notRequested",
+            "pending",
+            "unchanged",
+            "stored",
+            "failed"
+          ],
+          "description": "Explicit field-only storage outcome distinct from equality with known persistedValues."
+        },
+        {
+          "id": 6,
+          "name": "appliedControlRevision",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Optional canonical decimal uint64 associated P0 policy revision."
+        }
+      ]
+    },
+    {
+      "name": "CastSettingsEventContext",
+      "type": "object",
+      "description": "Independent settings event cursor; payload revision/sequence must match and this event never consumes P0 sequence.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlVersion",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Selected control version; P1 uses 1."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Canonical lower-case runtime epoch UUID."
+        },
+        {
+          "id": 3,
+          "name": "settingsRevision",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 settings state version."
+        },
+        {
+          "id": 4,
+          "name": "settingsEventSequence",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 settings publication sequence; snapshot barrier may be zero."
+        }
+      ]
+    },
+    {
+      "name": "CastPresentationSettingsChangedEvent",
+      "type": "object",
+      "description": "Complete settings state replacement in its own bounded ordered event stream; no P0 context or batch fields.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "settingsContext",
+          "type": "CastSettingsEventContext",
+          "required": true,
+          "deprecated": false,
+          "description": "Independent required settings cursor matching payload versions."
+        },
+        {
+          "id": 2,
+          "name": "settings",
+          "type": "CastPresentationSettingsState",
+          "required": true,
+          "deprecated": false,
+          "description": "Full post-commit settings state"
+        }
+      ]
+    },
+    {
+      "name": "CastReceiversChangedEvent",
+      "type": "object",
+      "description": "Full receiver-section replacement in one control group part.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "context",
+          "type": "CastControlEventContext",
+          "required": true,
+          "deprecated": false,
+          "description": "Required v1 commit context."
+        },
+        {
+          "id": 2,
+          "name": "receivers",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "CastReceiverState"
+          },
+          "description": "Complete current bounded receiver collection."
+        }
+      ]
+    },
+    {
+      "name": "CastSessionsChangedEvent",
+      "type": "object",
+      "description": "Full session-section replacement in one control group part.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "context",
+          "type": "CastControlEventContext",
+          "required": true,
+          "deprecated": false,
+          "description": "Required v1 commit context."
+        },
+        {
+          "id": 2,
+          "name": "sessions",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "CastMultiSessionState"
+          },
+          "description": "Complete current bounded session collection."
+        }
+      ]
+    },
+    {
+      "name": "CastPresentationChangedEvent",
+      "type": "object",
+      "description": "Full presentation-section replacement; never a receiver/session/audio aggregate.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "context",
+          "type": "CastControlEventContext",
+          "required": true,
+          "deprecated": false,
+          "description": "Required v1 commit context."
+        },
+        {
+          "id": 2,
+          "name": "presentation",
+          "type": "CastPresentationState",
+          "required": true,
+          "deprecated": false,
+          "description": "Complete current presentation state."
+        }
+      ]
+    },
+    {
+      "name": "CastAudioPolicyChangedEvent",
+      "type": "object",
+      "description": "Full audio-policy-section replacement in one control group part.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "context",
+          "type": "CastControlEventContext",
+          "required": true,
+          "deprecated": false,
+          "description": "Required v1 commit context."
+        },
+        {
+          "id": 2,
+          "name": "audioPolicy",
+          "type": "CastAudioPolicyState",
+          "required": true,
+          "deprecated": false,
+          "description": "Complete selected/effective audio policy state."
+        }
+      ]
+    },
+    {
+      "name": "CastControlOperationChangedEvent",
+      "type": "object",
+      "description": "One P0 per-session operation record with ordered control publication context; setPresentationSettings is excluded from this event stream.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "context",
+          "type": "CastControlEventContext",
+          "required": true,
+          "deprecated": false,
+          "description": "Required v1 commit context; may be an operation-only group."
+        },
+        {
+          "id": 2,
+          "name": "operation",
+          "type": "CastControlOperation",
+          "required": true,
+          "deprecated": false,
+          "description": "One admitted queued or terminal operation record."
+        }
+      ]
+    },
+    {
+      "name": "CastGetWebCastBackendStateParams",
+      "type": "object",
+      "description": "Explicit supported control version for the optional WebCast backend snapshot.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlVersion",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Supported control version; this feature uses 1."
+        }
+      ]
+    },
+    {
+      "name": "CastWebCastBackendContext",
+      "type": "object",
+      "description": "Independent full-state event cursor; not part of P0 control or P1 settings sequences.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlVersion",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Selected supported control version; uses 1."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Canonical lower-case host UUID; changes at restart and equals the advertised control epoch."
+        },
+        {
+          "id": 3,
+          "name": "backendRevision",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 independent backend-state revision."
+        },
+        {
+          "id": 4,
+          "name": "backendEventSequence",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 barrier covering complete backend replacement events through this snapshot."
+        }
+      ]
+    },
+    {
+      "name": "CastWebCastSignalingState",
+      "type": "object",
+      "description": "Current room signaling availability and retained native peer connectivity; no media-quality claim or secret material.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "state",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "disabled",
+            "offline",
+            "creatingRoom",
+            "awaitingRestore",
+            "ready",
+            "failed",
+            "stopped"
+          ],
+          "description": "Ready requires an authoritative usable room and code; transport-open alone is insufficient."
+        },
+        {
+          "id": 2,
+          "name": "transportConnected",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Current signaling transport connectivity independent of existing P2P media."
+        },
+        {
+          "id": 3,
+          "name": "retainedPeerCount",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Native peers retained by this backend including peers still negotiating."
+        },
+        {
+          "id": 4,
+          "name": "connectedPeerCount",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Retained peers with an open data/control channel; never proof of presented video or audible output."
+        },
+        {
+          "id": 5,
+          "name": "lastNetworkError",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "description": "Historical sanitized transport error code; not an override of current state."
+        }
+      ]
+    },
+    {
+      "name": "CastWebCastLocalBackendState",
+      "type": "object",
+      "description": "Receiver-owned optional local signaling listener and its independent room.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "fallbackEnabled",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether local fallback is enabled in the active receiver instance."
+        },
+        {
+          "id": 2,
+          "name": "serviceState",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "disabled",
+            "dormant",
+            "running",
+            "failed",
+            "stopped"
+          ],
+          "description": "Local listener lifecycle; dormant means permitted but not yet started."
+        },
+        {
+          "id": 3,
+          "name": "servicePort",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "min": 1,
+          "max": 65535,
+          "description": "Actual owned listener port in 1..65535; present iff serviceState is running."
+        },
+        {
+          "id": 4,
+          "name": "startAttempts",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 local-start attempts for this host lifetime."
+        },
+        {
+          "id": 5,
+          "name": "lastStartError",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "description": "Sanitized last local startup error code; no path or exception text."
+        },
+        {
+          "id": 6,
+          "name": "signaling",
+          "type": "CastWebCastSignalingState",
+          "required": true,
+          "deprecated": false,
+          "description": "Local room signaling and peer connectivity independent of cloud recovery."
+        }
+      ]
+    },
+    {
+      "name": "CastWebCastBackendState",
+      "type": "object",
+      "description": "Actual WebCast signaling backend selection and independent cloud/local observations; no automatic migration or recovery policy is mandated.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "enabled",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether WebCast was enabled for this host instance; false is reported explicitly."
+        },
+        {
+          "id": 2,
+          "name": "state",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "disabled",
+            "starting",
+            "ready",
+            "failed",
+            "stopped"
+          ],
+          "description": "Current ability to admit a new WebCast join; does not describe existing media quality."
+        },
+        {
+          "id": 3,
+          "name": "selectedBackend",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "none",
+            "cloud",
+            "local"
+          ],
+          "description": "Authoritative backend currently offered for new joins; none when no usable room exists. Existing peers may belong to the other backend."
+        },
+        {
+          "id": 4,
+          "name": "cloud",
+          "type": "CastWebCastSignalingState",
+          "required": true,
+          "deprecated": false,
+          "description": "Cloud room and peer observations."
+        },
+        {
+          "id": 5,
+          "name": "local",
+          "type": "CastWebCastLocalBackendState",
+          "required": true,
+          "deprecated": false,
+          "description": "Local listener and room observations; retained local peers need not migrate when cloud returns."
+        }
+      ]
+    },
+    {
+      "name": "CastWebCastBackendSnapshot",
+      "type": "object",
+      "description": "Atomic complete WebCast backend replacement shared by query, optional status section and change event.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "backendContext",
+          "type": "CastWebCastBackendContext",
+          "required": true,
+          "deprecated": false,
+          "description": "Epoch and independent revision/event barrier committed with this state."
+        },
+        {
+          "id": 2,
+          "name": "state",
+          "type": "CastWebCastBackendState",
+          "required": true,
+          "deprecated": false,
+          "description": "Complete safe backend state rather than a delta."
+        }
+      ]
+    },
+    {
+      "name": "CastWebCastBackendCapability",
+      "type": "object",
+      "description": "Explicit optional WebCast backend snapshot and independent event discovery; absence never implies support.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "supportsSnapshot",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "True for this complete feature."
+        },
+        {
+          "id": 2,
+          "name": "supportsEvents",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "True for complete independent full-state events."
+        },
+        {
+          "id": 3,
+          "name": "backendTypes",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Supported identifiers from cloud and local; current selection is reported separately."
+        },
+        {
+          "id": 4,
+          "name": "sequenceModel",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "independent-full-state"
+          ],
+          "description": "Backend events do not change P0 batch membership or P1 sequence."
+        }
+      ]
+    },
+    {
+      "name": "CastMeetingPresentationState",
+      "type": "object",
+      "description": "Meeting policy and transient emphasis captured at the existing P0 commit boundary; no media-quality claims.",
+      "fields": [
+        {
+          "id": 2,
+          "name": "mode",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "manual",
+            "automatic"
+          ],
+          "description": "Primary selection policy inside Presentation only; never automatically enters it from Grid."
+        },
+        {
+          "id": 3,
+          "name": "sidebar",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "left",
+            "right"
+          ],
+          "description": "Preview rail position."
+        },
+        {
+          "id": 4,
+          "name": "audioFollow",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Follow preference preserved while inactive."
+        },
+        {
+          "id": 5,
+          "name": "revision",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 meeting identity revision for optimistic commands."
+        },
+        {
+          "id": 7,
+          "name": "primary",
+          "type": "CastSessionRef",
+          "required": false,
+          "deprecated": false,
+          "description": "Current exact primary identity; omitted in base split."
+        },
+        {
+          "id": 8,
+          "name": "sidebarPage",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Zero-based preview page."
+        },
+        {
+          "id": 9,
+          "name": "sidebarPageCount",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "min": 1,
+          "description": "Current bounded page count including an empty page."
+        },
+        {
+          "id": 10,
+          "name": "mainSharePermille",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Fixed logical width share; this profile uses 840."
+        },
+        {
+          "id": 11,
+          "name": "audioFollowActive",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether follow policy currently has an eligible primary; not audible output."
+        },
+        {
+          "id": 12,
+          "name": "view",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "sidebar",
+            "focus"
+          ],
+          "description": "Present only in Presentation layout; omitted in Grid."
+        },
+        {
+          "id": 13,
+          "name": "focusOnDoubleClick",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Main-body double-click Focus entry preference; absent means true. Explicit focus API remains independent."
+        },
+        {
+          "id": 14,
+          "name": "gridOnDoubleClick",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Include Grid in main-body double-click cycle; absent means false. With Focus enabled the cycle is Grid to Sidebar to Focus to Grid."
+        },
+        {
+          "id": 15,
+          "name": "autoEnter",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Automatic layout entry preference; absent means unsupported. Independent of primary selection."
+        },
+        {
+          "id": 16,
+          "name": "autoEnterSuppressed",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Explicit Grid suspends auto-entry for this source round; resets on complete withdrawal or explicit re-enabling. Transient and never persisted."
+        }
+      ]
+    },
+    {
+      "name": "CastSetPresentationFocusParams",
+      "type": "object",
+      "description": "P0-style bounded async operation; dedup before optimistic revision check and exact owner fencing before mutation.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlVersion",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Explicit version uses 1."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Canonical lower-case runtime UUID."
+        },
+        {
+          "id": 3,
+          "name": "clientInstanceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Canonical lower-case client UUID."
+        },
+        {
+          "id": 4,
+          "name": "commandId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Canonical lower-case intent UUID."
+        },
+        {
+          "id": 5,
+          "name": "target",
+          "type": "CastControlTarget",
+          "required": true,
+          "deprecated": false,
+          "description": "Exact admitted identity; split requires current primary."
+        },
+        {
+          "id": 6,
+          "name": "expectedMeetingRevision",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 optimistic meeting revision checked on owner after dedup."
+        },
+        {
+          "id": 7,
+          "name": "display",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "sidebar",
+            "grid",
+            "focus"
+          ],
+          "description": "Explicit desired view. Focus requires current primary and supportsFocusView capability; primary restores sidebar. No toggle."
+        },
+        {
+          "id": 8,
+          "name": "sidebarPage",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "description": "Explicit page optional only with primary; validated against current membership before mutation."
+        }
+      ]
+    },
+    {
+      "name": "CastMeetingAudioGain",
+      "type": "object",
+      "description": "Observed applied audio branch weight separate from enabled intent and physical listening quality.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "session",
+          "type": "CastSessionRef",
+          "required": true,
+          "deprecated": false,
+          "description": "Exact audible participant."
+        },
+        {
+          "id": 2,
+          "name": "gainPpm",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Rounded linear gain parts per million in 0..1000000; not perceived loudness percent."
+        }
+      ]
+    },
+    {
+      "name": "CastMeetingPresentationCapability",
+      "type": "object",
+      "description": "Optional meeting focus and fixed rail policy; settings keys require explicit P1 declaration.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "modes",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Supported visual identifiers manual and automatic."
+        },
+        {
+          "id": 2,
+          "name": "sidebars",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Supported left and right rail positions."
+        },
+        {
+          "id": 3,
+          "name": "mainSharePermille",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Fixed logical main width share 840."
+        },
+        {
+          "id": 4,
+          "name": "supportsAudioFollow",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Explicit optional follow switch independent of global automatic/manual."
+        },
+        {
+          "id": 5,
+          "name": "supportsPaging",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Bounded preview paging without admission or media lifecycle changes."
+        },
+        {
+          "id": 6,
+          "name": "supportsFocusView",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Explicit support for focus display requests and meeting view observation; absence means unsupported."
+        }
+      ]
+    },
+    {
+      "name": "CastAirPlayControlCapability",
+      "type": "object",
+      "description": "Bounded secret-free authentication and discovery observation.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "supportsEvents",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "State participates in the P0 commit barrier."
+        },
+        {
+          "id": 2,
+          "name": "supportsLiveRename",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Safe discovery-only name reconfiguration."
+        },
+        {
+          "id": 3,
+          "name": "passwordPolicy",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "startup-only"
+          ],
+          "description": "Random-password protection changes through startup arguments only."
+        }
+      ]
+    },
+    {
+      "name": "CastAirPlayAuthenticationAttempt",
+      "type": "object",
+      "description": "Authentication identity is not a media session; never contains a password or client address.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "attemptId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Service-minted decimal uint64 attempt identity."
+        },
+        {
+          "id": 2,
+          "name": "challengeId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 challenge generation; zero before a challenge."
+        },
+        {
+          "id": 3,
+          "name": "displayRequestId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 prompt occurrence; retrying the same challenge may change it."
+        },
+        {
+          "id": 4,
+          "name": "state",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "incoming",
+            "waitingForPassword",
+            "authenticated",
+            "ended",
+            "failed",
+            "timedOut"
+          ],
+          "description": "Observed phase; transport closure alone never claims user cancellation."
+        },
+        {
+          "id": 5,
+          "name": "reason",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "Bounded non-sensitive reason."
+        }
+      ]
+    },
+    {
+      "name": "CastAirPlayControlState",
+      "type": "object",
+      "description": "Current discovery and bounded authentication observations without credentials.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "enabled",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Startup protocol enablement."
+        },
+        {
+          "id": 2,
+          "name": "displayName",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Actual configured discovery name."
+        },
+        {
+          "id": 3,
+          "name": "publishState",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "published",
+            "republishing",
+            "pending",
+            "failed",
+            "unpublished"
+          ],
+          "description": "Observed discovery publication state."
+        },
+        {
+          "id": 4,
+          "name": "randomPasswordEnabled",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Startup random-password policy."
+        },
+        {
+          "id": 5,
+          "name": "attempts",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "CastAirPlayAuthenticationAttempt"
+          },
+          "description": "Bounded active and recently ended authentication attempts."
+        },
+        {
+          "id": 6,
+          "name": "observationDrops",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 20,
+          "description": "Decimal uint64 count of bounded authentication observations dropped before host commit; resynchronize state when it changes."
+        }
+      ]
+    },
+    {
+      "name": "CastAirPlayChangedEvent",
+      "type": "object",
+      "description": "Full AirPlay state replacement in one P0 commit group part.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "context",
+          "type": "CastControlEventContext",
+          "required": true,
+          "deprecated": false,
+          "description": "Required atomic commit context."
+        },
+        {
+          "id": 2,
+          "name": "airplay",
+          "type": "CastAirPlayControlState",
+          "required": true,
+          "deprecated": false,
+          "description": "Complete secret-free state."
+        }
+      ]
+    },
+    {
+      "name": "CastTouchbackTarget",
+      "type": "object",
+      "description": "Per-route target identity for touchback control.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "sessionId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Cast session identifier."
+        },
+        {
+          "id": 2,
+          "name": "sessionGeneration",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 32,
+          "description": "Decimal-string session generation."
+        },
+        {
+          "id": 3,
+          "name": "slotId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Per-route slot identifier."
+        },
+        {
+          "id": 4,
+          "name": "bindingGeneration",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 32,
+          "description": "Decimal-string binding generation."
+        },
+        {
+          "id": 5,
+          "name": "lifecycleGeneration",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 32,
+          "description": "Decimal-string receiver lifecycle generation."
+        }
+      ]
+    },
+    {
+      "name": "CastTouchbackTargetRequest",
+      "type": "object",
+      "description": "Selector for one cast target.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "target",
+          "type": "CastTouchbackTarget",
+          "required": true,
+          "deprecated": false,
+          "description": "Complete target identity and generation fence."
+        }
+      ]
+    },
+    {
+      "name": "CastTouchbackState",
+      "type": "object",
+      "description": "Per-target touchback state with independent gates and geometry fencing.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "target",
+          "type": "CastTouchbackTarget",
+          "required": true,
+          "deprecated": false,
+          "description": "Complete target identity."
+        },
+        {
+          "id": 2,
+          "name": "receiverOptIn",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Receiver-local touchback gate."
+        },
+        {
+          "id": 3,
+          "name": "controllerRequested",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Launcher/controller requested gate."
+        },
+        {
+          "id": 4,
+          "name": "effectiveEnabled",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Computed effective gate; true only when both gates allow input."
+        },
+        {
+          "id": 5,
+          "name": "requestedMode",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "touch",
+            "mouse"
+          ],
+          "description": "Controller requested input interpretation."
+        },
+        {
+          "id": 6,
+          "name": "negotiatedMode",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "touch",
+            "mouse",
+            "none"
+          ],
+          "description": "Mode accepted by the active stream, or none when closed."
+        },
+        {
+          "id": 7,
+          "name": "resolutionPreference",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "inherit",
+            "prefer1080p"
+          ],
+          "description": "Preserve the sender's current source quality or request 1080p; TouchBatch coordinates remain normalized."
+        },
+        {
+          "id": 8,
+          "name": "streamId",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "description": "Active input.stream identifier."
+        },
+        {
+          "id": 9,
+          "name": "epoch",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "description": "Active input stream epoch."
+        },
+        {
+          "id": 10,
+          "name": "canvasRevision",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Canvas revision bound to this target."
+        },
+        {
+          "id": 11,
+          "name": "geometryRevision",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Geometry revision bound to this target."
+        },
+        {
+          "id": 12,
+          "name": "canvasToken",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Canvas fence token."
+        },
+        {
+          "id": 13,
+          "name": "geometryToken",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Geometry fence token."
+        },
+        {
+          "id": 14,
+          "name": "revision",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Monotonic touchback state revision."
+        },
+        {
+          "id": 15,
+          "name": "diagnosticReason",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 256,
+          "description": "Bounded diagnostic reason."
+        }
+      ]
+    },
+    {
+      "name": "CastTouchbackEnabledRequest",
+      "type": "object",
+      "description": "Request to set the controller touchback gate for one target.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "target",
+          "type": "CastTouchbackTarget",
+          "required": true,
+          "deprecated": false,
+          "description": "Target identity and generation fence."
+        },
+        {
+          "id": 2,
+          "name": "enabled",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Requested controller gate."
+        },
+        {
+          "id": 3,
+          "name": "commandId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Idempotency key."
+        }
+      ]
+    },
+    {
+      "name": "CastTouchbackModeRequest",
+      "type": "object",
+      "description": "Request to set touchback mode for one target.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "target",
+          "type": "CastTouchbackTarget",
+          "required": true,
+          "deprecated": false,
+          "description": "Target identity and generation fence."
+        },
+        {
+          "id": 2,
+          "name": "mode",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "touch",
+            "mouse"
+          ],
+          "description": "Requested input interpretation."
+        },
+        {
+          "id": 3,
+          "name": "requirement",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "default": "preferred",
+          "enum": [
+            "preferred",
+            "required"
+          ],
+          "description": "Whether a fallback mode is allowed."
+        },
+        {
+          "id": 4,
+          "name": "commandId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Idempotency key."
+        }
+      ]
+    },
+    {
+      "name": "CastTouchbackResolutionRequest",
+      "type": "object",
+      "description": "Request to set touchback coordinate resolution preference.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "target",
+          "type": "CastTouchbackTarget",
+          "required": true,
+          "deprecated": false,
+          "description": "Target identity and generation fence."
+        },
+        {
+          "id": 2,
+          "name": "resolutionPreference",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "inherit",
+            "prefer1080p"
+          ],
+          "description": "Requested sender source-quality preference; packet coordinates remain normalized."
+        },
+        {
+          "id": 3,
+          "name": "commandId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Idempotency key."
+        }
+      ]
+    },
+    {
+      "name": "CastTouchbackChangedEvent",
+      "type": "object",
+      "description": "Per-target touchback state change event.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "state",
+          "type": "CastTouchbackState",
+          "required": true,
+          "deprecated": false,
+          "description": "Current target state."
+        },
+        {
+          "id": 2,
+          "name": "changedFields",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Changed state fields."
+        },
+        {
+          "id": 3,
+          "name": "accepted",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether the owner lane accepted the triggering request."
+        }
+      ]
+    },
+    {
+      "name": "CastTouchbackCapability",
+      "type": "object",
+      "description": "Capability descriptor for cast.touchback; AirPlay receivers do not advertise this capability.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "capability",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 32,
+          "description": "Fixed capability name cast.touchback."
+        },
+        {
+          "id": 2,
+          "name": "protocols",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Protocol paths supporting touchback, such as webcast and hid; airplay is excluded."
+        },
+        {
+          "id": 3,
+          "name": "supportedModes",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Supported input modes, with touch preferred by default."
+        },
+        {
+          "id": 4,
+          "name": "supportsPerTarget",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether state is independently controlled for each route."
+        },
+        {
+          "id": 5,
+          "name": "supportsControlPlane",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether launcher control-plane gate methods are supported."
         }
       ]
     },
@@ -7293,6 +11277,560 @@
           "required": false,
           "deprecated": false,
           "description": "Error details when state is failed."
+        }
+      ]
+    },
+    {
+      "name": "InputStreamTarget",
+      "type": "object",
+      "description": "Complete target identity used to fence an input stream against stale sessions and bindings.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "sessionId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Stable cast session identifier."
+        },
+        {
+          "id": 2,
+          "name": "sessionGeneration",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 32,
+          "description": "Decimal-string session generation."
+        },
+        {
+          "id": 3,
+          "name": "slotId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Per-route or per-display slot identifier."
+        },
+        {
+          "id": 4,
+          "name": "bindingGeneration",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 32,
+          "description": "Decimal-string binding generation for the selected route."
+        },
+        {
+          "id": 5,
+          "name": "lifecycleGeneration",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 32,
+          "description": "Decimal-string receiver lifecycle generation."
+        }
+      ]
+    },
+    {
+      "name": "InputOpenStreamParams",
+      "type": "object",
+      "description": "Request to open the canonical input.stream touchback business stream.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlVersion",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Control-plane contract version."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Runtime instance that owns the request."
+        },
+        {
+          "id": 3,
+          "name": "target",
+          "type": "InputStreamTarget",
+          "required": true,
+          "deprecated": false,
+          "description": "Target identity and generation fence."
+        },
+        {
+          "id": 4,
+          "name": "streamKind",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "touchback"
+          ],
+          "description": "Business stream kind; v1 is touchback."
+        },
+        {
+          "id": 5,
+          "name": "format",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "touch-batch-v1"
+          ],
+          "description": "Canonical binary payload format after the AXTP STREAM header."
+        },
+        {
+          "id": 6,
+          "name": "preferredMode",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "default": "touch",
+          "enum": [
+            "touch",
+            "mouse"
+          ],
+          "description": "Preferred input interpretation; touch is the default."
+        },
+        {
+          "id": 7,
+          "name": "supportedModes",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Modes the requester can consume, normally touch and mouse."
+        },
+        {
+          "id": 8,
+          "name": "canvasRevision",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Canvas revision used to produce normalized coordinates."
+        },
+        {
+          "id": 9,
+          "name": "geometryRevision",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Geometry revision used to map the viewport."
+        },
+        {
+          "id": 10,
+          "name": "canvasToken",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Numeric canvas fence token."
+        },
+        {
+          "id": 11,
+          "name": "geometryToken",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Numeric geometry fence token."
+        },
+        {
+          "id": 12,
+          "name": "maxBatchEvents",
+          "type": "uint16",
+          "required": false,
+          "deprecated": false,
+          "description": "Maximum touch events per batch accepted by the requester."
+        },
+        {
+          "id": 13,
+          "name": "maxFrameBytes",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "description": "Maximum complete STREAM frame size accepted by the requester."
+        },
+        {
+          "id": 14,
+          "name": "maxContacts",
+          "type": "uint16",
+          "required": false,
+          "deprecated": false,
+          "description": "Maximum simultaneous contacts supported by the requester."
+        },
+        {
+          "id": 15,
+          "name": "modeRequirement",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "default": "preferred",
+          "enum": [
+            "preferred",
+            "required"
+          ],
+          "description": "Whether preferredMode may fall back to another supported mode."
+        },
+        {
+          "id": 16,
+          "name": "commandId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Idempotency key for the open request."
+        }
+      ]
+    },
+    {
+      "name": "InputOpenStreamResult",
+      "type": "object",
+      "description": "Result of input.openStream negotiation.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "streamId",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "AXTP STREAM identifier."
+        },
+        {
+          "id": 2,
+          "name": "epoch",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Input ownership epoch; changes after reset and reopen."
+        },
+        {
+          "id": 3,
+          "name": "acceptedMode",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "touch",
+            "mouse"
+          ],
+          "description": "Mode accepted for this stream."
+        },
+        {
+          "id": 4,
+          "name": "format",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "touch-batch-v1"
+          ],
+          "description": "Canonical binary payload format."
+        },
+        {
+          "id": 5,
+          "name": "canvasToken",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Canvas token bound to this stream epoch."
+        },
+        {
+          "id": 6,
+          "name": "geometryToken",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Geometry token bound to this stream epoch."
+        },
+        {
+          "id": 7,
+          "name": "maxBatchEvents",
+          "type": "uint16",
+          "required": false,
+          "deprecated": false,
+          "description": "Maximum events per accepted batch."
+        },
+        {
+          "id": 8,
+          "name": "maxFrameBytes",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "description": "Maximum complete STREAM frame size."
+        },
+        {
+          "id": 9,
+          "name": "maxContacts",
+          "type": "uint16",
+          "required": false,
+          "deprecated": false,
+          "description": "Maximum simultaneous contacts."
+        },
+        {
+          "id": 10,
+          "name": "revision",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Receiver input stream state revision."
+        },
+        {
+          "id": 11,
+          "name": "accepted",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether the owner lane accepted the request; true does not imply effective touchback enablement."
+        }
+      ]
+    },
+    {
+      "name": "InputCloseStreamParams",
+      "type": "object",
+      "description": "Request to close an input.stream epoch and release active input state.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "controlVersion",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Control-plane contract version."
+        },
+        {
+          "id": 2,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Runtime instance that owns the request."
+        },
+        {
+          "id": 3,
+          "name": "target",
+          "type": "InputStreamTarget",
+          "required": true,
+          "deprecated": false,
+          "description": "Target identity and generation fence."
+        },
+        {
+          "id": 4,
+          "name": "streamKind",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "touchback"
+          ],
+          "description": "Business stream kind; v1 is touchback."
+        },
+        {
+          "id": 5,
+          "name": "streamId",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "AXTP STREAM identifier to close."
+        },
+        {
+          "id": 6,
+          "name": "epoch",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Input ownership epoch to close."
+        },
+        {
+          "id": 7,
+          "name": "reason",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "requested",
+            "route_changed",
+            "disconnect",
+            "timeout",
+            "reset",
+            "shutdown"
+          ],
+          "description": "Reason for closing the stream."
+        },
+        {
+          "id": 8,
+          "name": "finalSeqId",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "description": "Last sequence number accepted before close."
+        },
+        {
+          "id": 9,
+          "name": "commandId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Idempotency key for the close request."
+        }
+      ]
+    },
+    {
+      "name": "InputCloseStreamResult",
+      "type": "object",
+      "description": "Result of input.closeStream.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "streamId",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "AXTP STREAM identifier."
+        },
+        {
+          "id": 2,
+          "name": "epoch",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Closed input ownership epoch."
+        },
+        {
+          "id": 3,
+          "name": "closed",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether the stream is now closed."
+        },
+        {
+          "id": 4,
+          "name": "alreadyClosed",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "default": false,
+          "description": "Whether the stream was already closed and the operation converged idempotently."
+        },
+        {
+          "id": 5,
+          "name": "revision",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Receiver input stream state revision after close."
+        }
+      ]
+    },
+    {
+      "name": "InputStreamCapability",
+      "type": "object",
+      "description": "Capability descriptor for input.stream.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "capability",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 32,
+          "description": "Fixed capability name input.stream."
+        },
+        {
+          "id": 2,
+          "name": "direction",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "receiver_to_source"
+          ],
+          "description": "Touchback data flows from the receiver to the source."
+        },
+        {
+          "id": 3,
+          "name": "formats",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Supported input stream formats, including touch-batch-v1."
+        },
+        {
+          "id": 4,
+          "name": "inputModes",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Supported modes, including touch and mouse."
+        },
+        {
+          "id": 5,
+          "name": "reliability",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "ordered_reliable"
+          ],
+          "description": "Data-channel delivery requirement; ordinary packets have no application ACK."
+        },
+        {
+          "id": 6,
+          "name": "supportsReset",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether ordered reset frames are supported."
+        },
+        {
+          "id": 7,
+          "name": "supportsMoveCoalescing",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether move events may be coalesced while down/up/cancel ordering is preserved."
+        },
+        {
+          "id": 8,
+          "name": "maxBatchEvents",
+          "type": "uint16",
+          "required": false,
+          "deprecated": false,
+          "description": "Advertised maximum events per batch."
+        },
+        {
+          "id": 9,
+          "name": "maxFrameBytes",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "description": "Advertised maximum complete STREAM frame size."
+        },
+        {
+          "id": 10,
+          "name": "maxContacts",
+          "type": "uint16",
+          "required": false,
+          "deprecated": false,
+          "description": "Advertised maximum simultaneous contacts."
         }
       ]
     },
@@ -9095,7 +13633,7 @@
           "array": {
             "itemType": "string"
           },
-          "description": "Supported playlist item type strings; candidate values include image, website, video, clock, and unsplash."
+          "description": "Supported playlist item types as a subset of the SignagePlaylistItem.type enum values (image, website, video, clock, unsplash, powerbi)."
         },
         {
           "id": 2,
@@ -9190,7 +13728,7 @@
     {
       "name": "SignageGetPlaylistItemUrlResult",
       "type": "object",
-      "description": "Refreshed playlist item URL result. The internal structure of settings depends on type.",
+      "description": "Refreshed playlist item URL result; the type field value selects the settings variant schema.",
       "fields": [
         {
           "id": 1,
@@ -9198,15 +13736,61 @@
           "type": "enum",
           "required": true,
           "deprecated": false,
-          "description": "Playlist item type used to discriminate the settings structure; candidate values include image, video, website, and unsplash. Clock is excluded from URL refresh."
+          "enum": [
+            "image",
+            "video",
+            "website",
+            "unsplash"
+          ],
+          "description": "Playlist item type used to discriminate the settings structure; clock and powerbi are excluded from URL refresh and return NOT_SUPPORTED (powerbi refresh uses signage.getPlaylistItem)."
         },
         {
           "id": 2,
           "name": "settings",
-          "type": "SignagePlaylistItemSettings",
+          "type": "object",
           "required": true,
           "deprecated": false,
-          "description": "Refreshed complete settings; the device may replace the locally cached settings with this value."
+          "variants": {
+            "discriminator": "type",
+            "mapping": {
+              "image": "SignageImageItemSettings",
+              "video": "SignageVideoItemSettings",
+              "website": "SignageWebsiteItemSettings",
+              "unsplash": "SignageUnsplashItemSettings"
+            }
+          },
+          "description": "Refreshed complete settings; the device may replace the locally cached settings with this value. The type field value selects the variant schema."
+        }
+      ]
+    },
+    {
+      "name": "SignageGetPlaylistItemParams",
+      "type": "object",
+      "description": "Request to refresh a complete playlist item by itemId.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "itemId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "Playlist item unique identifier (UUID); same identifier space as signage.getPlaylistItemUrl."
+        }
+      ]
+    },
+    {
+      "name": "SignageGetPlaylistItemResult",
+      "type": "object",
+      "description": "Refreshed complete playlist item; structurally identical to the SignagePlaylistItem elements carried in setPlaylistConfig / getPlaylistConfig payloads.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "item",
+          "type": "SignagePlaylistItem",
+          "required": true,
+          "deprecated": false,
+          "description": "Complete playlist item (id, type, duration, sort, settings). The device replaces the locally cached item with this value."
         }
       ]
     },
@@ -9221,7 +13805,11 @@
           "type": "enum",
           "required": true,
           "deprecated": false,
-          "description": "Change reason; candidate values include set_config (triggered by setPlaylistConfig) and reset_config (triggered by resetPlaylistConfig)."
+          "enum": [
+            "set_config",
+            "reset_config"
+          ],
+          "description": "Change reason; set_config (configuration replaced via signage.setPlaylistConfig) and reset_config (configuration restored to factory default via signage.resetPlaylistConfig)."
         },
         {
           "id": 2,
@@ -9254,7 +13842,11 @@
           "type": "enum",
           "required": true,
           "deprecated": false,
-          "description": "Playlist type; candidate values include default (always-on default playlist) and scheduled (time-windowed playlist)."
+          "enum": [
+            "default",
+            "scheduled"
+          ],
+          "description": "Playlist type; default (always-on default playlist) and scheduled (time-windowed playlist; startDate, endDate, startTime, endTime, and days are required, see each field for ordering constraints)."
         },
         {
           "id": 3,
@@ -9334,7 +13926,15 @@
           "type": "enum",
           "required": true,
           "deprecated": false,
-          "description": "Playlist item type; candidate values include image, website, video, clock, and unsplash."
+          "enum": [
+            "image",
+            "website",
+            "video",
+            "clock",
+            "unsplash",
+            "powerbi"
+          ],
+          "description": "Playlist item type; image (rotating image set), website (embedded web page), video (video media URL), clock (clock face list), unsplash (Unsplash photo set), and powerbi (embedded PowerBI dashboard). The value selects the settings variant schema."
         },
         {
           "id": 3,
@@ -9359,38 +13959,49 @@
         {
           "id": 5,
           "name": "settings",
-          "type": "SignagePlaylistItemSettings",
+          "type": "object",
           "required": true,
           "deprecated": false,
-          "description": "Playlist item settings; structure varies by type."
+          "variants": {
+            "discriminator": "type",
+            "mapping": {
+              "image": "SignageImageItemSettings",
+              "website": "SignageWebsiteItemSettings",
+              "video": "SignageVideoItemSettings",
+              "clock": "SignageClockItemSettings",
+              "unsplash": "SignageUnsplashItemSettings",
+              "powerbi": "SignagePowerBiItemSettings"
+            }
+          },
+          "description": "Per-type playlist item settings; the type field value selects the variant schema applied to this field."
         }
       ]
     },
     {
-      "name": "SignagePlaylistItemSettings",
+      "name": "SignageImageItemSettings",
       "type": "object",
-      "description": "Aggregated playlist item settings spanning all item types. Only the subset matching the enclosing item type is meaningful; see the per-type rules in the signage.playlist draft.",
+      "description": "Settings for the image playlist item type; selected via PlaylistItem.settings variants when type is image.",
       "fields": [
         {
           "id": 1,
           "name": "urls",
           "type": "array",
-          "required": false,
+          "required": true,
           "deprecated": false,
           "array": {
             "itemType": "string"
           },
-          "description": "image type: non-empty image URLs."
+          "description": "Non-empty image URL list."
         },
         {
           "id": 2,
           "name": "delaySeconds",
           "type": "uint32",
-          "required": false,
+          "required": true,
           "deprecated": false,
           "min": 1,
           "default": 5,
-          "description": "image and unsplash types: per-image display interval in seconds."
+          "description": "Per-image display interval in seconds."
         },
         {
           "id": 3,
@@ -9398,61 +14009,176 @@
           "type": "uint64",
           "required": false,
           "deprecated": false,
-          "description": "image, video, and unsplash types: Unix timestamp URL expiry. 0 or absent means never expires."
-        },
+          "description": "Unix timestamp URL expiry. 0 or absent means never expires."
+        }
+      ]
+    },
+    {
+      "name": "SignageVideoItemSettings",
+      "type": "object",
+      "description": "Settings for the video playlist item type; selected via PlaylistItem.settings variants when type is video.",
+      "fields": [
         {
-          "id": 4,
+          "id": 1,
           "name": "url",
           "type": "string",
-          "required": false,
+          "required": true,
           "deprecated": false,
           "maxLength": 2048,
-          "description": "video and website types: media or page URL."
+          "description": "Video media URL."
         },
         {
-          "id": 5,
+          "id": 2,
+          "name": "expiresAt",
+          "type": "uint64",
+          "required": false,
+          "deprecated": false,
+          "description": "Unix timestamp URL expiry. 0 or absent means never expires."
+        },
+        {
+          "id": 3,
           "name": "muted",
           "type": "bool",
           "required": false,
           "deprecated": false,
           "default": false,
-          "description": "video type: whether to play muted."
+          "description": "Whether to play muted."
+        }
+      ]
+    },
+    {
+      "name": "SignageWebsiteItemSettings",
+      "type": "object",
+      "description": "Settings for the website playlist item type; selected via PlaylistItem.settings variants when type is website.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "url",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 2048,
+          "description": "Web page URL."
         },
         {
-          "id": 6,
+          "id": 2,
           "name": "ignoreCertificateError",
           "type": "bool",
           "required": false,
           "deprecated": false,
           "default": false,
-          "description": "website type: whether to ignore TLS certificate errors. Enabling bypasses certificate validation and carries MITM risk; the default policy and caller permission requirements are product-defined."
+          "description": "Whether to ignore TLS certificate errors. Enabling bypasses certificate validation and carries MITM risk; the default policy and caller permission requirements are product-defined."
         },
         {
-          "id": 7,
+          "id": 3,
           "name": "refreshIntervalSecs",
           "type": "uint32",
           "required": false,
           "deprecated": false,
           "min": 1,
-          "description": "website type: page refresh interval in seconds. 0 or absent means no refresh."
-        },
+          "description": "Page refresh interval in seconds. 0 or absent means no refresh."
+        }
+      ]
+    },
+    {
+      "name": "SignageClockItemSettings",
+      "type": "object",
+      "description": "Settings for the clock playlist item type; selected via PlaylistItem.settings variants when type is clock.",
+      "fields": [
         {
-          "id": 8,
+          "id": 1,
           "name": "clocks",
           "type": "array",
-          "required": false,
+          "required": true,
           "deprecated": false,
           "schema": "SignagePlaylistClockEntry",
-          "description": "clock type: non-empty playlist clock entry objects."
-        },
+          "description": "Non-empty clock entries."
+        }
+      ]
+    },
+    {
+      "name": "SignageUnsplashItemSettings",
+      "type": "object",
+      "description": "Settings for the unsplash playlist item type; selected via PlaylistItem.settings variants when type is unsplash.",
+      "fields": [
         {
-          "id": 9,
+          "id": 1,
           "name": "photos",
           "type": "array",
-          "required": false,
+          "required": true,
           "deprecated": false,
           "schema": "SignagePlaylistUnsplashPhoto",
-          "description": "unsplash type: non-empty playlist unsplash photo objects."
+          "description": "Non-empty Unsplash photo entries with photographer attribution."
+        },
+        {
+          "id": 2,
+          "name": "delaySeconds",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "min": 1,
+          "default": 5,
+          "description": "Per-photo display interval in seconds."
+        },
+        {
+          "id": 3,
+          "name": "expiresAt",
+          "type": "uint64",
+          "required": false,
+          "deprecated": false,
+          "description": "Unix timestamp URL expiry. 0 or absent means never expires."
+        }
+      ]
+    },
+    {
+      "name": "SignagePowerBiItemSettings",
+      "type": "object",
+      "description": "Settings for the powerbi playlist item type; selected via PlaylistItem.settings variants when type is powerbi. All fields are required.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "groupId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "PowerBI workspace (group) identifier (GUID)."
+        },
+        {
+          "id": 2,
+          "name": "dashboardId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "PowerBI dashboard identifier (GUID)."
+        },
+        {
+          "id": 3,
+          "name": "embedUrl",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 2048,
+          "description": "Dashboard embed URL; stable across token refreshes. The device SHOULD cache and reuse it."
+        },
+        {
+          "id": 4,
+          "name": "token",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 8192,
+          "description": "AAD access token for the PowerBI audience (https://analysis.windows.net/powerbi/api; tokenType=Aad embedding; typically ~60 minutes). Tenants with many group/role claims issue JWTs of 5-8 KB, hence the generous bound. Sensitive credential transported only via the RPC channel; never embedded in resource URLs and not to be logged."
+        },
+        {
+          "id": 5,
+          "name": "expiresAt",
+          "type": "uint64",
+          "required": true,
+          "deprecated": false,
+          "min": 1,
+          "description": "Unix timestamp token expiry; MUST be greater than 0 (0 is invalid for powerbi, unlike the 0-equals-never-expires convention of URL-based item types). Always present for powerbi items; drives the device-side signage.getPlaylistItem refresh."
         }
       ]
     },
@@ -9497,7 +14223,22 @@
         },
         {
           "id": 2,
-          "name": "userName",
+          "name": "user",
+          "type": "SignagePlaylistUnsplashUser",
+          "required": true,
+          "deprecated": false,
+          "description": "Photographer attribution."
+        }
+      ]
+    },
+    {
+      "name": "SignagePlaylistUnsplashUser",
+      "type": "object",
+      "description": "Photographer attribution for an Unsplash photo.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "name",
           "type": "string",
           "required": true,
           "deprecated": false,
@@ -9505,8 +14246,8 @@
           "description": "Photographer name."
         },
         {
-          "id": 3,
-          "name": "userLink",
+          "id": 2,
+          "name": "link",
           "type": "string",
           "required": true,
           "deprecated": false,
@@ -9529,7 +14270,7 @@
           "array": {
             "itemType": "string"
           },
-          "description": "Supported playlist item type strings; candidate values include image, website, video, clock, and unsplash."
+          "description": "Supported playlist item types as a subset of the SignagePlaylistItem.type enum values (image, website, video, clock, unsplash, powerbi)."
         },
         {
           "id": 2,
@@ -10059,6 +14800,809 @@
           "required": false,
           "deprecated": false,
           "description": "Whether restoring defaults via resetUpdatePolicy is supported."
+        }
+      ]
+    },
+    {
+      "name": "SportConfigTargetParams",
+      "type": "object",
+      "description": "Target selector shared by sport configuration queries in multi-device App sessions.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "macAddress",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 17,
+          "description": "Target device MAC address in uppercase colon-separated form, for example AA:BB:CC:DD:EE:FF."
+        },
+        {
+          "id": 2,
+          "name": "sportType",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 32,
+          "description": "Capability-supported sport type whose configuration is requested."
+        }
+      ]
+    },
+    {
+      "name": "SportGoalShotWatermarkConfig",
+      "type": "object",
+      "description": "Complete Goal and Shot watermark visibility configuration for one device and sport type.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "macAddress",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 17,
+          "description": "Target device MAC address in canonical uppercase colon-separated form."
+        },
+        {
+          "id": 2,
+          "name": "sportType",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 32,
+          "description": "Sport type represented by this configuration."
+        },
+        {
+          "id": 3,
+          "name": "goalVisible",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether Goal watermarks are displayed for detected Goal events."
+        },
+        {
+          "id": 4,
+          "name": "shotVisible",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether Shot watermarks are displayed for detected Shot events."
+        }
+      ]
+    },
+    {
+      "name": "SportSetGoalShotWatermarkConfigParams",
+      "type": "object",
+      "description": "Full atomic update of Goal and Shot watermark visibility for one device and sport type.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "macAddress",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 17,
+          "description": "Target device MAC address in uppercase colon-separated form, for example AA:BB:CC:DD:EE:FF."
+        },
+        {
+          "id": 2,
+          "name": "sportType",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 32,
+          "description": "Capability-supported sport type to configure."
+        },
+        {
+          "id": 3,
+          "name": "goalVisible",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Desired Goal watermark visibility."
+        },
+        {
+          "id": 4,
+          "name": "shotVisible",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Desired Shot watermark visibility."
+        }
+      ]
+    },
+    {
+      "name": "SportEventClipConfig",
+      "type": "object",
+      "description": "Complete video clip window configuration centered on Goal and Shot events for one device and sport type.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "macAddress",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 17,
+          "description": "Target device MAC address in canonical uppercase colon-separated form."
+        },
+        {
+          "id": 2,
+          "name": "sportType",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 32,
+          "description": "Sport type represented by this configuration."
+        },
+        {
+          "id": 3,
+          "name": "beforeOffsetSeconds",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Number of whole seconds included before the detected event timestamp."
+        },
+        {
+          "id": 4,
+          "name": "afterOffsetSeconds",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Number of whole seconds included after the detected event timestamp."
+        }
+      ]
+    },
+    {
+      "name": "SportSetEventClipConfigParams",
+      "type": "object",
+      "description": "Full atomic update of the video clip window centered on Goal and Shot events for one device and sport type.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "macAddress",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 17,
+          "description": "Target device MAC address in uppercase colon-separated form, for example AA:BB:CC:DD:EE:FF."
+        },
+        {
+          "id": 2,
+          "name": "sportType",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 32,
+          "description": "Capability-supported sport type to configure."
+        },
+        {
+          "id": 3,
+          "name": "beforeOffsetSeconds",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Number of whole seconds to include before the detected event timestamp."
+        },
+        {
+          "id": 4,
+          "name": "afterOffsetSeconds",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Number of whole seconds to include after the detected event timestamp."
+        }
+      ]
+    },
+    {
+      "name": "GetEventDetectionCapabilitiesParams",
+      "type": "object",
+      "description": "Optional selector for event detection capability discovery.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "sportTypes",
+          "type": "array",
+          "required": false,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Optional sport type filter; omitted means return all supported sport types."
+        },
+        {
+          "id": 2,
+          "name": "includeRuntimeState",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "default": false,
+          "description": "Whether to include a runtime state summary in the capability snapshot; detailed state is returned by the config query."
+        }
+      ]
+    },
+    {
+      "name": "GetEventDetectionCapabilitiesResult",
+      "type": "object",
+      "description": "Result wrapper for cross-sport event detection capability discovery.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "capability",
+          "type": "SportEventDetectionCapabilities",
+          "required": true,
+          "deprecated": false,
+          "description": "Cross-sport event detection capability descriptor."
+        }
+      ]
+    },
+    {
+      "name": "SportEventDetectionSportDescriptor",
+      "type": "object",
+      "description": "Capability descriptor for one supported sport type, its registered event types, and optional sport-specific configuration methods.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "sportType",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 32,
+          "description": "Stable sport type discriminator, such as basketball, football, baseball, or tennis."
+        },
+        {
+          "id": 2,
+          "name": "supportedEvents",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Event type discriminators supported for this sport type."
+        },
+        {
+          "id": 3,
+          "name": "supportsToggle",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether sport.setEventDetectionConfig can control this sport type."
+        },
+        {
+          "id": 4,
+          "name": "detailsSchemas",
+          "type": "array",
+          "required": false,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Registered sport-specific detail schema names for the supported event types."
+        },
+        {
+          "id": 5,
+          "name": "supportedConfigMethods",
+          "type": "array",
+          "required": false,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Optional registered sport configuration methods supported for this sport type, such as Goal/Shot watermark or event clip configuration."
+        }
+      ]
+    },
+    {
+      "name": "SportEventDetectionCapabilities",
+      "type": "object",
+      "description": "Cross-sport event detection capability descriptor.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "capability",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "Fixed capability name sport.eventDetection."
+        },
+        {
+          "id": 2,
+          "name": "supportedSports",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemSchema": "SportEventDetectionSportDescriptor"
+          },
+          "description": "Supported sport types, events, toggle support, and detail schema names."
+        },
+        {
+          "id": 3,
+          "name": "concurrentSportTypes",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether more than one sport type may be enabled at the same time; the MVP default is false."
+        },
+        {
+          "id": 4,
+          "name": "supportsStateEvent",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether the device emits sport.eventDetectionStateChanged."
+        },
+        {
+          "id": 5,
+          "name": "supportsUnifiedEvent",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether the device emits sport.eventDetected."
+        },
+        {
+          "id": 6,
+          "name": "persistencePolicy",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "volatile",
+            "persistent",
+            "profileControlled"
+          ],
+          "description": "Persistence policy for sport detection toggles; this adoption selects persistent for VM33PRO and factory reset returns disabled."
+        }
+      ]
+    },
+    {
+      "name": "GetEventDetectionConfigParams",
+      "type": "object",
+      "description": "Selector for one sport type event detection state.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "sportType",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 32,
+          "description": "Supported sport type whose effective state is requested."
+        }
+      ]
+    },
+    {
+      "name": "SportEventDetectionState",
+      "type": "object",
+      "description": "Effective event detection configuration and runtime state for one sport type.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "sportType",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 32,
+          "description": "Sport type represented by this state snapshot."
+        },
+        {
+          "id": 2,
+          "name": "effectiveEnabled",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether event detection is effectively enabled for this sport type."
+        },
+        {
+          "id": 3,
+          "name": "runtimeState",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "disabled",
+            "enabling",
+            "ready",
+            "degraded",
+            "unavailable",
+            "disabling"
+          ],
+          "description": "Current detector runtime state."
+        },
+        {
+          "id": 4,
+          "name": "applyState",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "applied",
+            "pending"
+          ],
+          "description": "Whether the latest toggle request is fully applied."
+        },
+        {
+          "id": 5,
+          "name": "reason",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "State transition, degraded, or unavailable reason summary."
+        },
+        {
+          "id": 6,
+          "name": "stateRevision",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "description": "Monotonic state revision for client calibration and optional compare-and-set."
+        },
+        {
+          "id": 7,
+          "name": "updatedAt",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "Device timestamp of this state snapshot."
+        }
+      ]
+    },
+    {
+      "name": "SetEventDetectionConfigParams",
+      "type": "object",
+      "description": "Request to enable or disable event detection for one sport type.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "sportType",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 32,
+          "description": "Supported sport type to control."
+        },
+        {
+          "id": 2,
+          "name": "enabled",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Desired effective detection toggle."
+        },
+        {
+          "id": 3,
+          "name": "expectedStateRevision",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "description": "Optional compare-and-set state revision."
+        }
+      ]
+    },
+    {
+      "name": "SetEventDetectionConfigResult",
+      "type": "object",
+      "description": "Accepted or effective state returned from a sport detection toggle request.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "accepted",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether the device accepted the toggle request."
+        },
+        {
+          "id": 2,
+          "name": "state",
+          "type": "SportEventDetectionState",
+          "required": true,
+          "deprecated": false,
+          "description": "Effective or pending state after processing the request."
+        }
+      ]
+    },
+    {
+      "name": "SportEventDetectionStateChangedEvent",
+      "type": "object",
+      "description": "State change event for one sport type.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "state",
+          "type": "SportEventDetectionState",
+          "required": true,
+          "deprecated": false,
+          "description": "Complete state after the change."
+        },
+        {
+          "id": 2,
+          "name": "source",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "remoteApp",
+            "localPolicy",
+            "restart",
+            "restore",
+            "unknown"
+          ],
+          "description": "Source of the state change."
+        },
+        {
+          "id": 3,
+          "name": "reason",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "State change or unavailable reason summary."
+        }
+      ]
+    },
+    {
+      "name": "SportEventDetails",
+      "type": "object",
+      "description": "Common discriminator-qualified detail carrier. Fields are interpreted according to sportType and eventType; new sports add optional fields or a dedicated event schema through a later amendment.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "shotId",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Basketball shot identifier when eventType is shot or goal."
+        },
+        {
+          "id": 2,
+          "name": "goalId",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Basketball goal identifier when eventType is goal."
+        },
+        {
+          "id": 3,
+          "name": "releaseType",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "unknown",
+            "setShot",
+            "jumpShot",
+            "layup",
+            "other"
+          ],
+          "description": "Basketball shot release type when eventType is shot."
+        },
+        {
+          "id": 4,
+          "name": "goalType",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "fieldGoal",
+            "freeThrow",
+            "unknown"
+          ],
+          "description": "Basketball goal type when eventType is goal."
+        }
+      ]
+    },
+    {
+      "name": "SportEventDetectedEvent",
+      "type": "object",
+      "description": "Common low-frequency sport event envelope with discriminator-qualified details.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "eventId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Device event identifier used for deduplication."
+        },
+        {
+          "id": 2,
+          "name": "sequence",
+          "type": "uint64",
+          "required": true,
+          "deprecated": false,
+          "description": "Monotonic candidate event sequence used for ordering."
+        },
+        {
+          "id": 3,
+          "name": "sportType",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 32,
+          "description": "Sport type discriminator."
+        },
+        {
+          "id": 4,
+          "name": "eventType",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "Registered event type discriminator within the sport type."
+        },
+        {
+          "id": 5,
+          "name": "occurredAt",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "Device timestamp of the detected event."
+        },
+        {
+          "id": 6,
+          "name": "confidence",
+          "type": "number",
+          "required": false,
+          "deprecated": false,
+          "min": 0,
+          "max": 1,
+          "description": "Optional detector confidence in the range 0.0 to 1.0."
+        },
+        {
+          "id": 7,
+          "name": "trainingSessionId",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Optional training session association."
+        },
+        {
+          "id": 8,
+          "name": "details",
+          "type": "SportEventDetails",
+          "required": true,
+          "deprecated": false,
+          "description": "Discriminator-qualified event details; the MVP basketball projection uses shotId, goalId, releaseType, and goalType."
+        }
+      ]
+    },
+    {
+      "name": "SportBasketballCapability",
+      "type": "object",
+      "description": "Basketball specialization capability descriptor.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "capability",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "Fixed capability name sport.basketball."
+        },
+        {
+          "id": 2,
+          "name": "sportType",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 32,
+          "description": "Fixed discriminator basketball."
+        },
+        {
+          "id": 3,
+          "name": "supportedEvents",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Basketball event types supported by the device."
+        },
+        {
+          "id": 4,
+          "name": "detailsSchemas",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Basketball detail schema names advertised to the App."
+        },
+        {
+          "id": 5,
+          "name": "requiresEventDetectionToggle",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether basketball events require the common event detection toggle."
+        },
+        {
+          "id": 6,
+          "name": "goalRequiresShotReference",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "MVP policy: every goal must reference one shotId."
+        }
+      ]
+    },
+    {
+      "name": "SportBasketballShotDetails",
+      "type": "object",
+      "description": "Basketball shot detail projection for sport.eventDetected with eventType shot.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "shotId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Business identifier for the valid basketball shot attempt."
+        },
+        {
+          "id": 2,
+          "name": "releaseType",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "unknown",
+            "setShot",
+            "jumpShot",
+            "layup",
+            "other"
+          ],
+          "description": "Optional shot release type."
+        }
+      ]
+    },
+    {
+      "name": "SportBasketballGoalDetails",
+      "type": "object",
+      "description": "Basketball goal detail projection for sport.eventDetected with eventType goal.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "goalId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Business identifier for the basketball goal result."
+        },
+        {
+          "id": 2,
+          "name": "shotId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Required reference to the shot that produced this goal."
+        },
+        {
+          "id": 3,
+          "name": "goalType",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "fieldGoal",
+            "freeThrow",
+            "unknown"
+          ],
+          "description": "Optional goal type."
         }
       ]
     },

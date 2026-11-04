@@ -15,6 +15,8 @@ AXTP conformance 用例维护在根目录 `conformance/` 下，是 runtime、SDK
 | `fixtures/` | 协议行为用例使用的设备画像。 |
 | `cases/` | YAML 格式的用例描述。 |
 
+篮球事件检测配置的多设备行为由 `sport` level 覆盖，包含 MAC 路由、get/set 往返、status-only 成功响应，以及参数校验和原子更新失败语义。
+
 ## Phase 1 MVP Scope
 
 | 能力 | WebSocket JSON runtime | Standard Framed runtime |
@@ -116,13 +118,55 @@ Case-level `semantic.kind` 和 step `role`（如 `trigger`、`degraded`、`obser
 
 | Required case | 必测行为 |
 |---|---|
-| `stream.video_stream_params_idle_open` | source 没有 active video stream 时直接 `video.openStream`，不得发送 close；结果回显 negotiated frame rate / bitrate。 |
-| `stream.video_stream_params_active_reconfigure` | active stream 必须按 `closeStream(old, reason=encodingReconfigure)`、terminal closed、`openStream(peerRole=transmitter, new params)` 顺序替换；旧 streamId 作废，音频及 `syncGroupId` 保持。 |
+| `stream.video_stream_params_idle_open` | source 完全没有 active audio/video stream 时，直接以新 streamId 和新 `syncGroupId` 建立完整 audio/video AV pair，不得发送 close；结果回显 negotiated frame rate / bitrate。存在 partial media state 时不得按 idle 处理。 |
+| `stream.video_stream_params_active_reconfigure` | active 音视频 pair 必须先分别 `closeStream` 并等待两路 terminal `closed` barrier，再以新 streamId 和共享的新 `syncGroupId` 分别 `openStream(peerRole=transmitter)`；视频 close 使用 `reason=encodingReconfigure`，且 `applied` 只能在两路 open result 之后。 |
 | `stream.video_stream_params_precedence` | `video.openStream` 显式值覆盖 session 参数，且显式值不持久化到 session。 |
-| `stream.video_stream_params_rollback` | 新 open 返回 `MEDIA_FRAMERATE_UNSUPPORTED`、`MEDIA_BITRATE_UNSUPPORTED` 或 `MEDIA_STREAM_START_FAILED` 时，尝试旧参数恢复；分别验证 `rolledBack + rollbackApplied` 和恢复失败时 `failed + 无 active stream`。 |
+| `stream.video_stream_params_rollback` | 新 open 返回 `MEDIA_FRAMERATE_UNSUPPORTED`、`MEDIA_BITRATE_UNSUPPORTED` 或 `MEDIA_STREAM_START_FAILED` 时，先完成 audio/video 双 close barrier，再以 fresh `syncGroupId` 双路新 open；清理 partial replacement 后尝试旧参数恢复，分别验证 `rolledBack + rollbackApplied` 和失败时无 complete active AV pair。 |
 | `stream.video_stream_params_validation` | 空更新、字段与 `resetFields` 冲突、profile 越界以及重配置并发请求分别返回 `INVALID_ARGUMENT`、媒体能力错误或 `BUSY`。 |
 
 不支持 source encoder 参数或 active reconfigure 的 UxPlay/AirPlay receiver 不得模拟成功，应返回 `NOT_SUPPORTED`；该降级不影响同一 session 的其他 RPC。
+
+## Optional cast-control P0
+
+The [cast-control profile](profiles/cast-control.yaml) binds C01–C11 under
+`cases/castcontrol/` to the [normative contract](../specs/45-cast-control.md).
+Its `since: spec/v0.18.0` denotes the planned next additive release, not a
+published tag. The optional [cast-settings profile](profiles/cast-settings.yaml)
+combines C01–C12 and maps all PS-01–PS-12 protocol obligations to executable
+scenarios in C12. P0-only `cast-control` requirements stay
+unchanged. The fixture's small queue/window values are test data, not defaults.
+
+`runtime_local` steps with `control_model: { action, input, expect }` are executable
+substitute-owner oracles. `input` supplies messages, faults or observations;
+`expect` recursively matches object subsets and compares arrays/scalars exactly.
+Each scenario starts from `cast_control_receiver`. Inputs are independent values;
+unknown actions/missing expected results fail DSL validation. Capture/install,
+receive/flush, admit/execute/query and monotonic advance actions expose the
+separate control boundaries. Overflow/gap/invalid snapshot observations require
+resync, and negative value/encoding/privacy observations fail validation.
+
+Run `pnpm --dir tooling/generators test` for the executable reference evidence and
+`tooling/scripts/validate-conformance.sh` for manifest/schema/reference checks.
+The reference module ships in spec artifacts; runtime runners must map these
+observations to real public RPC/events and owner instrumentation before claiming
+cast-control conformance. No HWND/GStreamer or human audio proof is claimed.
+The [legacy fixture](fixtures/cast-control/legacy-baseline.json) freezes identifiers
+and field facts from `a2a550313bcf570361f1bfe9872851141b847520`; descriptions are
+excluded. Generated [JSON/TLV8 pairs](../contract/test-vectors/cast_control_encoding.json)
+exercise decimal string fidelity, including >2^53 and uint64 bounds.
+
+P1 uses [substitute settings/store/policy owners](reference/cast-settings.mjs)
+and the cast_settings_receiver fixture. `settings_admit/execute/complete_store`
+separate admission, owner validation and blocked storage; P0 control can execute
+during the storage boundary. Settings capture/install/publish/receive/flush use an
+independent cursor. Store/observe/restart actions inject foreign edits, invalid
+stores, known policy limits or a crash/new epoch; they are oracle actions, not new
+wire APIs or product restart authorization. Generated
+[settings JSON/TLV8 pairs](../contract/test-vectors/cast_settings_encoding.json)
+prove string fidelity separately from [P0 pairs](../contract/test-vectors/cast_control_encoding.json).
+The frozen [local P0 baseline](fixtures/cast-control/p0-baseline.json) guards all
+earlier work. Real disk algorithms, GStreamer, arbitration, layout and UI still
+require downstream implementation and physical acceptance.
 
 ## STREAM P0 范围
 

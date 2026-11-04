@@ -1,0 +1,652 @@
+domain: sport
+description: Cross-sport event detection control, state, and sport-specific business event semantics.
+
+methods:
+  - id: 0x1801
+    name: sport.getEventDetectionCapabilities
+    domain: sport
+    status: draft
+    bitOffset: 0
+    since: 1.0.0
+    description: Return supported sport types, event types, sport-specific detail schemas, and runtime constraints for event detection.
+    rpc_op: request_response
+    request_schema: GetEventDetectionCapabilitiesParams
+    response_schema: GetEventDetectionCapabilitiesResult
+    recommended_encoding: [json, tlv]
+    capabilities: [sport.eventDetection]
+    errors: [SUCCESS, INVALID_ARGUMENT, NOT_SUPPORTED, PERMISSION_DENIED, UNAVAILABLE]
+
+  - id: 0x1802
+    name: sport.getEventDetectionConfig
+    domain: sport
+    status: draft
+    bitOffset: 1
+    since: 1.0.0
+    description: Return the effective event detection configuration and runtime state for one sport type.
+    rpc_op: request_response
+    request_schema: GetEventDetectionConfigParams
+    response_schema: SportEventDetectionState
+    recommended_encoding: [json, tlv]
+    capabilities: [sport.eventDetection]
+    errors: [SUCCESS, INVALID_ARGUMENT, NOT_SUPPORTED, PERMISSION_DENIED, UNAVAILABLE]
+
+  - id: 0x1803
+    name: sport.setEventDetectionConfig
+    domain: sport
+    status: draft
+    bitOffset: 2
+    since: 1.0.0
+    description: Enable or disable event detection for one sport type and return the accepted or effective state.
+    rpc_op: request_response
+    request_schema: SetEventDetectionConfigParams
+    response_schema: SetEventDetectionConfigResult
+    recommended_encoding: [json, tlv]
+    capabilities: [sport.eventDetection]
+    events: [sport.eventDetectionStateChanged]
+    errors: [SUCCESS, INVALID_ARGUMENT, NOT_SUPPORTED, INVALID_STATE, BUSY, PERMISSION_DENIED, UNAVAILABLE]
+
+  - id: 0x1804
+    name: sport.getGoalShotWatermarkConfig
+    domain: sport
+    status: draft
+    bitOffset: 3
+    since: 1.0.0
+    description: Return Goal and Shot watermark visibility for one device and sport type.
+    rpc_op: request_response
+    request_schema: SportConfigTargetParams
+    response_schema: SportGoalShotWatermarkConfig
+    recommended_encoding: [json, tlv]
+    capabilities: [sport.eventDetection]
+    errors: [SUCCESS, INVALID_ARGUMENT, NOT_SUPPORTED, NOT_FOUND, PERMISSION_DENIED, UNAVAILABLE]
+
+  - id: 0x1805
+    name: sport.setGoalShotWatermarkConfig
+    domain: sport
+    status: draft
+    bitOffset: 4
+    since: 1.0.0
+    description: Atomically set Goal and Shot watermark visibility for one device and sport type; success is represented only by the standard RPC status.
+    rpc_op: request_response
+    request_schema: SportSetGoalShotWatermarkConfigParams
+    response_schema: Empty
+    recommended_encoding: [json, tlv]
+    capabilities: [sport.eventDetection]
+    errors: [SUCCESS, INVALID_ARGUMENT, NOT_SUPPORTED, NOT_FOUND, INVALID_STATE, BUSY, PERMISSION_DENIED, UNAVAILABLE]
+
+  - id: 0x1806
+    name: sport.getEventClipConfig
+    domain: sport
+    status: draft
+    bitOffset: 5
+    since: 1.0.0
+    description: Return the video clip window before and after a Goal or Shot event for one device and sport type.
+    rpc_op: request_response
+    request_schema: SportConfigTargetParams
+    response_schema: SportEventClipConfig
+    recommended_encoding: [json, tlv]
+    capabilities: [sport.eventDetection]
+    errors: [SUCCESS, INVALID_ARGUMENT, NOT_SUPPORTED, NOT_FOUND, PERMISSION_DENIED, UNAVAILABLE]
+
+  - id: 0x1807
+    name: sport.setEventClipConfig
+    domain: sport
+    status: draft
+    bitOffset: 6
+    since: 1.0.0
+    description: Atomically set the video clip window before and after a Goal or Shot event for one device and sport type; success is represented only by the standard RPC status.
+    rpc_op: request_response
+    request_schema: SportSetEventClipConfigParams
+    response_schema: Empty
+    recommended_encoding: [json, tlv]
+    capabilities: [sport.eventDetection]
+    errors: [SUCCESS, INVALID_ARGUMENT, OUT_OF_RANGE, NOT_SUPPORTED, NOT_FOUND, INVALID_STATE, BUSY, PERMISSION_DENIED, UNAVAILABLE]
+
+events:
+  - id: 0x1801
+    name: sport.eventDetectionStateChanged
+    domain: sport
+    status: draft
+    bitOffset: 0
+    since: 1.0.0
+    description: Emitted when one sport type changes effective enabled state, runtime state, availability, or apply state.
+    event_schema: SportEventDetectionStateChangedEvent
+    severity: info
+    trigger: [sport.setEventDetectionConfig, device restart, restore default, local policy, detector availability change]
+    capabilities: [sport.eventDetection]
+
+  - id: 0x1802
+    name: sport.eventDetected
+    domain: sport
+    status: draft
+    bitOffset: 1
+    since: 1.0.0
+    description: Emitted when an enabled sport detector identifies a registered business event using a sport and event type discriminator.
+    event_schema: SportEventDetectedEvent
+    severity: info
+    trigger: [registered sport event detected, detector ready, detector degraded when policy permits]
+    capabilities: [sport.eventDetection]
+
+types:
+  SportConfigTargetParams:
+    kind: object
+    description: Target selector shared by sport configuration queries in multi-device App sessions.
+    fields:
+      - id: 0x01
+        name: macAddress
+        type: string
+        required: true
+        max_length: 17
+        description: Target device MAC address in uppercase colon-separated form, for example AA:BB:CC:DD:EE:FF.
+      - id: 0x02
+        name: sportType
+        type: string
+        required: true
+        max_length: 32
+        description: Capability-supported sport type whose configuration is requested.
+
+  SportGoalShotWatermarkConfig:
+    kind: object
+    description: Complete Goal and Shot watermark visibility configuration for one device and sport type.
+    fields:
+      - id: 0x01
+        name: macAddress
+        type: string
+        required: true
+        max_length: 17
+        description: Target device MAC address in canonical uppercase colon-separated form.
+      - id: 0x02
+        name: sportType
+        type: string
+        required: true
+        max_length: 32
+        description: Sport type represented by this configuration.
+      - id: 0x03
+        name: goalVisible
+        type: bool
+        required: true
+        description: Whether Goal watermarks are displayed for detected Goal events.
+      - id: 0x04
+        name: shotVisible
+        type: bool
+        required: true
+        description: Whether Shot watermarks are displayed for detected Shot events.
+
+  SportSetGoalShotWatermarkConfigParams:
+    kind: object
+    description: Full atomic update of Goal and Shot watermark visibility for one device and sport type.
+    fields:
+      - id: 0x01
+        name: macAddress
+        type: string
+        required: true
+        max_length: 17
+        description: Target device MAC address in uppercase colon-separated form, for example AA:BB:CC:DD:EE:FF.
+      - id: 0x02
+        name: sportType
+        type: string
+        required: true
+        max_length: 32
+        description: Capability-supported sport type to configure.
+      - id: 0x03
+        name: goalVisible
+        type: bool
+        required: true
+        description: Desired Goal watermark visibility.
+      - id: 0x04
+        name: shotVisible
+        type: bool
+        required: true
+        description: Desired Shot watermark visibility.
+
+  SportEventClipConfig:
+    kind: object
+    description: Complete video clip window configuration centered on Goal and Shot events for one device and sport type.
+    fields:
+      - id: 0x01
+        name: macAddress
+        type: string
+        required: true
+        max_length: 17
+        description: Target device MAC address in canonical uppercase colon-separated form.
+      - id: 0x02
+        name: sportType
+        type: string
+        required: true
+        max_length: 32
+        description: Sport type represented by this configuration.
+      - id: 0x03
+        name: beforeOffsetSeconds
+        type: uint32
+        required: true
+        description: Number of whole seconds included before the detected event timestamp.
+      - id: 0x04
+        name: afterOffsetSeconds
+        type: uint32
+        required: true
+        description: Number of whole seconds included after the detected event timestamp.
+
+  SportSetEventClipConfigParams:
+    kind: object
+    description: Full atomic update of the video clip window centered on Goal and Shot events for one device and sport type.
+    fields:
+      - id: 0x01
+        name: macAddress
+        type: string
+        required: true
+        max_length: 17
+        description: Target device MAC address in uppercase colon-separated form, for example AA:BB:CC:DD:EE:FF.
+      - id: 0x02
+        name: sportType
+        type: string
+        required: true
+        max_length: 32
+        description: Capability-supported sport type to configure.
+      - id: 0x03
+        name: beforeOffsetSeconds
+        type: uint32
+        required: true
+        description: Number of whole seconds to include before the detected event timestamp.
+      - id: 0x04
+        name: afterOffsetSeconds
+        type: uint32
+        required: true
+        description: Number of whole seconds to include after the detected event timestamp.
+
+  GetEventDetectionCapabilitiesParams:
+    kind: object
+    description: Optional selector for event detection capability discovery.
+    fields:
+      - id: 0x01
+        name: sportTypes
+        type: array
+        array:
+          item_type: string
+        required: false
+        description: Optional sport type filter; omitted means return all supported sport types.
+      - id: 0x02
+        name: includeRuntimeState
+        type: bool
+        required: false
+        default: false
+        description: Whether to include a runtime state summary in the capability snapshot; detailed state is returned by the config query.
+
+  GetEventDetectionCapabilitiesResult:
+    kind: object
+    description: Result wrapper for cross-sport event detection capability discovery.
+    fields:
+      - id: 0x01
+        name: capability
+        type: SportEventDetectionCapabilities
+        required: true
+        description: Cross-sport event detection capability descriptor.
+
+  SportEventDetectionSportDescriptor:
+    kind: object
+    description: Capability descriptor for one supported sport type, its registered event types, and optional sport-specific configuration methods.
+    fields:
+      - id: 0x01
+        name: sportType
+        type: string
+        required: true
+        max_length: 32
+        description: Stable sport type discriminator, such as basketball, football, baseball, or tennis.
+      - id: 0x02
+        name: supportedEvents
+        type: array
+        array:
+          item_type: string
+        required: true
+        description: Event type discriminators supported for this sport type.
+      - id: 0x03
+        name: supportsToggle
+        type: bool
+        required: true
+        description: Whether sport.setEventDetectionConfig can control this sport type.
+      - id: 0x04
+        name: detailsSchemas
+        type: array
+        array:
+          item_type: string
+        required: false
+        description: Registered sport-specific detail schema names for the supported event types.
+      - id: 0x05
+        name: supportedConfigMethods
+        type: array
+        array:
+          item_type: string
+        required: false
+        description: Optional registered sport configuration methods supported for this sport type, such as Goal/Shot watermark or event clip configuration.
+
+  SportEventDetectionCapabilities:
+    kind: object
+    description: Cross-sport event detection capability descriptor.
+    fields:
+      - id: 0x01
+        name: capability
+        type: string
+        required: true
+        max_length: 64
+        description: Fixed capability name sport.eventDetection.
+      - id: 0x02
+        name: supportedSports
+        type: array
+        array:
+          item_schema: SportEventDetectionSportDescriptor
+        required: true
+        description: Supported sport types, events, toggle support, and detail schema names.
+      - id: 0x03
+        name: concurrentSportTypes
+        type: bool
+        required: true
+        description: Whether more than one sport type may be enabled at the same time; the MVP default is false.
+      - id: 0x04
+        name: supportsStateEvent
+        type: bool
+        required: true
+        description: Whether the device emits sport.eventDetectionStateChanged.
+      - id: 0x05
+        name: supportsUnifiedEvent
+        type: bool
+        required: true
+        description: Whether the device emits sport.eventDetected.
+      - id: 0x06
+        name: persistencePolicy
+        type: enum
+        required: true
+        enum: [volatile, persistent, profileControlled]
+        description: Persistence policy for sport detection toggles; this adoption selects persistent for VM33PRO and factory reset returns disabled.
+
+  GetEventDetectionConfigParams:
+    kind: object
+    description: Selector for one sport type event detection state.
+    fields:
+      - id: 0x01
+        name: sportType
+        type: string
+        required: true
+        max_length: 32
+        description: Supported sport type whose effective state is requested.
+
+  SportEventDetectionState:
+    kind: object
+    description: Effective event detection configuration and runtime state for one sport type.
+    fields:
+      - id: 0x01
+        name: sportType
+        type: string
+        required: true
+        max_length: 32
+        description: Sport type represented by this state snapshot.
+      - id: 0x02
+        name: effectiveEnabled
+        type: bool
+        required: true
+        description: Whether event detection is effectively enabled for this sport type.
+      - id: 0x03
+        name: runtimeState
+        type: enum
+        required: true
+        enum: [disabled, enabling, ready, degraded, unavailable, disabling]
+        description: Current detector runtime state.
+      - id: 0x04
+        name: applyState
+        type: enum
+        required: false
+        enum: [applied, pending]
+        description: Whether the latest toggle request is fully applied.
+      - id: 0x05
+        name: reason
+        type: string
+        required: false
+        max_length: 128
+        description: State transition, degraded, or unavailable reason summary.
+      - id: 0x06
+        name: stateRevision
+        type: uint32
+        required: false
+        description: Monotonic state revision for client calibration and optional compare-and-set.
+      - id: 0x07
+        name: updatedAt
+        type: string
+        required: false
+        max_length: 64
+        description: Device timestamp of this state snapshot.
+
+  SetEventDetectionConfigParams:
+    kind: object
+    description: Request to enable or disable event detection for one sport type.
+    fields:
+      - id: 0x01
+        name: sportType
+        type: string
+        required: true
+        max_length: 32
+        description: Supported sport type to control.
+      - id: 0x02
+        name: enabled
+        type: bool
+        required: true
+        description: Desired effective detection toggle.
+      - id: 0x03
+        name: expectedStateRevision
+        type: uint32
+        required: false
+        description: Optional compare-and-set state revision.
+
+  SetEventDetectionConfigResult:
+    kind: object
+    description: Accepted or effective state returned from a sport detection toggle request.
+    fields:
+      - id: 0x01
+        name: accepted
+        type: bool
+        required: true
+        description: Whether the device accepted the toggle request.
+      - id: 0x02
+        name: state
+        type: SportEventDetectionState
+        required: true
+        description: Effective or pending state after processing the request.
+
+  SportEventDetectionStateChangedEvent:
+    kind: object
+    description: State change event for one sport type.
+    fields:
+      - id: 0x01
+        name: state
+        type: SportEventDetectionState
+        required: true
+        description: Complete state after the change.
+      - id: 0x02
+        name: source
+        type: enum
+        required: true
+        enum: [remoteApp, localPolicy, restart, restore, unknown]
+        description: Source of the state change.
+      - id: 0x03
+        name: reason
+        type: string
+        required: false
+        max_length: 128
+        description: State change or unavailable reason summary.
+
+  SportEventDetails:
+    kind: object
+    description: Common discriminator-qualified detail carrier. Fields are interpreted according to sportType and eventType; new sports add optional fields or a dedicated event schema through a later amendment.
+    fields:
+      - id: 0x01
+        name: shotId
+        type: string
+        required: false
+        max_length: 128
+        description: Basketball shot identifier when eventType is shot or goal.
+      - id: 0x02
+        name: goalId
+        type: string
+        required: false
+        max_length: 128
+        description: Basketball goal identifier when eventType is goal.
+      - id: 0x03
+        name: releaseType
+        type: enum
+        required: false
+        enum: [unknown, setShot, jumpShot, layup, other]
+        description: Basketball shot release type when eventType is shot.
+      - id: 0x04
+        name: goalType
+        type: enum
+        required: false
+        enum: [fieldGoal, freeThrow, unknown]
+        description: Basketball goal type when eventType is goal.
+
+  SportEventDetectedEvent:
+    kind: object
+    description: Common low-frequency sport event envelope with discriminator-qualified details.
+    fields:
+      - id: 0x01
+        name: eventId
+        type: string
+        required: true
+        max_length: 128
+        description: Device event identifier used for deduplication.
+      - id: 0x02
+        name: sequence
+        type: uint64
+        required: true
+        description: Monotonic candidate event sequence used for ordering.
+      - id: 0x03
+        name: sportType
+        type: string
+        required: true
+        max_length: 32
+        description: Sport type discriminator.
+      - id: 0x04
+        name: eventType
+        type: string
+        required: true
+        max_length: 64
+        description: Registered event type discriminator within the sport type.
+      - id: 0x05
+        name: occurredAt
+        type: string
+        required: true
+        max_length: 64
+        description: Device timestamp of the detected event.
+      - id: 0x06
+        name: confidence
+        type: number
+        required: false
+        min: 0
+        max: 1
+        description: Optional detector confidence in the range 0.0 to 1.0.
+      - id: 0x07
+        name: trainingSessionId
+        type: string
+        required: false
+        max_length: 128
+        description: Optional training session association.
+      - id: 0x08
+        name: details
+        type: SportEventDetails
+        required: true
+        description: Discriminator-qualified event details; the MVP basketball projection uses shotId, goalId, releaseType, and goalType.
+
+  SportBasketballCapability:
+    kind: object
+    description: Basketball specialization capability descriptor.
+    fields:
+      - id: 0x01
+        name: capability
+        type: string
+        required: true
+        max_length: 64
+        description: Fixed capability name sport.basketball.
+      - id: 0x02
+        name: sportType
+        type: string
+        required: true
+        max_length: 32
+        description: Fixed discriminator basketball.
+      - id: 0x03
+        name: supportedEvents
+        type: array
+        array:
+          item_type: string
+        required: true
+        description: Basketball event types supported by the device.
+      - id: 0x04
+        name: detailsSchemas
+        type: array
+        array:
+          item_type: string
+        required: true
+        description: Basketball detail schema names advertised to the App.
+      - id: 0x05
+        name: requiresEventDetectionToggle
+        type: bool
+        required: true
+        description: Whether basketball events require the common event detection toggle.
+      - id: 0x06
+        name: goalRequiresShotReference
+        type: bool
+        required: true
+        description: "MVP policy: every goal must reference one shotId."
+
+  SportBasketballShotDetails:
+    kind: object
+    description: Basketball shot detail projection for sport.eventDetected with eventType shot.
+    fields:
+      - id: 0x01
+        name: shotId
+        type: string
+        required: true
+        max_length: 128
+        description: Business identifier for the valid basketball shot attempt.
+      - id: 0x02
+        name: releaseType
+        type: enum
+        required: false
+        enum: [unknown, setShot, jumpShot, layup, other]
+        description: Optional shot release type.
+
+  SportBasketballGoalDetails:
+    kind: object
+    description: Basketball goal detail projection for sport.eventDetected with eventType goal.
+    fields:
+      - id: 0x01
+        name: goalId
+        type: string
+        required: true
+        max_length: 128
+        description: Business identifier for the basketball goal result.
+      - id: 0x02
+        name: shotId
+        type: string
+        required: true
+        max_length: 128
+        description: Required reference to the shot that produced this goal.
+      - id: 0x03
+        name: goalType
+        type: enum
+        required: false
+        enum: [fieldGoal, freeThrow, unknown]
+        description: Optional goal type.
+
+capabilities:
+  - id: 0x1801
+    name: sport.eventDetection
+    domain: sport
+    status: draft
+    since: 1.0.0
+    description: Device supports cross-sport event detection capability discovery, per-sport toggle control, runtime state events, and unified sport event delivery.
+    type: object
+    schema: SportEventDetectionCapabilities
+
+  - id: 0x1802
+    name: sport.basketball
+    domain: sport
+    status: draft
+    since: 1.0.0
+    description: Device supports basketball shot and goal event semantics through sport.eventDetection.
+    type: object
+    schema: SportBasketballCapability

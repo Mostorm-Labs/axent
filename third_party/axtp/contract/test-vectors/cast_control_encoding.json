@@ -1,0 +1,110 @@
+{
+  "schema": "CastSessionRef",
+  "encoding": "json+tlv8",
+  "scope": "schema-local object body",
+  "fields": {
+    "id": 1,
+    "generation": 2
+  },
+  "pairs": [
+    {
+      "name": "zero",
+      "accepted": true,
+      "json": {
+        "id": "session-ref",
+        "generation": "0"
+      },
+      "tlv8Hex": "010B73657373696F6E2D726566020130"
+    },
+    {
+      "name": "beyond_js_precision",
+      "accepted": true,
+      "json": {
+        "id": "session-ref",
+        "generation": "9007199254740993"
+      },
+      "tlv8Hex": "010B73657373696F6E2D726566021039303037313939323534373430393933"
+    },
+    {
+      "name": "uint64_max",
+      "accepted": true,
+      "json": {
+        "id": "session-ref",
+        "generation": "18446744073709551615"
+      },
+      "tlv8Hex": "010B73657373696F6E2D72656602143138343436373434303733373039353531363135"
+    },
+    {
+      "name": "negative",
+      "accepted": false,
+      "json": {
+        "id": "session-ref",
+        "generation": "-1"
+      },
+      "tlv8Hex": "010B73657373696F6E2D72656602022D31"
+    },
+    {
+      "name": "exponent",
+      "accepted": false,
+      "json": {
+        "id": "session-ref",
+        "generation": "1e3"
+      },
+      "tlv8Hex": "010B73657373696F6E2D7265660203316533"
+    },
+    {
+      "name": "fraction",
+      "accepted": false,
+      "json": {
+        "id": "session-ref",
+        "generation": "1.5"
+      },
+      "tlv8Hex": "010B73657373696F6E2D7265660203312E35"
+    },
+    {
+      "name": "leading_zero",
+      "accepted": false,
+      "json": {
+        "id": "session-ref",
+        "generation": "01"
+      },
+      "tlv8Hex": "010B73657373696F6E2D72656602023031"
+    },
+    {
+      "name": "overflow",
+      "accepted": false,
+      "json": {
+        "id": "session-ref",
+        "generation": "18446744073709551616"
+      },
+      "tlv8Hex": "010B73657373696F6E2D72656602143138343436373434303733373039353531363136"
+    },
+    {
+      "name": "empty",
+      "accepted": false,
+      "json": {
+        "id": "session-ref",
+        "generation": ""
+      },
+      "tlv8Hex": "010B73657373696F6E2D7265660200"
+    },
+    {
+      "name": "whitespace",
+      "accepted": false,
+      "json": {
+        "id": "session-ref",
+        "generation": " 1"
+      },
+      "tlv8Hex": "010B73657373696F6E2D72656602022031"
+    },
+    {
+      "name": "plus",
+      "accepted": false,
+      "json": {
+        "id": "session-ref",
+        "generation": "+1"
+      },
+      "tlv8Hex": "010B73657373696F6E2D72656602022B31"
+    }
+  ]
+}

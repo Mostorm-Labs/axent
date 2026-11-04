@@ -61,5 +61,15 @@
       "hexFile": "compact_message_id_overflow.hex",
       "expectError": "COMPACT_MESSAGE_ID_OVERFLOW"
     }
+  ],
+  "schemaVectors": [
+    {
+      "schema": "CastSessionRef",
+      "pairsFile": "cast_control_encoding.json"
+    },
+    {
+      "schema": "CastSettingsEventContext",
+      "pairsFile": "cast_settings_encoding.json"
+    }
   ]
 }

@@ -13,6 +13,7 @@
 | `0x0801` | `video.stream` | video | draft | object | VideoStreamCapabilities |
 | `0x0901` | `audio.algorithm` | audio | stable | object | AudioAlgorithmCapability |
 | `0x0902` | `audio.stream` | audio | draft | object | AudioStreamCapabilities |
+| `0x0A01` | `input.stream` | input | draft | object | InputStreamCapability |
 | `0x0D01` | `signage.playlist` | signage | draft | object | SignagePlaylistCapability |
 | `0x0E01` | `network.interface` | network | draft | object | NetworkInterfaceCapability |
 | `0x0E02` | `network.ip` | network | draft | object | NetworkIpCapability |
@@ -25,5 +26,15 @@
 | `0x1605` | `cast.backend` | cast | draft | object | CastBackendCapability |
 | `0x1606` | `cast.flowControl` | cast | draft | object | CastFlowControlCapability |
 | `0x1607` | `cast.status` | cast | draft | object | CastStatusCapability |
+| `0x1608` | `cast.presentation` | cast | draft | object | CastPresentationCapability |
+| `0x1609` | `cast.audioPolicy` | cast | draft | object | CastAudioPolicyCapability |
+| `0x160A` | `cast.controlOperations` | cast | draft | object | CastControlOperationsCapability |
+| `0x160B` | `cast.presentationSettings` | cast | draft | object | CastPresentationSettingsCapability |
+| `0x160C` | `cast.webcastBackend` | cast | draft | object | CastWebCastBackendCapability |
+| `0x160D` | `cast.meetingPresentation` | cast | draft | object | CastMeetingPresentationCapability |
+| `0x160E` | `cast.airplayControl` | cast | draft | object | CastAirPlayControlCapability |
+| `0x160F` | `cast.touchback` | cast | draft | object | CastTouchbackCapability |
 | `0x1701` | `software.config` | software | draft | object | SoftwareConfigCapability |
 | `0x1702` | `software.updatePolicy` | software | draft | object | SoftwareUpdatePolicyCapability |
+| `0x1801` | `sport.eventDetection` | sport | draft | object | SportEventDetectionCapabilities |
+| `0x1802` | `sport.basketball` | sport | draft | object | SportBasketballCapability |

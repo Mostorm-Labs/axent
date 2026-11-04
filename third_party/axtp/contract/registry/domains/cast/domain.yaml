@@ -1,5 +1,5 @@
 domain: cast
-description: Cast receiver control capabilities for AirPlay/UxPlay and receiver-side status.
+description: Cast receiver control, legacy single-source status and optional fenced multi-presentation control for HID, AirPlay and WebCast.
 
 methods:
   - id: 0x1601
@@ -277,7 +277,7 @@ methods:
     response_schema: CastStatus
     recommended_encoding: [json, tlv]
     capabilities: [cast.status]
-    errors: [SUCCESS, INVALID_ARGUMENT, UNAVAILABLE]
+    errors: [SUCCESS, INVALID_ARGUMENT, UNAVAILABLE, NOT_SUPPORTED]
 
   - id: 0x1614
     name: cast.setVideoStreamParams
@@ -293,6 +293,166 @@ methods:
     capabilities: [cast.flowControl]
     events: [cast.flowControlChanged]
     errors: [SUCCESS, INVALID_ARGUMENT, INVALID_STATE, OUT_OF_RANGE, NOT_SUPPORTED, BUSY, MEDIA_SOURCE_UNAVAILABLE, MEDIA_FRAMERATE_UNSUPPORTED, MEDIA_BITRATE_UNSUPPORTED, MEDIA_STREAM_START_FAILED, MEDIA_STREAM_STOP_FAILED, UNAVAILABLE]
+
+  - id: 0x1615
+    name: cast.getControlCapabilities
+    domain: cast
+    status: draft
+    bitOffset: 20
+    since: 1.0.0
+    description: Discover supported control versions, runtime epoch and bounded multi-presentation guarantees before selecting a version.
+    rpc_op: request_response
+    request_schema: Empty
+    response_schema: CastControlCapabilities
+    recommended_encoding: [json, tlv]
+    capabilities: [cast.presentation]
+    errors: [SUCCESS, NOT_SUPPORTED, UNAVAILABLE]
+
+  - id: 0x1616
+    name: cast.stopPresentation
+    domain: cast
+    status: draft
+    bitOffset: 21
+    since: 1.0.0
+    description: Withdraw one exact presentation after atomic owner-side fence validation; success returns an admitted operation, not receiver shutdown.
+    rpc_op: request_response
+    request_schema: CastStopPresentationParams
+    response_schema: CastControlOperation
+    recommended_encoding: [json, tlv]
+    capabilities: [cast.presentation, cast.controlOperations]
+    events: [cast.sessionsChanged, cast.presentationChanged, cast.audioPolicyChanged, cast.controlOperationChanged]
+    errors: [SUCCESS, NOT_SUPPORTED, INVALID_ARGUMENT, INVALID_STATE, BUSY, UNAVAILABLE, INTERNAL_ERROR]
+
+  - id: 0x1617
+    name: cast.setSessionAudioEnabled
+    domain: cast
+    status: draft
+    bitOffset: 22
+    since: 1.0.0
+    description: Set explicit enabled intent for one exact presented session; effective audio participation is reported separately.
+    rpc_op: request_response
+    request_schema: CastSetSessionAudioEnabledParams
+    response_schema: CastControlOperation
+    recommended_encoding: [json, tlv]
+    capabilities: [cast.audioPolicy, cast.controlOperations]
+    events: [cast.audioPolicyChanged, cast.controlOperationChanged]
+    errors: [SUCCESS, NOT_SUPPORTED, INVALID_ARGUMENT, INVALID_STATE, BUSY, UNAVAILABLE, INTERNAL_ERROR]
+
+  - id: 0x1618
+    name: cast.getControlOperation
+    domain: cast
+    status: draft
+    bitOffset: 23
+    since: 1.0.0
+    description: Query the original intent by runtime, client and command identity; NOT_FOUND means unknown outcome rather than not executed.
+    rpc_op: request_response
+    request_schema: CastGetControlOperationParams
+    response_schema: CastControlOperation
+    recommended_encoding: [json, tlv]
+    capabilities: [cast.controlOperations]
+    errors: [SUCCESS, NOT_SUPPORTED, INVALID_ARGUMENT, INVALID_STATE, NOT_FOUND, UNAVAILABLE]
+
+  - id: 0x1619
+    name: cast.setPresentationSettings
+    domain: cast
+    status: draft
+    bitOffset: 24
+    since: 1.0.0
+    description: Set exactly one supported host setting with optimistic revision, bounded dedup and explicit field-only persistence; returns per-stage asynchronous results without automatic restart.
+    rpc_op: request_response
+    request_schema: CastSetPresentationSettingsParams
+    response_schema: CastControlOperation
+    recommended_encoding: [json, tlv]
+    capabilities: [cast.presentationSettings, cast.controlOperations]
+    events: [cast.presentationSettingsChanged, cast.presentationChanged, cast.audioPolicyChanged]
+    errors: [SUCCESS, NOT_SUPPORTED, INVALID_ARGUMENT, INVALID_STATE, OUT_OF_RANGE, BUSY, UNAVAILABLE, INTERNAL_ERROR]
+
+  - id: 0x161A
+    name: cast.getWebCastBackendState
+    domain: cast
+    status: draft
+    bitOffset: 25
+    since: 1.0.0
+    description: Read a secret-free WebCast signaling backend snapshot and independent event barrier; selection for new joins is separate from retained peers.
+    rpc_op: request_response
+    request_schema: CastGetWebCastBackendStateParams
+    response_schema: CastWebCastBackendSnapshot
+    recommended_encoding: [json, tlv]
+    capabilities: [cast.webcastBackend]
+    errors: [SUCCESS, NOT_SUPPORTED, INVALID_ARGUMENT, UNAVAILABLE]
+
+  - id: 0x161B
+    name: cast.setPresentationFocus
+    domain: cast
+    status: draft
+    bitOffset: 26
+    since: 1.0.0
+    description: Explicit exact-target primary or split intent with optimistic meeting revision and bounded dedup; never toggles or re-admits a source.
+    rpc_op: request_response
+    request_schema: CastSetPresentationFocusParams
+    response_schema: CastControlOperation
+    recommended_encoding: [json]
+    capabilities: [cast.meetingPresentation, cast.controlOperations]
+    errors: [SUCCESS, NOT_SUPPORTED, INVALID_ARGUMENT, INVALID_STATE, BUSY, UNAVAILABLE]
+
+  - id: 0x161C
+    name: cast.getTouchbackState
+    domain: cast
+    status: draft
+    bitOffset: 27
+    since: 1.0.0
+    description: Return per-target touchback gates, negotiated mode, and geometry fence state.
+    rpc_op: request_response
+    request_schema: CastTouchbackTargetRequest
+    response_schema: CastTouchbackState
+    recommended_encoding: [json, tlv]
+    capabilities: [cast.touchback]
+    errors: [SUCCESS, INVALID_ARGUMENT, NOT_FOUND, UNAVAILABLE]
+
+  - id: 0x161D
+    name: cast.setTouchbackEnabled
+    domain: cast
+    status: draft
+    bitOffset: 28
+    since: 1.0.0
+    description: Set the launcher/controller touchback gate for one cast target.
+    rpc_op: request_response
+    request_schema: CastTouchbackEnabledRequest
+    response_schema: CastTouchbackState
+    recommended_encoding: [json, tlv]
+    capabilities: [cast.touchback]
+    events: [cast.touchbackChanged]
+    errors: [SUCCESS, PERMISSION_DENIED, INVALID_ARGUMENT, INVALID_STATE, NOT_FOUND, UNAVAILABLE]
+
+  - id: 0x161E
+    name: cast.setTouchbackMode
+    domain: cast
+    status: draft
+    bitOffset: 29
+    since: 1.0.0
+    description: Request touch or mouse interpretation for one cast target; switching fences and reopens the input stream.
+    rpc_op: request_response
+    request_schema: CastTouchbackModeRequest
+    response_schema: CastTouchbackState
+    recommended_encoding: [json, tlv]
+    capabilities: [cast.touchback]
+    events: [cast.touchbackChanged]
+    errors: [SUCCESS, NOT_SUPPORTED, INVALID_ARGUMENT, INVALID_STATE, BUSY, NOT_FOUND, UNAVAILABLE]
+
+  - id: 0x161F
+    name: cast.setTouchbackResolutionPreference
+    domain: cast
+    status: draft
+    bitOffset: 30
+    since: 1.0.0
+    description: Set the touchback source-resolution preference for one cast target.
+    rpc_op: request_response
+    request_schema: CastTouchbackResolutionRequest
+    response_schema: CastTouchbackState
+    recommended_encoding: [json, tlv]
+    capabilities: [cast.touchback]
+    events: [cast.touchbackChanged]
+    errors: [SUCCESS, INVALID_ARGUMENT, INVALID_STATE, NOT_FOUND, UNAVAILABLE]
 
 events:
   - id: 0x1601
@@ -438,6 +598,114 @@ events:
     severity: info
     trigger: [cast.setRenderFps, cast.setFlowPolicy, cast.setVideoStreamParams, diagnostics sample]
     capabilities: [cast.flowControl]
+
+  - id: 0x160D
+    name: cast.receiversChanged
+    domain: cast
+    status: draft
+    bitOffset: 12
+    since: 1.0.0
+    description: Replace the receiver section after a logical control commit; not a full status event.
+    event_schema: CastReceiversChangedEvent
+    severity: info
+    trigger: [receiver availability changed]
+    capabilities: [cast.presentation]
+
+  - id: 0x160E
+    name: cast.sessionsChanged
+    domain: cast
+    status: draft
+    bitOffset: 13
+    since: 1.0.0
+    description: Replace the current multi-session collection as one part of an atomic control commit group.
+    event_schema: CastSessionsChangedEvent
+    severity: info
+    trigger: [session joined, session removed, session media state changed]
+    capabilities: [cast.presentation]
+
+  - id: 0x160F
+    name: cast.presentationChanged
+    domain: cast
+    status: draft
+    bitOffset: 14
+    since: 1.0.0
+    description: Replace only presentation slots, layout and capacity after a logical control commit.
+    event_schema: CastPresentationChangedEvent
+    severity: info
+    trigger: [presentation binding changed, lifecycle changed, capacity changed, layout changed]
+    capabilities: [cast.presentation]
+
+  - id: 0x1610
+    name: cast.audioPolicyChanged
+    domain: cast
+    status: draft
+    bitOffset: 15
+    since: 1.0.0
+    description: Replace audio policy intent and effective participation sets after a control commit.
+    event_schema: CastAudioPolicyChangedEvent
+    severity: info
+    trigger: [enabled intent changed, effective audio participation changed, audio policy changed]
+    capabilities: [cast.audioPolicy]
+
+  - id: 0x1611
+    name: cast.controlOperationChanged
+    domain: cast
+    status: draft
+    bitOffset: 16
+    since: 1.0.0
+    description: Publish one admitted P0 per-session operation record; P1 settings progress uses RPC/query and its independent settings event, never this sequence.
+    event_schema: CastControlOperationChangedEvent
+    severity: info
+    trigger: [operation admitted, operation terminal]
+    capabilities: [cast.controlOperations]
+
+  - id: 0x1612
+    name: cast.presentationSettingsChanged
+    domain: cast
+    status: draft
+    bitOffset: 17
+    since: 1.0.0
+    description: Replace complete settings state using independent settingsContext/settingsEventSequence; never consumes the P0 eventSequence.
+    event_schema: CastPresentationSettingsChangedEvent
+    severity: info
+    trigger: [desired setting committed, adopted policy changed, storage observation changed, settings issue or lock changed]
+    capabilities: [cast.presentationSettings]
+
+  - id: 0x1613
+    name: cast.webcastBackendChanged
+    domain: cast
+    status: draft
+    bitOffset: 18
+    since: 1.0.0
+    description: Replace complete WebCast backend state using independent backendContext; never consumes P0 or settings event sequences.
+    event_schema: CastWebCastBackendSnapshot
+    severity: info
+    trigger: [join backend selection changed, signaling availability changed, local listener lifecycle changed, peer connectivity changed, backend error changed]
+    capabilities: [cast.webcastBackend]
+
+  - id: 0x1614
+    name: cast.airplayChanged
+    domain: cast
+    status: draft
+    bitOffset: 19
+    since: 1.0.0
+    description: Replace secret-free AirPlay discovery and authentication state as a P0 commit part.
+    event_schema: CastAirPlayChangedEvent
+    severity: info
+    trigger: [discovery changed, authentication attempt changed]
+    capabilities: [cast.airplayControl]
+
+  - id: 0x1615
+    name: cast.touchbackChanged
+    domain: cast
+    status: draft
+    bitOffset: 20
+    since: 1.0.0
+    description: Emitted when per-target touchback gates, mode, resolution, or geometry fencing changes.
+    event_schema: CastTouchbackChangedEvent
+    severity: info
+    trigger: [cast.setTouchbackEnabled, cast.setTouchbackMode, cast.setTouchbackResolutionPreference, stream open, stream close, disconnect]
+    capabilities: [cast.touchback]
 
 types:
   CastSourceSummary:
@@ -648,7 +916,7 @@ types:
         type: string
         required: false
         max_length: 128
-        description: Optional receiver-local session id; omitted means current active session.
+        description: Optional receiver-local session id; omitted stops all connections and authentication requests existing at the host execution boundary, without stopping listeners.
       - id: 0x02
         name: reason
         type: enum
@@ -1226,6 +1494,24 @@ types:
         default: false
         description: Whether authorized clients request plaintext PIN material.
 
+      - id: 0x02
+        name: protocol
+        type: enum
+        required: false
+        enum: [airplay, webcast]
+        description: Code owner to query; omitted means AirPlay for legacy compatibility.
+      - id: 0x03
+        name: includeSensitive
+        type: bool
+        required: false
+        description: Legacy alias of includeSecret; either true requests secret material.
+      - id: 0x04
+        name: attemptId
+        type: string
+        max_length: 20
+        required: false
+        description: Exact AirPlay authentication attempt; canonical decimal uint64 string.
+
   CastSetPinCodeConfigParams:
     kind: object
     description: Request to update cast PIN protection configuration.
@@ -1275,6 +1561,41 @@ types:
         required: false
         enum: [hidden, authorizedOnly, localUi, both]
         description: Visibility policy for the new PIN.
+
+  CastPinCodeChallenge:
+    kind: object
+    description: One live AirPlay authentication challenge, never a media session.
+    fields:
+      - id: 0x01
+        name: attemptId
+        type: string
+        max_length: 20
+        required: true
+        description: Authentication attempt identity; canonical decimal uint64 string.
+      - id: 0x02
+        name: challengeId
+        type: string
+        max_length: 20
+        required: true
+        description: Exact credential generation; canonical decimal uint64 string.
+      - id: 0x03
+        name: displayRequestId
+        type: string
+        max_length: 20
+        required: true
+        description: Display occurrence, independent of credential lifetime; canonical decimal uint64 string.
+      - id: 0x04
+        name: pinCode
+        type: string
+        required: false
+        description: Live secret, omitted unless explicitly requested or in a dedicated PIN event.
+
+      - id: 0x05
+        name: codeGeneration
+        type: string
+        max_length: 20
+        required: false
+        description: Canonical decimal uint64 prepared or replacement credential generation frozen for this request.
 
   CastPinCodeConfig:
     kind: object
@@ -1345,6 +1666,39 @@ types:
         required: false
         description: Whether sensitive fields were withheld in this snapshot.
 
+      - id: 0x0C
+        name: protocol
+        type: enum
+        required: false
+        enum: [airplay, webcast]
+        description: Credential owner, independent of the currently playing protocol.
+      - id: 0x0D
+        name: backend
+        type: enum
+        required: false
+        enum: [cloud, local, none]
+        description: Selected WebCast backend for new joins; none means no usable backend.
+      - id: 0x0E
+        name: challenges
+        type: array
+        required: false
+        array:
+          item_type: CastPinCodeChallenge
+        description: Active AirPlay challenges; plaintext only when requested or in dedicated PIN events.
+
+      - id: 0x0F
+        name: scope
+        type: enum
+        required: false
+        enum: [access, challenge]
+        description: Access is the prepared code for future joins; challenge is an exact in-flight authentication request.
+      - id: 0x10
+        name: codeGeneration
+        type: string
+        max_length: 20
+        required: false
+        description: Canonical decimal uint64 credential generation, independent of repeated digit values.
+
   CastPinCodeChangedEvent:
     kind: object
     description: Event payload for PIN configuration or PIN state changes.
@@ -1373,6 +1727,12 @@ types:
         required: false
         max_length: 64
         description: Timestamp for this event.
+
+      - id: 0x05
+        name: challenge
+        type: CastPinCodeChallenge
+        required: false
+        description: Affected AirPlay identity; secret omitted after consumption or expiry.
 
   CastPinCodeRequiredEvent:
     kind: object
@@ -1412,6 +1772,12 @@ types:
         required: false
         max_length: 64
         description: Timestamp when PIN input was requested.
+
+      - id: 0x07
+        name: config
+        type: CastPinCodeConfig
+        required: false
+        description: Exact AirPlay code state for this occurrence, including challenge identity.
 
   CastPinCodeAuthFailedEvent:
     kind: object
@@ -1580,6 +1946,11 @@ types:
         required: false
         max_length: 64
         description: Timestamp for this event.
+      - id: 0x05
+        name: controlContext
+        type: CastControlEventContext
+        required: false
+        description: Optional v1 commit context; absent legacy events do not advance the multi-control sequence.
 
   CastGetBackendStatusParams:
     kind: object
@@ -2173,6 +2544,11 @@ types:
         required: false
         default: false
         description: Whether authorized callers request sensitive summary fields.
+      - id: 0x03
+        name: controlVersion
+        type: uint32
+        required: false
+        description: Explicit multi-control version; v1 unifiedControl requires a complete atomic six-section projection. Unknown versions return NOT_SUPPORTED.
 
   CastReceiverSummary:
     kind: object
@@ -2326,6 +2702,42 @@ types:
         type: bool
         required: false
         description: Whether any sensitive snapshot fields were withheld.
+      - id: 0x0A
+        name: controlSync
+        type: CastControlSnapshotCursor
+        required: false
+        description: Required with requested v1 sections; atomic capture revision and published event barrier in one runtime epoch.
+      - id: 0x0B
+        name: receivers
+        type: array
+        array: { item_type: CastReceiverState }
+        required: false
+        description: Required in v1 unifiedControl; full bounded receiver set including disabled and failed receivers.
+      - id: 0x0C
+        name: sessions
+        type: array
+        array: { item_type: CastMultiSessionState }
+        required: false
+        description: Required in v1 unifiedControl; full bounded current session set, possibly empty, captured with slots and audio.
+      - id: 0x0D
+        name: presentation
+        type: CastPresentationState
+        required: false
+        description: Required in v1 unifiedControl; does not replace old single-source summaries.
+      - id: 0x0E
+        name: audioPolicy
+        type: CastAudioPolicyState
+        required: false
+        description: Required in v1 unifiedControl; selected intent and effective participation are separate from legacy audio.
+      - id: 0x0F
+        name: presentationSettings
+        type: CastPresentationSettingsState
+        required: false
+        description: Required only when P1 is supported and explicitly requested; combined P0/P1 capture shares one host commit boundary and keeps independent event barriers.
+
+      - { id: 0x10, name: webcastBackend, type: CastWebCastBackendSnapshot, required: false, description: Explicit optional backend snapshot with its own barrier; not implied by unifiedControl or settings. }
+      - { id: 0x11, name: airplay, type: CastAirPlayControlState, required: false, description: Secret-free discovery and authentication state at the P0 snapshot boundary. }
+      - { id: 0x12, name: touchback, type: array, array: { item_type: CastTouchbackState }, required: false, description: Per-target Touchback state; omitted for AirPlay-only receivers. }
 
   CastSessionCapability:
     kind: object
@@ -2581,13 +2993,840 @@ types:
         array:
           item_type: string
         required: true
-        description: Status snapshot sections the receiver can report.
+        description: Status snapshot sections the receiver can report; v1 adds unifiedControl, controlSync, receivers, sessions, presentation and audioPolicy and reuses window; P1 adds explicitly requested presentationSettings.
       - id: 0x02
         name: supportsSensitiveRedaction
         type: bool
         required: false
         default: true
         description: Whether sensitive status fields can be withheld and marked redacted.
+      - id: 0x03
+        name: supportedControlVersions
+        type: array
+        array: { item_type: uint32 }
+        required: false
+        description: Explicit supported multi-control versions; absence is unknown rather than v1 support.
+      - id: 0x04
+        name: supportsAtomicUnifiedSnapshot
+        type: bool
+        required: false
+        description: Whether unifiedControl is captured atomically in full; absence is not a verified false or true value.
+
+  CastSessionRef:
+    kind: object
+    description: Shared runtime session identity, distinct from a protocol-local legacy sessionId.
+    fields:
+      - { id: 0x01, name: id, type: string, required: true, max_length: 128, description: Nonempty opaque shared runtime session ID. }
+      - { id: 0x02, name: generation, type: string, required: true, max_length: 20, description: 'Canonical decimal uint64 string (0 or nonzero-leading digits, at most 18446744073709551615); encoded as UTF-8 in TLV.' }
+
+  CastControlTarget:
+    kind: object
+    description: Exact presentation fences; params.runtimeInstanceId completes the target and all fences are rechecked atomically at mutation.
+    fields:
+      - { id: 0x01, name: session, type: CastSessionRef, required: true, description: Shared runtime session and generation. }
+      - { id: 0x02, name: slotId, type: uint32, required: true, description: Opaque slot identifier; never an array index. }
+      - { id: 0x03, name: bindingGeneration, type: string, required: true, max_length: 20, description: Canonical decimal uint64 string fencing slot reuse. }
+      - { id: 0x04, name: lifecycleGeneration, type: string, required: true, max_length: 20, description: Canonical decimal uint64 string fencing presentation lifecycle replacement. }
+
+  CastControlSnapshotCursor:
+    kind: object
+    description: One atomic logical capture and its complete published-event barrier; counters never wrap within an epoch.
+    fields:
+      - { id: 0x01, name: controlVersion, type: uint32, required: true, description: Selected control version; P0 uses 1. }
+      - { id: 0x02, name: runtimeInstanceId, type: string, required: true, max_length: 36, description: Canonical lower-case UUID text; fresh for each host start. }
+      - { id: 0x03, name: revision, type: string, required: true, max_length: 20, description: Canonical decimal uint64 logical control revision. }
+      - { id: 0x04, name: eventSequence, type: string, required: true, max_length: 20, description: Canonical decimal uint64 string; snapshot includes every complete published batch through this barrier. }
+
+  CastControlEventContext:
+    kind: object
+    description: Atomic feature commit group context; all parts share epoch/version/revision/batchId/partCount.
+    fields:
+      - { id: 0x01, name: controlVersion, type: uint32, required: true, description: Selected control version; P0 uses 1. }
+      - { id: 0x02, name: runtimeInstanceId, type: string, required: true, max_length: 36, description: Canonical lower-case UUID identifying the current host epoch. }
+      - { id: 0x03, name: revision, type: string, required: true, max_length: 20, description: Canonical decimal uint64 control revision; operation-only batches may retain the current revision. }
+      - { id: 0x04, name: eventSequence, type: string, required: true, max_length: 20, description: Canonical decimal uint64 string equal to batchId plus partIndex. }
+      - { id: 0x05, name: batchId, type: string, required: true, max_length: 20, description: Canonical decimal uint64 string equal to the first eventSequence of the group. }
+      - { id: 0x06, name: partIndex, type: uint32, required: true, description: Zero-based part index strictly less than partCount. }
+      - { id: 0x07, name: partCount, type: uint32, required: true, min: 1, description: Positive complete group size; clients apply only after every part is present. }
+
+  CastControlCapabilities:
+    kind: object
+    description: Dynamic optional multi-control surface; partial descriptors do not imply complete v1 support. No secrets.
+    fields:
+      - { id: 0x01, name: supportedControlVersions, type: array, array: { item_type: uint32 }, required: true, description: Explicit supported control versions. }
+      - { id: 0x02, name: runtimeInstanceId, type: string, required: true, max_length: 36, description: Canonical lower-case UUID for this host lifetime. }
+      - { id: 0x03, name: methods, type: array, array: { item_type: string }, required: true, description: Actual registered method names supported by this instance. }
+      - { id: 0x04, name: events, type: array, array: { item_type: string }, required: true, description: Actual feature event names supported by this instance. }
+      - { id: 0x05, name: statusSections, type: array, array: { item_type: string }, required: true, description: Actual supported status section names. }
+      - { id: 0x06, name: presentation, type: CastPresentationCapability, required: false, description: Required when cast.presentation is supported. }
+      - { id: 0x07, name: audioPolicy, type: CastAudioPolicyCapability, required: false, description: Required when cast.audioPolicy is supported. }
+      - { id: 0x08, name: operations, type: CastControlOperationsCapability, required: false, description: Required when cast.controlOperations is supported. }
+      - { id: 0x09, name: profileHints, type: array, array: { item_type: string }, required: false, description: Non-secret host profile hints; not media profiles or implicit defaults. }
+      - { id: 0x0A, name: presentationSettings, type: CastPresentationSettingsCapability, required: false, description: Required iff P1 is supported together with its method/event/status section; absence does not imply support. }
+
+      - { id: 0x0B, name: webcastBackend, type: CastWebCastBackendCapability, required: false, description: Required iff this independent backend method/event/status section is supported. }
+
+      - { id: 0x0C, name: meetingPresentation, type: CastMeetingPresentationCapability, required: false, description: Explicit optional meeting focus and policy support. }
+      - { id: 0x0D, name: airplayControl, type: CastAirPlayControlCapability, required: false, description: Secret-free authentication and discovery observation. }
+      - { id: 0x0E, name: touchback, type: CastTouchbackCapability, required: false, description: Required when cast.touchback is supported; never advertised for AirPlay-only presentation targets. }
+
+  CastPresentationCapability:
+    kind: object
+    description: Supported presentation protocols and logical capture/target guarantees; no product layout algorithm.
+    fields:
+      - { id: 0x01, name: protocols, type: array, array: { item_type: string }, required: true, description: Supported subset of hid/airplay/webcast; unknown is not a supported protocol. }
+      - { id: 0x02, name: supportsAtomicSnapshot, type: bool, required: true, description: Must be true for a complete v1 unifiedControl implementation. }
+      - { id: 0x03, name: supportsStrictTargets, type: bool, required: true, description: Must be true for exact per-presentation writes. }
+      - { id: 0x04, name: maxPresentationCapacity, type: uint32, required: true, min: 1, description: Positive host-specific presentation capacity bound. }
+      - { id: 0x05, name: capacityChoices, type: array, array: { item_type: uint32 }, required: false, description: Positive supported capacities no greater than maxPresentationCapacity. }
+      - { id: 0x06, name: layoutModes, type: array, array: { item_type: string }, required: true, description: Supported grid/presentation layouts. }
+      - { id: 0x07, name: contentAdaptations, type: array, array: { item_type: string }, required: true, description: Supported fixed/auto-fit content adaptation. }
+
+  CastAudioPolicyCapability:
+    kind: object
+    description: Audio intent and effective-set reporting guarantees.
+    fields:
+      - { id: 0x01, name: controlModes, type: array, array: { item_type: string }, required: true, description: Supported subset of automatic/manual. }
+      - { id: 0x02, name: mixModes, type: array, array: { item_type: string }, required: true, description: Supported subset of exclusive/mix. }
+      - { id: 0x03, name: supportsPerSessionEnable, type: bool, required: true, description: Whether explicit per-session enabled intent is available. }
+      - { id: 0x04, name: reportsEffectiveSet, type: bool, required: true, description: Whether effective participants are reported separately from selected intent. }
+      - { id: 0x05, name: supportsMasterMute, type: bool, required: false, description: Untargeted legacy mute controls an independent global output gate. }
+
+  CastControlOperationsCapability:
+    kind: object
+    description: Query and deduplication guarantees bounded by declared limits.
+    fields:
+      - { id: 0x01, name: supportsQuery, type: bool, required: true, description: Whether original command results can be queried. }
+      - { id: 0x02, name: supportsDedup, type: bool, required: true, description: Whether same-key same-value commands return the original operation. }
+      - { id: 0x03, name: limits, type: CastControlLimits, required: true, description: Nonzero finite bounds; guaranteed records cannot be silently evicted. }
+
+  CastControlLimits:
+    kind: object
+    description: Instance-specific positive uint32 limits; admission reserves result storage and returns BUSY on saturation.
+    fields:
+      - { id: 0x01, name: maxPendingOperations, type: uint32, required: true, min: 1, description: Maximum globally pending admitted operations. }
+      - { id: 0x02, name: maxPendingPerClient, type: uint32, required: true, min: 1, description: Maximum pending operations for one client instance. }
+      - { id: 0x03, name: maxRetainedResults, type: uint32, required: true, min: 1, description: Maximum retained records including reserved pending results. }
+      - { id: 0x04, name: replayWindowMs, type: uint32, required: true, min: 1, description: Guaranteed dedup/result window from admission using host monotonic time; pending records survive until terminal. }
+      - { id: 0x05, name: maxEventBufferEvents, type: uint32, required: true, min: 1, description: Bounded event count used for initial sync and slow-client handling. }
+      - { id: 0x06, name: maxEventBufferBytes, type: uint32, required: true, min: 1, description: Bounded buffered event bytes. }
+      - { id: 0x07, name: maxRequestBytes, type: uint32, required: true, min: 1, description: Maximum admitted request bytes. }
+      - { id: 0x08, name: maxSnapshotBytes, type: uint32, required: true, min: 1, description: Maximum atomic snapshot bytes including bounded collections. }
+
+  CastReceiverState:
+    kind: object
+    description: Real receiver availability; historical lastError does not override current state. No secrets.
+    fields:
+      - { id: 0x01, name: receiverId, type: string, required: true, max_length: 128, description: Nonempty opaque receiver identity. }
+      - { id: 0x02, name: protocol, type: enum, enum: [hid, airplay, webcast, unknown], required: true, description: Actual receiver protocol; unknown is not a supported-path alias. }
+      - { id: 0x03, name: state, type: enum, enum: [disabled, starting, ready, degraded, stopping, failed], required: true, description: Current receiver availability independent of session media. }
+      - { id: 0x04, name: observedAt, type: string, required: true, max_length: 64, description: UTC RFC3339 observation time for display only. }
+      - { id: 0x05, name: displayName, type: string, required: false, max_length: 128, description: Safe user-visible name; not identity or secret material. }
+      - { id: 0x06, name: lastError, type: CastLastError, required: false, description: Historical redacted error summary; never passwords/tokens/SDP/ICE/private keys. }
+
+  CastMultiSessionState:
+    kind: object
+    description: Current shared runtime session with independent connection, eligibility and media facts.
+    fields:
+      - { id: 0x01, name: session, type: CastSessionRef, required: true, description: Shared runtime session reference. }
+      - { id: 0x02, name: receiverId, type: string, required: true, max_length: 128, description: Nonempty reference to a receiver in the same projection. }
+      - { id: 0x03, name: protocol, type: enum, enum: [hid, airplay, webcast, unknown], required: true, description: Actual session protocol; legacy enums remain unchanged. }
+      - { id: 0x04, name: receiverState, type: enum, enum: [opening, open, mediaStarting, mediaActive, stopping, closed, failed], required: true, description: Protocol receiver session state; no frames does not imply disconnection. }
+      - { id: 0x05, name: presentationEligibility, type: enum, enum: [notEligible, priming, mediaReady, presented, withdrawing, notPresented], required: true, description: Presentation eligibility distinct from authentication and connection. }
+      - { id: 0x06, name: videoTrackOpen, type: bool, required: true, description: Whether the video track is open; not proof of rendered frames. }
+      - { id: 0x07, name: audioTrackOpen, type: bool, required: true, description: Whether the audio track is open; not proof of audible output. }
+      - { id: 0x08, name: audioReadiness, type: enum, enum: [unknown, absent, priming, ready, recovering], required: false, description: Audio readiness when observed. }
+      - { id: 0x09, name: displayName, type: string, required: false, max_length: 128, description: Safe user-visible name; not a target identity. }
+
+  CastPresentationSlotState:
+    kind: object
+    description: Current slot binding; target is required iff occupied and must match this slot and current lifecycle.
+    fields:
+      - { id: 0x01, name: slotId, type: uint32, required: true, description: Unique slot identifier within the presentation. }
+      - { id: 0x02, name: bindingGeneration, type: string, required: true, max_length: 20, description: Canonical decimal uint64 slot-binding generation. }
+      - { id: 0x03, name: occupied, type: bool, required: true, description: Whether the slot currently has an exact target. }
+      - { id: 0x04, name: target, type: CastControlTarget, required: false, description: Required iff occupied; omitted otherwise; null is invalid. }
+
+  CastPresentationState:
+    kind: object
+    description: Atomically captured presentation lifecycle, capacity and slots; zero effective/applied capacity does not imply no media.
+    fields:
+      - { id: 0x01, name: started, type: bool, required: true, description: Whether the presentation lifecycle is started. }
+      - { id: 0x02, name: lifecycleGeneration, type: string, required: true, max_length: 20, description: Canonical decimal uint64 lifecycle generation. }
+      - { id: 0x03, name: configuredCapacity, type: uint32, required: true, min: 1, description: Positive configured capacity. }
+      - { id: 0x04, name: validationAvailable, type: bool, required: true, description: Whether validatedCapacity is currently known. }
+      - { id: 0x05, name: validatedCapacity, type: uint32, required: false, min: 1, description: Required iff validationAvailable; omitted when unknown. }
+      - { id: 0x06, name: effectiveCapacity, type: uint32, required: true, description: Current host capacity-policy result; may be zero. }
+      - { id: 0x07, name: appliedCapacity, type: uint32, required: true, description: Capacity currently applied to presentation; may be zero. }
+      - { id: 0x08, name: layoutMode, type: enum, enum: [grid, presentation], required: true, description: Selected product layout; complete source withdrawal returns to grid. }
+      - { id: 0x09, name: layoutSettling, type: bool, required: true, description: Whether the host reports layout settling. }
+      - { id: 0x0A, name: slots, type: array, array: { item_type: CastPresentationSlotState }, required: true, description: Full bounded current slot set with no removed-session ghost binding. }
+
+      - { id: 0x0B, name: meeting, type: CastMeetingPresentationState, required: false, description: Present only when meeting capability is advertised; part of the existing P0 presentation commit. }
+      - { id: 0x0C, name: contentAdaptation, type: enum, enum: [fixed, auto-fit], required: true, description: Independent content adaptation; never changes the selected layout. }
+
+  CastAudioPolicyState:
+    kind: object
+    description: Selected intent and effective audio participation captured with the same session/slot projection.
+    fields:
+      - { id: 0x01, name: controlMode, type: enum, enum: [automatic, manual], required: true, description: Current control policy; writes do not implicitly reset it. }
+      - { id: 0x02, name: mixMode, type: enum, enum: [exclusive, mix], required: true, description: Current mixing policy. }
+      - { id: 0x03, name: enabledSessions, type: array, array: { item_type: CastSessionRef }, required: true, description: Unique current session references with enabled intent. }
+      - { id: 0x04, name: effectiveAudioSessions, type: array, array: { item_type: CastSessionRef }, required: true, description: Unique current effective participants; neither set proves human-audible sound. }
+
+      - { id: 0x05, name: appliedGains, type: array, array: { item_type: CastMeetingAudioGain }, required: false, description: Successfully applied weights aligned with effective participants; optional meeting extension. }
+      - { id: 0x06, name: masterMuted, type: bool, required: true, description: Global output gate including future admissions; does not erase per-session intent. }
+
+  CastStopPresentationParams:
+    kind: object
+    description: One exact withdrawal intent; same runtime/client/command key deduplicates canonical parsed values.
+    fields:
+      - { id: 0x01, name: controlVersion, type: uint32, required: true, description: Explicit selected control version; P0 uses 1. }
+      - { id: 0x02, name: runtimeInstanceId, type: string, required: true, max_length: 36, description: Canonical lower-case UUID of the targeted runtime epoch. }
+      - { id: 0x03, name: clientInstanceId, type: string, required: true, max_length: 36, description: Canonical lower-case client UUID; not authorization. }
+      - { id: 0x04, name: commandId, type: string, required: true, max_length: 36, description: Canonical lower-case UUID identifying one user intent. }
+      - { id: 0x05, name: target, type: CastControlTarget, required: true, description: Original exact target checked atomically at mutation after admission. }
+      - { id: 0x06, name: reason, type: string, required: false, max_length: 64, description: Optional non-secret withdrawal reason. }
+
+  CastSetSessionAudioEnabledParams:
+    kind: object
+    description: One explicit audio enable intent for an exact presentation; no toggle semantics.
+    fields:
+      - { id: 0x01, name: controlVersion, type: uint32, required: true, description: Explicit selected control version; P0 uses 1. }
+      - { id: 0x02, name: runtimeInstanceId, type: string, required: true, max_length: 36, description: Canonical lower-case UUID of the targeted runtime epoch. }
+      - { id: 0x03, name: clientInstanceId, type: string, required: true, max_length: 36, description: Canonical lower-case client UUID; not authorization. }
+      - { id: 0x04, name: commandId, type: string, required: true, max_length: 36, description: Canonical lower-case UUID identifying one user intent. }
+      - { id: 0x05, name: target, type: CastControlTarget, required: true, description: Original exact target checked atomically at mutation. }
+      - { id: 0x06, name: enabled, type: bool, required: true, description: Explicit desired intent; applied does not imply effective playback. }
+
+  CastGetControlOperationParams:
+    kind: object
+    description: Original deduplication key query; missing history is unknown outcome.
+    fields:
+      - { id: 0x01, name: controlVersion, type: uint32, required: true, description: Explicit selected control version; P0 uses 1. }
+      - { id: 0x02, name: runtimeInstanceId, type: string, required: true, max_length: 36, description: Canonical lower-case UUID of the original runtime epoch. }
+      - { id: 0x03, name: clientInstanceId, type: string, required: true, max_length: 36, description: Original canonical lower-case client UUID. }
+      - { id: 0x04, name: commandId, type: string, required: true, max_length: 36, description: Original canonical lower-case command UUID. }
+
+  CastControlOperation:
+    kind: object
+    description: Admitted queued or immutable terminal operation; terminal requires completedAt/statusCode/outcomeReason, P0 commit requires appliedRevision and P1 requires settingsResult.
+    fields:
+      - { id: 0x01, name: operationId, type: string, required: true, max_length: 128, description: Nonempty opaque operation record ID; not media session identity. }
+      - { id: 0x02, name: runtimeInstanceId, type: string, required: true, max_length: 36, description: Canonical lower-case runtime epoch UUID. }
+      - { id: 0x03, name: clientInstanceId, type: string, required: true, max_length: 36, description: Canonical lower-case UUID of the submitting client. }
+      - { id: 0x04, name: commandId, type: string, required: true, max_length: 36, description: Canonical lower-case original intent UUID. }
+      - { id: 0x05, name: kind, type: enum, enum: [stopPresentation, setSessionAudioEnabled, setPresentationSettings, setPresentationFocus], required: true, description: Intent kind; settings is a global P1 operation with settingsResult and no presentation target. }
+      - { id: 0x06, name: state, type: enum, enum: [queued, applied, rejected, failed], required: true, description: Admission or truthful terminal result; queued is not media success. }
+      - { id: 0x07, name: submittedAt, type: string, required: true, max_length: 64, description: UTC RFC3339 submission display time; expiry uses host monotonic time. }
+      - { id: 0x08, name: target, type: CastControlTarget, required: false, description: Required for both P0 per-session kinds and retains the original exact target; omitted for P1 settings. }
+      - { id: 0x09, name: completedAt, type: string, required: false, max_length: 64, description: UTC RFC3339 time required for applied/rejected/failed. }
+      - { id: 0x0A, name: appliedRevision, type: string, required: false, max_length: 20, description: Canonical decimal uint64 string required iff a P0 logical control commit occurred; settings-only metadata uses settingsResult.settingsRevision instead. }
+      - { id: 0x0B, name: statusCode, type: uint32, required: false, description: Required terminal standard AXTP status code; applied uses SUCCESS and failures use non-success. }
+      - { id: 0x0C, name: outcomeReason, type: string, required: false, max_length: 64, description: Required terminal bounded business reason; not a new numeric error space and never secret data. }
+      - { id: 0x0D, name: ownerCleanup, type: enum, enum: [notApplicable, pending, complete, failed], required: false, description: Cleanup observation at terminalization for the target owner only; not entire receiver exit. }
+      - { id: 0x0E, name: settingsResult, type: CastPresentationSettingsOperationResult, required: false, description: Required for kind=setPresentationSettings including queued/rejected/failed; reports configuration/application/persistence separately. }
+
+  CastSetPresentationSettingsParams:
+    kind: object
+    description: Global one-field settings intent; same-key dedup precedes owner-side optimistic version comparison and persist never saves another temporary field.
+    fields:
+      - { id: 0x01, name: controlVersion, type: uint32, required: true, description: Selected control version; P1 uses 1 with separate capability. }
+      - { id: 0x02, name: runtimeInstanceId, type: string, required: true, max_length: 36, description: Canonical lower-case runtime UUID; no automatic replay into a new epoch. }
+      - { id: 0x03, name: clientInstanceId, type: string, required: true, max_length: 36, description: Canonical lower-case client UUID; not authorization. }
+      - { id: 0x04, name: commandId, type: string, required: true, max_length: 36, description: Canonical lower-case UUID for this explicit settings intent. }
+      - { id: 0x05, name: expectedSettingsRevision, type: string, required: true, max_length: 20, description: Canonical decimal uint64 optimistic version; rechecked after dedup and queueing. }
+      - { id: 0x06, name: patch, type: CastPresentationSettingsPatch, required: true, description: Exactly one known supported setting key; empty/multiple/unknown keys are INVALID_ARGUMENT. }
+      - { id: 0x07, name: persist, type: bool, required: true, description: Explicit save choice; true saves only the patch field before configuration commit and live apply. }
+
+  CastPresentationSettingsPatch:
+    kind: object
+    description: All fields optional structurally but exactly one key required semantically; unknown patch keys rejected and conditional choices come from capability.
+    fields:
+      - { id: 0x01, name: layoutMode, type: enum, enum: [grid, presentation], required: false, description: Selected product layout; complete source withdrawal returns to grid. }
+      - { id: 0x02, name: audioControlMode, type: enum, enum: [automatic, manual], required: false, description: Declared audio control mode; same confirmed value does not reset selection. }
+      - { id: 0x03, name: audioMixMode, type: enum, enum: [exclusive, mix], required: false, description: Declared audio mix mode; no implicit inverse-mode rollback. }
+      - { id: 0x04, name: capacity, type: uint32, required: false, min: 1, description: One declared capacity choice; no global product maximum or default. }
+      - { id: 0x05, name: enabledProtocols, type: array, array: { item_type: string }, required: false, description: Duplicate-free set from declared hid/airplay/webcast protocols; empty only when minEnabledProtocols is explicitly zero. }
+      - { id: 0x06, name: profileHint, type: string, required: false, max_length: 64, description: Nonempty declared opaque product profile identifier; not a wire profile. }
+
+      - { id: 0x07, name: contentAdaptation, type: enum, enum: [fixed, auto-fit], required: false, description: Content aspect adaptation independent of Layout. }
+      - { id: 0x08, name: presentationMode, type: enum, enum: [manual, automatic], required: false, description: Meeting visual entry policy; not global audio policy. }
+      - { id: 0x09, name: presentationSidebar, type: enum, enum: [left, right], required: false, description: Meeting rail position independent of base layoutMode. }
+      - { id: 0x0A, name: presentationAudioFollow, type: bool, required: false, description: Remembered follow preference independent of activity and global audio control mode. }
+      - { id: 0x0B, name: presentationFocusOnDoubleClick, type: bool, required: false, description: Remembered main-body double-click Focus entry preference; default true. Disabling restores Sidebar from Focus. }
+      - { id: 0x0C, name: presentationGridOnDoubleClick, type: bool, required: false, description: Remembered inclusion of Grid in main-body double-click cycle; default false. Independent of Focus entry. }
+      - { id: 0x0D, name: presentationAutoEnter, type: bool, required: false, description: Automatic Grid to Sidebar entry at two presented sources; independent of primary selection. Explicit Grid suppresses entry until full withdrawal. }
+      - { id: 0x0E, name: canvasMode, type: enum, enum: [adaptive, fixed], required: false, description: Canvas sizing policy for normalized input geometry. }
+      - { id: 0x0F, name: baseWidth, type: uint32, required: false, min: 1, max: 16384, description: Fixed or preferred canvas width in pixels. }
+      - { id: 0x10, name: baseHeight, type: uint32, required: false, min: 1, max: 16384, description: Fixed or preferred canvas height in pixels. }
+      - { id: 0x11, name: maxWidth, type: uint32, required: false, min: 1, max: 16384, description: Adaptive canvas maximum width in pixels. }
+      - { id: 0x12, name: maxHeight, type: uint32, required: false, min: 1, max: 16384, description: Adaptive canvas maximum height in pixels. }
+
+  CastPresentationSettingsValues:
+    kind: object
+    description: Supported setting values only; configured/known persisted projections are complete, while unconfirmed applied fields are absent with issues.
+    fields:
+      - { id: 0x01, name: layoutMode, type: enum, enum: [grid, presentation], required: false, description: Selected product layout; complete source withdrawal returns to grid. }
+      - { id: 0x02, name: audioControlMode, type: enum, enum: [automatic, manual], required: false, description: Adopted or desired control policy; not proof of sound. }
+      - { id: 0x03, name: audioMixMode, type: enum, enum: [exclusive, mix], required: false, description: Adopted or desired audio mixing policy. }
+      - { id: 0x04, name: capacity, type: uint32, required: false, min: 1, description: Desired capacity or actually adopted capacity according to containing projection; applied may be limited. }
+      - { id: 0x05, name: enabledProtocols, type: array, array: { item_type: string }, required: false, description: Adopted or desired enable policy; not receiver readiness. }
+      - { id: 0x06, name: profileHint, type: string, required: false, max_length: 64, description: Declared product combination profile identifier. }
+
+      - { id: 0x07, name: contentAdaptation, type: enum, enum: [fixed, auto-fit], required: false, description: Content aspect adaptation independent of Layout. }
+      - { id: 0x08, name: presentationMode, type: enum, enum: [manual, automatic], required: false, description: Meeting visual entry policy; not global audio policy. }
+      - { id: 0x09, name: presentationSidebar, type: enum, enum: [left, right], required: false, description: Meeting rail position independent of base layoutMode. }
+      - { id: 0x0A, name: presentationAudioFollow, type: bool, required: false, description: Remembered follow preference independent of activity and global audio control mode. }
+      - { id: 0x0B, name: presentationFocusOnDoubleClick, type: bool, required: false, description: Remembered main-body double-click Focus entry preference; default true. Disabling restores Sidebar from Focus. }
+      - { id: 0x0C, name: presentationGridOnDoubleClick, type: bool, required: false, description: Remembered inclusion of Grid in main-body double-click cycle; default false. Independent of Focus entry. }
+      - { id: 0x0D, name: presentationAutoEnter, type: bool, required: false, description: Automatic Grid to Sidebar entry at two presented sources; independent of primary selection. Explicit Grid suppresses entry until full withdrawal. }
+      - { id: 0x0E, name: canvasMode, type: enum, enum: [adaptive, fixed], required: false, description: Canvas sizing policy for normalized input geometry. }
+      - { id: 0x0F, name: baseWidth, type: uint32, required: false, min: 1, max: 16384, description: Fixed or preferred canvas width in pixels. }
+      - { id: 0x10, name: baseHeight, type: uint32, required: false, min: 1, max: 16384, description: Fixed or preferred canvas height in pixels. }
+      - { id: 0x11, name: maxWidth, type: uint32, required: false, min: 1, max: 16384, description: Adaptive canvas maximum width in pixels. }
+      - { id: 0x12, name: maxHeight, type: uint32, required: false, min: 1, max: 16384, description: Adaptive canvas maximum height in pixels. }
+
+  CastPresentationStartupSettings:
+    kind: object
+    description: Exactly the capability-declared restart-only intent accepted at this host startup; distinct from effective/applied limits and stored values.
+    fields:
+      - { id: 0x01, name: layoutMode, type: enum, enum: [grid, presentation], required: false, description: Selected product layout; complete source withdrawal returns to grid. }
+      - { id: 0x02, name: audioControlMode, type: enum, enum: [automatic, manual], required: false, description: Present only if audioControlMode is restart-only. }
+      - { id: 0x03, name: audioMixMode, type: enum, enum: [exclusive, mix], required: false, description: Present only if audioMixMode is restart-only. }
+      - { id: 0x04, name: capacity, type: uint32, required: false, min: 1, description: Startup accepted capacity intent before runtime validation limitations. }
+      - { id: 0x05, name: enabledProtocols, type: array, array: { item_type: string }, required: false, description: Startup accepted receiver enable policy; does not claim Ready. }
+      - { id: 0x06, name: profileHint, type: string, required: false, max_length: 64, description: Startup accepted product profile when declared restart-only. }
+
+      - { id: 0x07, name: contentAdaptation, type: enum, enum: [fixed, auto-fit], required: false, description: Content aspect adaptation independent of Layout. }
+      - { id: 0x08, name: presentationMode, type: enum, enum: [manual, automatic], required: false, description: Meeting visual entry policy; not global audio policy. }
+      - { id: 0x09, name: presentationSidebar, type: enum, enum: [left, right], required: false, description: Meeting rail position independent of base layoutMode. }
+      - { id: 0x0A, name: presentationAudioFollow, type: bool, required: false, description: Remembered follow preference independent of activity and global audio control mode. }
+      - { id: 0x0B, name: presentationFocusOnDoubleClick, type: bool, required: false, description: Remembered main-body double-click Focus entry preference; default true. Disabling restores Sidebar from Focus. }
+      - { id: 0x0C, name: presentationGridOnDoubleClick, type: bool, required: false, description: Remembered inclusion of Grid in main-body double-click cycle; default false. Independent of Focus entry. }
+      - { id: 0x0D, name: presentationAutoEnter, type: bool, required: false, description: Automatic Grid to Sidebar entry at two presented sources; independent of primary selection. Explicit Grid suppresses entry until full withdrawal. }
+      - { id: 0x0E, name: canvasMode, type: enum, enum: [adaptive, fixed], required: false, description: Canvas sizing policy for normalized input geometry. }
+      - { id: 0x0F, name: baseWidth, type: uint32, required: false, min: 1, max: 16384, description: Fixed or preferred canvas width in pixels. }
+      - { id: 0x10, name: baseHeight, type: uint32, required: false, min: 1, max: 16384, description: Fixed or preferred canvas height in pixels. }
+      - { id: 0x11, name: maxWidth, type: uint32, required: false, min: 1, max: 16384, description: Adaptive canvas maximum width in pixels. }
+      - { id: 0x12, name: maxHeight, type: uint32, required: false, min: 1, max: 16384, description: Adaptive canvas maximum height in pixels. }
+
+  CastPresentationSettingsState:
+    kind: object
+    description: Full bounded settings state; desired/adopted/startup/stored facts and two independent event barriers must never be conflated.
+    fields:
+      - { id: 0x01, name: settingsRevision, type: string, required: true, max_length: 20, description: Canonical decimal uint64 settings fact version within the runtime epoch. }
+      - { id: 0x02, name: settingsEventSequence, type: string, required: true, max_length: 20, description: Canonical decimal uint64 settings publication barrier; independent of P0 eventSequence. }
+      - { id: 0x03, name: configured, type: CastPresentationSettingsValues, required: true, description: Complete supported desired settings including temporary changes. }
+      - { id: 0x04, name: applied, type: CastPresentationSettingsValues, required: true, description: Confirmed actually adopted values; unconfirmed fields omitted with issues. }
+      - { id: 0x05, name: activeStartup, type: CastPresentationStartupSettings, required: true, description: Restart-only intent accepted at current startup; used to compute pendingRestart. }
+      - { id: 0x06, name: pendingRestart, type: array, array: { item_type: string }, required: true, description: Unique restart-only fields where configured differs from activeStartup; applied capacity limits do not create permanent pending. }
+      - { id: 0x07, name: persisted, type: bool, required: true, description: True iff desired settings equal known stored/startup projection; false if unknown and not a disk-write receipt. }
+      - { id: 0x08, name: unsavedFields, type: array, array: { item_type: string }, required: true, description: Configured fields differing from known stored values; all supported fields when storage projection unknown. }
+      - { id: 0x09, name: unappliedFields, type: array, array: { item_type: string }, required: true, description: Live fields differing from confirmed adopted policy; layout animation alone does not qualify. }
+      - { id: 0x0A, name: storageState, type: enum, enum: [absent, loaded, saved, invalid, unavailable], required: true, description: Truthful store observation; invalid/unknown files are preserved rather than silently overwritten. }
+      - { id: 0x0B, name: lockedFields, type: array, array: { item_type: string }, required: true, description: Unique supported field names currently locked by explicit deployment/authorization policy. }
+      - { id: 0x0C, name: applicationIssues, type: array, array: { item_type: CastPresentationSettingIssue }, required: true, description: Safe field-specific limitation/failure/lock observations. }
+      - { id: 0x0D, name: persistedValues, type: CastPresentationSettingsValues, required: false, description: Complete known persistent startup projection; omitted if invalid/unavailable/unknown. }
+      - { id: 0x0E, name: storeRevision, type: string, required: false, max_length: 20, description: Canonical decimal uint64 known valid store version; absent without valid file. }
+      - { id: 0x0F, name: appliedControlRevision, type: string, required: false, max_length: 20, description: Associated P0 adopted-policy revision lower bound for cross-stream synchronization. }
+      - { id: 0x10, name: persistError, type: string, required: false, max_length: 512, description: Sanitized bounded storage diagnostic; no raw request/secret/private path. }
+
+  CastPresentationSettingIssue:
+    kind: object
+    description: One safe supported-field observation; historical failure and current policy remain distinct.
+    fields:
+      - { id: 0x01, name: field, type: string, required: true, max_length: 64, description: One supported setting field name. }
+      - { id: 0x02, name: kind, type: enum, enum: [limitedByValidation, limitedByHardLimit, liveApplyFailed, startupFailed, locked, unknown], required: true, description: Structured limitation/failure classification. }
+      - { id: 0x03, name: reason, type: string, required: false, max_length: 128, description: Bounded sanitized reason; no secret/path leakage. }
+      - { id: 0x04, name: statusCode, type: uint32, required: false, description: Optional standard AXTP numeric status. }
+
+  CastPresentationSettingsCapability:
+    kind: object
+    description: Optional P1 field and effect partition; conditional choices/modes/minimum are required for corresponding supported keys, never inferred defaults.
+    fields:
+      - { id: 0x01, name: fields, type: array, array: { item_type: string }, required: true, description: Unique supported settings keys; meeting extension adds four separately advertised keys. }
+      - { id: 0x02, name: liveFields, type: array, array: { item_type: string }, required: true, description: Live effect subset; disjoint from restartOnlyFields and together exactly fields. }
+      - { id: 0x03, name: restartOnlyFields, type: array, array: { item_type: string }, required: true, description: Restart-only subset; updates never automatically restart current media. }
+      - { id: 0x04, name: supportsPersistence, type: bool, required: true, description: Whether explicit field-only save requests are supported. }
+      - { id: 0x05, name: capacityChoices, type: array, array: { item_type: uint32 }, required: false, description: Nonempty unique positive choices required when capacity supported. }
+      - { id: 0x06, name: layoutModes, type: array, array: { item_type: string }, required: false, description: Supported grid/presentation layouts. }
+      - { id: 0x0A, name: contentAdaptations, type: array, array: { item_type: string }, required: false, description: Supported fixed/auto-fit content adaptation. }
+      - { id: 0x07, name: profileHints, type: array, array: { item_type: string }, required: false, description: Nonempty unique bounded product profile identifiers required when profileHint supported. }
+      - { id: 0x08, name: minEnabledProtocols, type: uint32, required: false, description: Required when enabledProtocols supported; zero explicitly permits empty if control/settings can remain available independently. }
+      - { id: 0x0B, name: canvasModes, type: array, array: { item_type: string }, required: false, description: Supported canvas sizing modes, normally adaptive and fixed. }
+      - { id: 0x0C, name: canvasMaxWidth, type: uint32, required: false, min: 1, max: 16384, description: Maximum supported canvas width in pixels. }
+      - { id: 0x0D, name: canvasMaxHeight, type: uint32, required: false, min: 1, max: 16384, description: Maximum supported canvas height in pixels. }
+
+  CastPresentationSettingsOperationResult:
+    kind: object
+    description: Truthful independent configuration/application/persistence results; failed may still include stored/configured commits.
+    fields:
+      - { id: 0x01, name: field, type: string, required: true, max_length: 64, description: Unique requested setting field. }
+      - { id: 0x02, name: settingsRevision, type: string, required: true, max_length: 20, description: Canonical decimal uint64 most recently confirmed settings revision; terminal uses completion/check version. }
+      - { id: 0x03, name: configurationStatus, type: enum, enum: [notCommitted, unchanged, committed], required: true, description: Whether this intent changed desired configuration. }
+      - { id: 0x04, name: applicationStatus, type: enum, enum: [notAttempted, unchanged, applied, pendingRestart, failed], required: true, description: Confirmed policy adoption or deferred restart intent; not media audibility/restart proof. }
+      - { id: 0x05, name: persistenceStatus, type: enum, enum: [notRequested, pending, unchanged, stored, failed], required: true, description: Explicit field-only storage outcome distinct from equality with known persistedValues. }
+      - { id: 0x06, name: appliedControlRevision, type: string, required: false, max_length: 20, description: Optional canonical decimal uint64 associated P0 policy revision. }
+
+  CastSettingsEventContext:
+    kind: object
+    description: Independent settings event cursor; payload revision/sequence must match and this event never consumes P0 sequence.
+    fields:
+      - { id: 0x01, name: controlVersion, type: uint32, required: true, description: Selected control version; P1 uses 1. }
+      - { id: 0x02, name: runtimeInstanceId, type: string, required: true, max_length: 36, description: Canonical lower-case runtime epoch UUID. }
+      - { id: 0x03, name: settingsRevision, type: string, required: true, max_length: 20, description: Canonical decimal uint64 settings state version. }
+      - { id: 0x04, name: settingsEventSequence, type: string, required: true, max_length: 20, description: Canonical decimal uint64 settings publication sequence; snapshot barrier may be zero. }
+
+  CastPresentationSettingsChangedEvent:
+    kind: object
+    description: Complete settings state replacement in its own bounded ordered event stream; no P0 context or batch fields.
+    fields:
+      - { id: 0x01, name: settingsContext, type: CastSettingsEventContext, required: true, description: Independent required settings cursor matching payload versions. }
+      - { id: 0x02, name: settings, type: CastPresentationSettingsState, required: true, description: Full post-commit settings state, not a patch. }
+
+  CastReceiversChangedEvent:
+    kind: object
+    description: Full receiver-section replacement in one control group part.
+    fields:
+      - { id: 0x01, name: context, type: CastControlEventContext, required: true, description: Required v1 commit context. }
+      - { id: 0x02, name: receivers, type: array, array: { item_type: CastReceiverState }, required: true, description: Complete current bounded receiver collection. }
+
+  CastSessionsChangedEvent:
+    kind: object
+    description: Full session-section replacement in one control group part.
+    fields:
+      - { id: 0x01, name: context, type: CastControlEventContext, required: true, description: Required v1 commit context. }
+      - { id: 0x02, name: sessions, type: array, array: { item_type: CastMultiSessionState }, required: true, description: Complete current bounded session collection. }
+
+  CastPresentationChangedEvent:
+    kind: object
+    description: Full presentation-section replacement; never a receiver/session/audio aggregate.
+    fields:
+      - { id: 0x01, name: context, type: CastControlEventContext, required: true, description: Required v1 commit context. }
+      - { id: 0x02, name: presentation, type: CastPresentationState, required: true, description: Complete current presentation state. }
+
+  CastAudioPolicyChangedEvent:
+    kind: object
+    description: Full audio-policy-section replacement in one control group part.
+    fields:
+      - { id: 0x01, name: context, type: CastControlEventContext, required: true, description: Required v1 commit context. }
+      - { id: 0x02, name: audioPolicy, type: CastAudioPolicyState, required: true, description: Complete selected/effective audio policy state. }
+
+  CastControlOperationChangedEvent:
+    kind: object
+    description: One P0 per-session operation record with ordered control publication context; setPresentationSettings is excluded from this event stream.
+    fields:
+      - { id: 0x01, name: context, type: CastControlEventContext, required: true, description: Required v1 commit context; may be an operation-only group. }
+      - { id: 0x02, name: operation, type: CastControlOperation, required: true, description: One admitted queued or terminal operation record. }
+
+  CastGetWebCastBackendStateParams:
+    kind: object
+    description: Explicit supported control version for the optional WebCast backend snapshot.
+    fields:
+      - { id: 0x01, name: controlVersion, type: uint32, required: true, description: Supported control version; this feature uses 1. }
+
+  CastWebCastBackendContext:
+    kind: object
+    description: Independent full-state event cursor; not part of P0 control or P1 settings sequences.
+    fields:
+      - { id: 0x01, name: controlVersion, type: uint32, required: true, description: Selected supported control version; uses 1. }
+      - { id: 0x02, name: runtimeInstanceId, type: string, required: true, max_length: 36, description: Canonical lower-case host UUID; changes at restart and equals the advertised control epoch. }
+      - { id: 0x03, name: backendRevision, type: string, required: true, max_length: 20, description: Canonical decimal uint64 independent backend-state revision. }
+      - { id: 0x04, name: backendEventSequence, type: string, required: true, max_length: 20, description: Canonical decimal uint64 barrier covering complete backend replacement events through this snapshot. }
+
+  CastWebCastSignalingState:
+    kind: object
+    description: Current room signaling availability and retained native peer connectivity; no media-quality claim or secret material.
+    fields:
+      - { id: 0x01, name: state, type: enum, enum: [disabled, offline, creatingRoom, awaitingRestore, ready, failed, stopped], required: true, description: Ready requires an authoritative usable room and code; transport-open alone is insufficient. }
+      - { id: 0x02, name: transportConnected, type: bool, required: true, description: Current signaling transport connectivity independent of existing P2P media. }
+      - { id: 0x03, name: retainedPeerCount, type: uint32, required: true, description: Native peers retained by this backend including peers still negotiating. }
+      - { id: 0x04, name: connectedPeerCount, type: uint32, required: true, description: Retained peers with an open data/control channel; never proof of presented video or audible output. }
+      - { id: 0x05, name: lastNetworkError, type: uint32, required: false, description: Historical sanitized transport error code; not an override of current state. }
+
+  CastWebCastLocalBackendState:
+    kind: object
+    description: Receiver-owned optional local signaling listener and its independent room.
+    fields:
+      - { id: 0x01, name: fallbackEnabled, type: bool, required: true, description: Whether local fallback is enabled in the active receiver instance. }
+      - { id: 0x02, name: serviceState, type: enum, enum: [disabled, dormant, running, failed, stopped], required: true, description: Local listener lifecycle; dormant means permitted but not yet started. }
+      - { id: 0x03, name: servicePort, type: uint32, required: false, min: 1, max: 65535, description: Actual owned listener port in 1..65535; present iff serviceState is running. }
+      - { id: 0x04, name: startAttempts, type: string, required: true, max_length: 20, description: Canonical decimal uint64 local-start attempts for this host lifetime. }
+      - { id: 0x05, name: lastStartError, type: uint32, required: false, description: Sanitized last local startup error code; no path or exception text. }
+      - { id: 0x06, name: signaling, type: CastWebCastSignalingState, required: true, description: Local room signaling and peer connectivity independent of cloud recovery. }
+
+  CastWebCastBackendState:
+    kind: object
+    description: Actual WebCast signaling backend selection and independent cloud/local observations; no automatic migration or recovery policy is mandated.
+    fields:
+      - { id: 0x01, name: enabled, type: bool, required: true, description: Whether WebCast was enabled for this host instance; false is reported explicitly. }
+      - { id: 0x02, name: state, type: enum, enum: [disabled, starting, ready, failed, stopped], required: true, description: Current ability to admit a new WebCast join; does not describe existing media quality. }
+      - { id: 0x03, name: selectedBackend, type: enum, enum: [none, cloud, local], required: true, description: Authoritative backend currently offered for new joins; none when no usable room exists. Existing peers may belong to the other backend. }
+      - { id: 0x04, name: cloud, type: CastWebCastSignalingState, required: true, description: Cloud room and peer observations. }
+      - { id: 0x05, name: local, type: CastWebCastLocalBackendState, required: true, description: Local listener and room observations; retained local peers need not migrate when cloud returns. }
+
+  CastWebCastBackendSnapshot:
+    kind: object
+    description: Atomic complete WebCast backend replacement shared by query, optional status section and change event.
+    fields:
+      - { id: 0x01, name: backendContext, type: CastWebCastBackendContext, required: true, description: Epoch and independent revision/event barrier committed with this state. }
+      - { id: 0x02, name: state, type: CastWebCastBackendState, required: true, description: Complete safe backend state rather than a delta. }
+
+  CastWebCastBackendCapability:
+    kind: object
+    description: Explicit optional WebCast backend snapshot and independent event discovery; absence never implies support.
+    fields:
+      - { id: 0x01, name: supportsSnapshot, type: bool, required: true, description: True for this complete feature. }
+      - { id: 0x02, name: supportsEvents, type: bool, required: true, description: True for complete independent full-state events. }
+      - { id: 0x03, name: backendTypes, type: array, array: { item_type: string }, required: true, description: Supported identifiers from cloud and local; current selection is reported separately. }
+      - { id: 0x04, name: sequenceModel, type: enum, enum: [independent-full-state], required: true, description: Backend events do not change P0 batch membership or P1 sequence. }
+
+
+  CastMeetingPresentationState:
+    kind: object
+    description: Meeting policy and transient emphasis captured at the existing P0 commit boundary; no media-quality claims.
+    fields:
+      - { id: 0x02, name: mode, type: enum, enum: [manual, automatic], required: true, description: Primary selection policy inside Presentation only; never automatically enters it from Grid. }
+      - { id: 0x03, name: sidebar, type: enum, enum: [left, right], required: true, description: Preview rail position. }
+      - { id: 0x04, name: audioFollow, type: bool, required: true, description: Follow preference preserved while inactive. }
+      - { id: 0x05, name: revision, type: string, required: true, max_length: 20, description: Canonical decimal uint64 meeting identity revision for optimistic commands. }
+      - { id: 0x07, name: primary, type: CastSessionRef, required: false, description: Current exact primary identity; omitted in base split. }
+      - { id: 0x08, name: sidebarPage, type: uint32, required: true, description: Zero-based preview page. }
+      - { id: 0x09, name: sidebarPageCount, type: uint32, required: true, min: 1, description: Current bounded page count including an empty page. }
+      - { id: 0x0A, name: mainSharePermille, type: uint32, required: true, description: Fixed logical width share; this profile uses 840. }
+      - { id: 0x0B, name: audioFollowActive, type: bool, required: true, description: Whether follow policy currently has an eligible primary; not audible output. }
+
+      - { id: 0x0C, name: view, type: enum, enum: [sidebar, focus], required: false, description: Present only in Presentation layout; omitted in Grid. }
+      - { id: 0x0D, name: focusOnDoubleClick, type: bool, required: false, description: Main-body double-click Focus entry preference; absent means true. Explicit focus API remains independent. }
+      - { id: 0x0E, name: gridOnDoubleClick, type: bool, required: false, description: Include Grid in main-body double-click cycle; absent means false. With Focus enabled the cycle is Grid to Sidebar to Focus to Grid. }
+      - { id: 0x0F, name: autoEnter, type: bool, required: false, description: Automatic layout entry preference; absent means unsupported. Independent of primary selection. }
+      - { id: 0x10, name: autoEnterSuppressed, type: bool, required: false, description: Explicit Grid suspends auto-entry for this source round; resets on complete withdrawal or explicit re-enabling. Transient and never persisted. }
+
+  CastSetPresentationFocusParams:
+    kind: object
+    description: P0-style bounded async operation; dedup before optimistic revision check and exact owner fencing before mutation.
+    fields:
+      - { id: 0x01, name: controlVersion, type: uint32, required: true, description: Explicit version uses 1. }
+      - { id: 0x02, name: runtimeInstanceId, type: string, required: true, max_length: 36, description: Canonical lower-case runtime UUID. }
+      - { id: 0x03, name: clientInstanceId, type: string, required: true, max_length: 36, description: Canonical lower-case client UUID. }
+      - { id: 0x04, name: commandId, type: string, required: true, max_length: 36, description: Canonical lower-case intent UUID. }
+      - { id: 0x05, name: target, type: CastControlTarget, required: true, description: Exact admitted identity; split requires current primary. }
+      - { id: 0x06, name: expectedMeetingRevision, type: string, required: true, max_length: 20, description: Canonical decimal uint64 optimistic meeting revision checked on owner after dedup. }
+      - { id: 0x07, name: display, type: enum, enum: [sidebar, grid, focus], required: true, description: Explicit desired view. Focus requires current primary and supportsFocusView capability; primary restores sidebar. No toggle. }
+      - { id: 0x08, name: sidebarPage, type: uint32, required: false, description: Explicit page optional only with primary; validated against current membership before mutation. }
+
+  CastMeetingAudioGain:
+    kind: object
+    description: Observed applied audio branch weight separate from enabled intent and physical listening quality.
+    fields:
+      - { id: 0x01, name: session, type: CastSessionRef, required: true, description: Exact audible participant. }
+      - { id: 0x02, name: gainPpm, type: uint32, required: true, description: Rounded linear gain parts per million in 0..1000000; not perceived loudness percent. }
+
+  CastMeetingPresentationCapability:
+    kind: object
+    description: Optional meeting focus and fixed rail policy; settings keys require explicit P1 declaration.
+    fields:
+      - { id: 0x01, name: modes, type: array, array: { item_type: string }, required: true, description: Supported visual identifiers manual and automatic. }
+      - { id: 0x02, name: sidebars, type: array, array: { item_type: string }, required: true, description: Supported left and right rail positions. }
+      - { id: 0x03, name: mainSharePermille, type: uint32, required: true, description: Fixed logical main width share 840. }
+      - { id: 0x04, name: supportsAudioFollow, type: bool, required: true, description: Explicit optional follow switch independent of global automatic/manual. }
+      - { id: 0x05, name: supportsPaging, type: bool, required: true, description: Bounded preview paging without admission or media lifecycle changes. }
+      - { id: 0x06, name: supportsFocusView, type: bool, required: false, description: Explicit support for focus display requests and meeting view observation; absence means unsupported. }
+
+  CastAirPlayControlCapability:
+    kind: object
+    description: Bounded secret-free authentication and discovery observation.
+    fields:
+      - { id: 0x01, name: supportsEvents, type: bool, required: true, description: State participates in the P0 commit barrier. }
+      - { id: 0x02, name: supportsLiveRename, type: bool, required: true, description: Safe discovery-only name reconfiguration. }
+      - { id: 0x03, name: passwordPolicy, type: enum, enum: [startup-only], required: true, description: Random-password protection changes through startup arguments only. }
+  CastAirPlayAuthenticationAttempt:
+    kind: object
+    description: Authentication identity is not a media session; never contains a password or client address.
+    fields:
+      - { id: 0x01, name: attemptId, type: string, required: true, max_length: 20, description: Service-minted decimal uint64 attempt identity. }
+      - { id: 0x02, name: challengeId, type: string, required: true, max_length: 20, description: Canonical decimal uint64 challenge generation; zero before a challenge. }
+      - { id: 0x03, name: displayRequestId, type: string, required: true, max_length: 20, description: Canonical decimal uint64 prompt occurrence; retrying the same challenge may change it. }
+      - { id: 0x04, name: state, type: enum, enum: [incoming, waitingForPassword, authenticated, ended, failed, timedOut], required: true, description: Observed phase; transport closure alone never claims user cancellation. }
+      - { id: 0x05, name: reason, type: string, required: false, max_length: 64, description: Bounded non-sensitive reason. }
+  CastAirPlayControlState:
+    kind: object
+    description: Current discovery and bounded authentication observations without credentials.
+    fields:
+      - { id: 0x01, name: enabled, type: bool, required: true, description: Startup protocol enablement. }
+      - { id: 0x02, name: displayName, type: string, required: true, max_length: 128, description: Actual configured discovery name. }
+      - { id: 0x03, name: publishState, type: enum, enum: [published, republishing, pending, failed, unpublished], required: true, description: Observed discovery publication state. }
+      - { id: 0x04, name: randomPasswordEnabled, type: bool, required: true, description: Startup random-password policy. }
+      - { id: 0x05, name: attempts, type: array, array: { item_type: CastAirPlayAuthenticationAttempt }, required: true, description: Bounded active and recently ended authentication attempts. }
+      - { id: 0x06, name: observationDrops, type: string, required: false, max_length: 20, description: Decimal uint64 count of bounded authentication observations dropped before host commit; resynchronize state when it changes. }
+  CastAirPlayChangedEvent:
+    kind: object
+    description: Full AirPlay state replacement in one P0 commit group part.
+    fields:
+      - { id: 0x01, name: context, type: CastControlEventContext, required: true, description: Required atomic commit context. }
+      - { id: 0x02, name: airplay, type: CastAirPlayControlState, required: true, description: Complete secret-free state. }
+
+  CastTouchbackTarget:
+    kind: object
+    description: Per-route target identity for touchback control.
+    fields:
+      - id: 0x01
+        name: sessionId
+        type: string
+        required: true
+        max_length: 128
+        description: Cast session identifier.
+      - id: 0x02
+        name: sessionGeneration
+        type: string
+        required: true
+        max_length: 32
+        description: Decimal-string session generation.
+      - id: 0x03
+        name: slotId
+        type: string
+        required: true
+        max_length: 128
+        description: Per-route slot identifier.
+      - id: 0x04
+        name: bindingGeneration
+        type: string
+        required: true
+        max_length: 32
+        description: Decimal-string binding generation.
+      - id: 0x05
+        name: lifecycleGeneration
+        type: string
+        required: true
+        max_length: 32
+        description: Decimal-string receiver lifecycle generation.
+
+  CastTouchbackTargetRequest:
+    kind: object
+    description: Selector for one cast target.
+    fields:
+      - id: 0x01
+        name: target
+        type: CastTouchbackTarget
+        required: true
+        description: Complete target identity and generation fence.
+
+  CastTouchbackState:
+    kind: object
+    description: Per-target touchback state with independent gates and geometry fencing.
+    fields:
+      - id: 0x01
+        name: target
+        type: CastTouchbackTarget
+        required: true
+        description: Complete target identity.
+      - id: 0x02
+        name: receiverOptIn
+        type: bool
+        required: true
+        description: Receiver-local touchback gate.
+      - id: 0x03
+        name: controllerRequested
+        type: bool
+        required: true
+        description: Launcher/controller requested gate.
+      - id: 0x04
+        name: effectiveEnabled
+        type: bool
+        required: true
+        description: Computed effective gate; true only when both gates allow input.
+      - id: 0x05
+        name: requestedMode
+        type: enum
+        enum: [touch, mouse]
+        required: true
+        description: Controller requested input interpretation.
+      - id: 0x06
+        name: negotiatedMode
+        type: enum
+        enum: [touch, mouse, none]
+        required: true
+        description: Mode accepted by the active stream, or none when closed.
+      - id: 0x07
+        name: resolutionPreference
+        type: enum
+        enum: [inherit, prefer1080p]
+        required: true
+        description: Preserve the sender's current source quality or request 1080p; TouchBatch coordinates remain normalized.
+      - id: 0x08
+        name: streamId
+        type: uint32
+        required: false
+        description: Active input.stream identifier.
+      - id: 0x09
+        name: epoch
+        type: uint32
+        required: false
+        description: Active input stream epoch.
+      - id: 0x0A
+        name: canvasRevision
+        type: string
+        required: true
+        max_length: 128
+        description: Canvas revision bound to this target.
+      - id: 0x0B
+        name: geometryRevision
+        type: string
+        required: true
+        max_length: 128
+        description: Geometry revision bound to this target.
+      - id: 0x0C
+        name: canvasToken
+        type: uint32
+        required: true
+        description: Canvas fence token.
+      - id: 0x0D
+        name: geometryToken
+        type: uint32
+        required: true
+        description: Geometry fence token.
+      - id: 0x0E
+        name: revision
+        type: string
+        required: true
+        max_length: 128
+        description: Monotonic touchback state revision.
+      - id: 0x0F
+        name: diagnosticReason
+        type: string
+        required: false
+        max_length: 256
+        description: Bounded diagnostic reason.
+
+  CastTouchbackEnabledRequest:
+    kind: object
+    description: Request to set the controller touchback gate for one target.
+    fields:
+      - id: 0x01
+        name: target
+        type: CastTouchbackTarget
+        required: true
+        description: Target identity and generation fence.
+      - id: 0x02
+        name: enabled
+        type: bool
+        required: true
+        description: Requested controller gate.
+      - id: 0x03
+        name: commandId
+        type: string
+        required: true
+        max_length: 128
+        description: Idempotency key.
+
+  CastTouchbackModeRequest:
+    kind: object
+    description: Request to set touchback mode for one target.
+    fields:
+      - id: 0x01
+        name: target
+        type: CastTouchbackTarget
+        required: true
+        description: Target identity and generation fence.
+      - id: 0x02
+        name: mode
+        type: enum
+        enum: [touch, mouse]
+        required: true
+        description: Requested input interpretation.
+      - id: 0x03
+        name: requirement
+        type: enum
+        enum: [preferred, required]
+        required: false
+        default: preferred
+        description: Whether a fallback mode is allowed.
+      - id: 0x04
+        name: commandId
+        type: string
+        required: true
+        max_length: 128
+        description: Idempotency key.
+
+  CastTouchbackResolutionRequest:
+    kind: object
+    description: Request to set touchback coordinate resolution preference.
+    fields:
+      - id: 0x01
+        name: target
+        type: CastTouchbackTarget
+        required: true
+        description: Target identity and generation fence.
+      - id: 0x02
+        name: resolutionPreference
+        type: enum
+        enum: [inherit, prefer1080p]
+        required: true
+        description: Requested sender source-quality preference; packet coordinates remain normalized.
+      - id: 0x03
+        name: commandId
+        type: string
+        required: true
+        max_length: 128
+        description: Idempotency key.
+
+  CastTouchbackChangedEvent:
+    kind: object
+    description: Per-target touchback state change event.
+    fields:
+      - id: 0x01
+        name: state
+        type: CastTouchbackState
+        required: true
+        description: Current target state.
+      - id: 0x02
+        name: changedFields
+        type: array
+        array:
+          item_type: string
+        required: true
+        description: Changed state fields.
+      - id: 0x03
+        name: accepted
+        type: bool
+        required: true
+        description: Whether the owner lane accepted the triggering request.
+
+  CastTouchbackCapability:
+    kind: object
+    description: Capability descriptor for cast.touchback; AirPlay receivers do not advertise this capability.
+    fields:
+      - id: 0x01
+        name: capability
+        type: string
+        required: true
+        max_length: 32
+        description: Fixed capability name cast.touchback.
+      - id: 0x02
+        name: protocols
+        type: array
+        array:
+          item_type: string
+        required: true
+        description: Protocol paths supporting touchback, such as webcast and hid; airplay is excluded.
+      - id: 0x03
+        name: supportedModes
+        type: array
+        array:
+          item_type: string
+        required: true
+        description: Supported input modes, with touch preferred by default.
+      - id: 0x04
+        name: supportsPerTarget
+        type: bool
+        required: true
+        description: Whether state is independently controlled for each route.
+      - id: 0x05
+        name: supportsControlPlane
+        type: bool
+        required: true
+        description: Whether launcher control-plane gate methods are supported.
 
 capabilities:
   - id: 0x1601
@@ -2652,3 +3891,74 @@ capabilities:
     description: Device supports current cast receiver status snapshot query.
     type: object
     schema: CastStatusCapability
+
+  - id: 0x1608
+    name: cast.presentation
+    domain: cast
+    status: draft
+    since: 1.0.0
+    description: Optional concurrent receiver/session projection, atomic snapshots and exact presentation targets.
+    type: object
+    schema: CastPresentationCapability
+
+  - id: 0x1609
+    name: cast.audioPolicy
+    domain: cast
+    status: draft
+    since: 1.0.0
+    description: Optional explicit per-session audio intent and separate effective participation reporting.
+    type: object
+    schema: CastAudioPolicyCapability
+
+  - id: 0x160A
+    name: cast.controlOperations
+    domain: cast
+    status: draft
+    since: 1.0.0
+    description: Optional asynchronous operation query and bounded same-intent deduplication/retention guarantees.
+    type: object
+    schema: CastControlOperationsCapability
+
+  - id: 0x160B
+    name: cast.presentationSettings
+    domain: cast
+    status: draft
+    since: 1.0.0
+    description: Optional one-field host settings with declared live/restart behavior, independent synchronization and truthful field-only persistence/application results.
+    type: object
+    schema: CastPresentationSettingsCapability
+
+  - id: 0x160C
+    name: cast.webcastBackend
+    domain: cast
+    status: draft
+    since: 1.0.0
+    description: Optional secret-free WebCast cloud/local backend state query and independent full-state changes.
+    type: object
+    schema: CastWebCastBackendCapability
+
+  - id: 0x160D
+    name: cast.meetingPresentation
+    domain: cast
+    status: draft
+    since: 1.0.0
+    description: Optional fixed main-plus-preview view with exact focus control and independently remembered audio-follow preference.
+    type: object
+    schema: CastMeetingPresentationCapability
+  - id: 0x160E
+    name: cast.airplayControl
+    domain: cast
+    status: draft
+    since: 1.0.0
+    description: Secret-free AirPlay authentication and discovery observation with live rename.
+    type: object
+    schema: CastAirPlayControlCapability
+
+  - id: 0x160F
+    name: cast.touchback
+    domain: cast
+    status: draft
+    since: 1.0.0
+    description: Device supports per-target touchback control and negotiated touch or mouse input; AirPlay is excluded.
+    type: object
+    schema: CastTouchbackCapability

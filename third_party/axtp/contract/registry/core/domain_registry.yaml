@@ -91,3 +91,7 @@ domains:
     domain: software
     status: draft
     description: Runtime configuration and update policy for software objects.
+  - high_byte: 0x18
+    domain: sport
+    status: draft
+    description: Cross-sport event detection control, state, and sport-specific business event semantics.

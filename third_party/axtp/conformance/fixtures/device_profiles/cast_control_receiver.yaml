@@ -1,0 +1,196 @@
+name: Concurrent cast control substitute-owner fixture (no media implementation)
+capabilities:
+  - id: cast.presentation
+  - id: cast.audioPolicy
+  - id: cast.controlOperations
+clientInstanceId: 22222222-2222-4222-8222-222222222222
+commandId: 33333333-3333-4333-8333-333333333333
+controlCapabilities:
+  supportedControlVersions:
+    - 1
+  runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+  methods:
+    - cast.getControlCapabilities
+    - cast.stopPresentation
+    - cast.setSessionAudioEnabled
+    - cast.getControlOperation
+    - cast.getStatus
+  events:
+    - cast.receiversChanged
+    - cast.sessionsChanged
+    - cast.presentationChanged
+    - cast.audioPolicyChanged
+    - cast.controlOperationChanged
+    - cast.windowChanged
+  statusSections:
+    - controlSync
+    - receivers
+    - sessions
+    - presentation
+    - audioPolicy
+    - window
+  presentation:
+    protocols:
+      - hid
+      - airplay
+      - webcast
+    supportsAtomicSnapshot: true
+    supportsStrictTargets: true
+    maxPresentationCapacity: 8
+    capacityChoices:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 8
+    layoutModes:
+      - grid
+      - presentation
+    contentAdaptations:
+      - fixed
+      - auto-fit
+  audioPolicy:
+    controlModes:
+      - automatic
+      - manual
+    mixModes:
+      - exclusive
+      - mix
+    supportsPerSessionEnable: true
+    reportsEffectiveSet: true
+  operations:
+    supportsQuery: true
+    supportsDedup: true
+    limits:
+      maxPendingOperations: 4
+      maxPendingPerClient: 2
+      maxRetainedResults: 8
+      replayWindowMs: 1000
+      maxEventBufferEvents: 8
+      maxEventBufferBytes: 65536
+      maxRequestBytes: 4096
+      maxSnapshotBytes: 65536
+snapshot:
+  receiver:
+    role: receiver
+    protocols:
+      - hid
+      - airplay
+      - webcast
+    state: ready
+    receiverPhase: rendering
+  sampledAt: 2026-10-20T08:00:00Z
+  window:
+    hasWindow: true
+    visible: true
+    mode: normal
+    fullscreen: false
+    alwaysOnTop: false
+  controlSync:
+    controlVersion: 1
+    runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+    revision: "1"
+    eventSequence: "0"
+  receivers:
+    - receiverId: receiver-hid
+      protocol: hid
+      state: ready
+      observedAt: 2026-10-20T08:00:00Z
+    - receiverId: receiver-airplay
+      protocol: airplay
+      state: ready
+      observedAt: 2026-10-20T08:00:00Z
+    - receiverId: receiver-webcast
+      protocol: webcast
+      state: ready
+      observedAt: 2026-10-20T08:00:00Z
+  sessions:
+    - session:
+        id: session-hid
+        generation: "9007199254740993"
+      receiverId: receiver-hid
+      protocol: hid
+      receiverState: mediaActive
+      presentationEligibility: presented
+      videoTrackOpen: true
+      audioTrackOpen: true
+    - session:
+        id: session-airplay
+        generation: "9007199254740994"
+      receiverId: receiver-airplay
+      protocol: airplay
+      receiverState: mediaActive
+      presentationEligibility: presented
+      videoTrackOpen: true
+      audioTrackOpen: true
+    - session:
+        id: session-webcast
+        generation: "9007199254740995"
+      receiverId: receiver-webcast
+      protocol: webcast
+      receiverState: mediaActive
+      presentationEligibility: presented
+      videoTrackOpen: true
+      audioTrackOpen: true
+  presentation:
+    started: true
+    lifecycleGeneration: "1"
+    configuredCapacity: 3
+    validationAvailable: false
+    effectiveCapacity: 3
+    appliedCapacity: 3
+    layoutMode: grid
+    layoutSettling: false
+    slots:
+      - slotId: 0
+        bindingGeneration: "1"
+        occupied: true
+        target:
+          session:
+            id: session-hid
+            generation: "9007199254740993"
+          slotId: 0
+          bindingGeneration: "1"
+          lifecycleGeneration: "1"
+      - slotId: 1
+        bindingGeneration: "1"
+        occupied: true
+        target:
+          session:
+            id: session-airplay
+            generation: "9007199254740994"
+          slotId: 1
+          bindingGeneration: "1"
+          lifecycleGeneration: "1"
+      - slotId: 2
+        bindingGeneration: "1"
+        occupied: true
+        target:
+          session:
+            id: session-webcast
+            generation: "9007199254740995"
+          slotId: 2
+          bindingGeneration: "1"
+          lifecycleGeneration: "1"
+    contentAdaptation: auto-fit
+  audioPolicy:
+    controlMode: manual
+    mixMode: exclusive
+    enabledSessions:
+      - id: session-hid
+        generation: "9007199254740993"
+    effectiveAudioSessions: []
+    masterMuted: false
+legacy:
+  receiver:
+    role: receiver
+    protocols:
+      - hid
+      - airplay
+    state: ready
+    receiverPhase: rendering
+  sampledAt: 2026-10-20T08:00:00Z
+  session:
+    sessionId: legacy-session
+    protocol: hid
+    receiverPhase: rendering

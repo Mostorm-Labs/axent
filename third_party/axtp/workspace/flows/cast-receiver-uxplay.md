@@ -48,7 +48,7 @@
 | 投屏窗口 | draft | `cast.getWindowState`, `cast.setWindowState`, `cast.windowChanged` | 无活动窗口时拒绝还是记住预设；是否需要 public show / hide。 |
 | Backend 状态和重启 | draft | `cast.getBackendStatus`, `cast.restartBackend`, `cast.backendChanged` | session / backend 事件顺序。 |
 | 本地渲染流控 | draft | `cast.getFlowControlState`, `cast.setRenderFps`, `cast.setFlowPolicy`, `cast.flowControlChanged` | 当前无业务阻断项；采纳时补 conformance。 |
-| NT10 source 编码参数 | draft | `cast.setVideoStreamParams` + `video.closeStream(reason=encodingReconfigure)` + `video.openStream(frameRate/bitrateKbps)` | 仅 Nearcast/NA20/NT10 source；UxPlay/AirPlay 返回 `NOT_SUPPORTED`。 |
+| NT10 source 编码参数 | draft | `cast.setVideoStreamParams` + `video.closeStream(reason=encodingReconfigure)` + `audio.closeStream` + paired `video.openStream` / `audio.openStream` with fresh `syncGroupId` | 仅 Nearcast/NA20/NT10 source；活动音视频完整 close -> open，生成新的 audio/video `streamId` 和同步组；UxPlay/AirPlay 返回 `NOT_SUPPORTED`。 |
 | Launcher 启动与 UxPlay 内部控制口 | local / non-protocol | app orchestration, backend adapter | 不进入 AXTP 公共协议。 |
 
 ### 2.1 Receiver Phase Model
@@ -131,9 +131,9 @@ sequenceDiagram
     end
 ```
 
-### 3.1 Nearcast → NA20 → NT10 视频编码参数重配置分支
+### 3.1 Nearcast → NA20 → NT10 音视频编码参数重配置分支
 
-该分支不经过 UxPlay/AirPlay backend：Nearcast 通过 WS 控制面接收 `cast.setVideoStreamParams`，由 NA20 对 NT10 source 的编码目标执行协调。参数也可以在 `video.openStream` 中直接给出；一次 open 的显式值优先于当前 session 配置，再回退到 source/profile 默认值。
+该分支不经过 UxPlay/AirPlay backend：Nearcast 通过 WS 控制面接收 `cast.setVideoStreamParams`，由 NA20 对 NT10 source 的编码目标执行完整的音视频 downstream stream replacement。参数也可以在 `video.openStream` 中直接给出；一次 open 的显式值优先于当前 session 配置，再回退到 source/profile 默认值。
 
 ```mermaid
 sequenceDiagram
@@ -144,30 +144,58 @@ sequenceDiagram
 
     WS->>NA20: cast.setVideoStreamParams(frameRate, bitrateKbps)
     NA20-->>WS: accepted=true, state=pending, reconfigureId
-    alt 已有 active video stream
-        NA20->>NA20: video.closeStream(oldStreamId, reason=encodingReconfigure)
-        NA20-->>WS: cast.flowControlChanged(sourceVideo.phase=closing)
+    alt 已有 active audio/video stream pair
+        NA20->>NA20: video.closeStream(oldVideoStreamId, reason=encodingReconfigure)
+        NA20->>NA20: audio.closeStream(oldAudioStreamId, reason omitted)
+        NA20-->>WS: both close states converge to terminal closed
+        NA20->>NA20: wait for both terminal closed (opening barrier)
+        NA20->>NA20: retire old video/audio streamIds and old syncGroupId
+    else session idle / no active audio/video pair
+        NA20->>NA20: no close; there are no active streamIds or syncGroupId to retain
     end
-    NA20->>NT10: apply encoder target(frameRate, bitrateKbps)
-    NT10-->>NA20: encoder target accepted/effective
-    NA20->>NA20: video.openStream(peerRole=transmitter, new params)
-    NA20-->>WS: video.openStream result(newStreamId, negotiated params)
-    NA20-->>WS: cast.flowControlChanged(sourceVideo.state=streaming)
-    Note over NA20,Audio: 只重开 video；原 syncGroupId 与 audio stream 保持不变
 
-    alt open 失败
-        NA20->>NT10: restore previous encoder target
-        NA20->>NA20: video.openStream(previous params)
-        NA20-->>WS: state=rolledBack 或 state=failed + lastError
+    NA20->>NA20: allocate fresh syncGroupId
+    par replacement video
+        NA20->>NA20: video.openStream(peerRole=transmitter, new frameRate/bitrateKbps, original video context, syncGroupId=new)
+    and replacement audio
+        NA20->>NA20: audio.openStream(peerRole=transmitter, original AAC/adts/media.audio/timing context, syncGroupId=new)
+    end
+
+    alt both replacement opens succeed
+        NA20-->>WS: both open results (newVideoStreamId, newAudioStreamId)
+        NA20->>NT10: confirm new encoder target effective
+        NT10-->>NA20: frameRate/bitrateKbps effective
+        NA20-->>WS: cast.flowControlChanged(sourceVideo.state=streaming, reason=videoStreamReconfigure)
+    else any replacement open fails
+        NA20-->>WS: partial open failure (one or zero replacement streamIds)
+        NA20->>NA20: close any partial replacement stream(s)
+        NA20->>NA20: retire partial replacement IDs/group
+        NA20->>NA20: allocate another fresh rollback syncGroupId
+        par rollback video
+            NA20->>NA20: video.openStream(peerRole=transmitter, old encoder target, original video context, syncGroupId=rollback)
+        and rollback audio
+            NA20->>NA20: audio.openStream(peerRole=transmitter, original AAC/adts/media.audio/timing context, syncGroupId=rollback)
+        end
+        alt both rollback opens succeed
+            NA20-->>WS: state=rolledBack; both rollback streamIds are fresh
+        else rollback incomplete or fails
+            NA20->>NA20: close any partial rollback stream(s)
+            NA20-->>WS: state=failed; no complete active audio/video pair
+        end
     end
 ```
 
 规则：
 
-- 没有 active video stream 时省略 close，直接执行 `video.openStream`；有 active stream 时必须严格 close -> open，不得并行创建 replacement。
-- 新 open 使用原 `source`、`codec`、`streamProfile`、`syncGroupId`，并使用 `peerRole=transmitter`；成功后生成新的 `streamId`，旧 streamId 及其媒体包失效。
-- 没有 active video stream 时，只要求 `cast.flowControl.supportsVideoStreamParams` 和所选 source encoder capability；满足后可直接 `video.openStream`，不要求 `supportsActiveVideoReconfigure`。
-- 已有 active video stream 时，除上述能力外还必须声明 `supportsActiveVideoReconfigure`；任一能力缺失时 Nearcast 返回 `NOT_SUPPORTED`。此错误不终止 WS/AXTP session，后续普通 RPC 仍可调用。
+- 活动音视频 stream pair 变更时，必须把它作为一个 `pending` -> `closing` -> `opening` -> `streaming/applied` 事务：对旧 video 调用 `video.closeStream(reason=encodingReconfigure)`，并对旧 audio 调用 `audio.closeStream`（audio 的 `reason` 可以省略）。调用顺序不作规范性要求，但必须等待 audio 和 video 都达到 terminal `closed` 后才能进入 opening。
+- 两侧 terminal close 后，旧 video/audio `streamId` 和旧 `syncGroupId` 全部退役；不得在 replacement 中复用。分配一个全新的 `syncGroupId`，并以同一新组分别打开 video 和 audio；两次 open 都必须返回新的 `streamId`。
+- 新 `video.openStream` 使用新的 `frameRate` / `bitrateKbps`，并保持原有 video `source`、codec/format、stream/profile、cursor、PTS、packetization 和时钟等上下文；配对的 `audio.openStream` 保持原有 source、AAC codec、`adts` transport、`media.audio` profile 以及采样、packetization、PTS 和时钟等 timing context。两者使用同一个新 `syncGroupId`。
+- 只有收到两个 replacement `streamId`、两次 open 都成功且 NT10 已确认新的 `frameRate` / `bitrateKbps` 实际生效，Nearcast/NA20 才能将 `sourceVideo.state` 标为 `streaming` 并发送 `cast.flowControlChanged(reason=videoStreamReconfigure)`。若初始 `cast.setVideoStreamParams` response 已返回 `state=pending`，这只是单次异步 response，不暗示稍后还会有第二个 response；客户端通过该 event 加 `cast.getFlowControlState`（或 `cast.getStatus`）查询最终状态。`state=applied` 只描述在事务可同步完成时返回的 `cast.setVideoStreamParams` result。该 event 的 `state` 字段仍是 `CastFlowControlState` 对象，不承载 `applied` 枚举。cast result 的 `previousStreamId` / `activeStreamId` 仍只表示 video stream ID；audio ID 通过 `audio.closeStream` / `audio.openStream` 响应或 `audio.streamStateChanged` 观察。
+- session idle、没有 active audio/video pair 时省略 close，但仍分配一个新的共享 `syncGroupId`，直接打开完整的 video/audio pair；只有两个 open 成功且 NT10 参数实际生效，且请求可同步完成时，才在 `cast.setVideoStreamParams` result 报告 `applied`。
+- 任一 replacement open 失败时，已经成功打开的 partial stream 属于不完整音视频 pair，必须先关闭并清理其 ID/group。随后恢复旧 encoder/audio 语义，以另一套全新的 video/audio `streamId` 和全新的 `syncGroupId` 重开完整 pair；不得复用任何退役标识。两侧都恢复成功才报告 `rolledBack`；若回退任一侧失败，关闭所有 partial rollback stream，报告 `failed`，此时没有 complete active audio/video pair。
+- 若 session 只有 audio 或 video 一侧的 partial media state，则该状态不是 active cast pair；必须先清理并归一化 partial stream，再开始重配置，不能按 video-only active path 执行。
+- 没有 active audio/video pair 时，只要求 `cast.flowControl.supportsVideoStreamParams` 和所选 source encoder capability；满足后可直接打开完整 video/audio pair，不要求 `supportsActiveVideoReconfigure`。
+- 已有 active audio/video pair 时，除上述能力外还必须声明 `supportsActiveVideoReconfigure`；任一能力缺失时 Nearcast 返回 `NOT_SUPPORTED`。此错误不终止 WS/AXTP session，后续普通 RPC 仍可调用。
 - UxPlay/AirPlay 只提供接收端本地渲染路径，不具备 NT10 encoder 控制能力；对这些 source 调用该方法一律返回 `NOT_SUPPORTED`，不得尝试重启 UxPlay 或改变 `cast.setRenderFps` 的语义。
 
 ## 4. Review Checks

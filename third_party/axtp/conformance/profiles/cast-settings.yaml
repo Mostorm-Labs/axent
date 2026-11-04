@@ -1,0 +1,6 @@
+id: cast-settings
+title: Optional combined cast presentation control and settings
+since: spec/v0.18.0
+description: C01-C12 includes all protocol obligations PS-01 through PS-12; settings has an independent event cursor and requires explicit capability.
+capabilities: [cast.presentation, cast.audioPolicy, cast.controlOperations, cast.presentationSettings, cast.status, cast.window]
+oracle: reference/cast-settings.mjs

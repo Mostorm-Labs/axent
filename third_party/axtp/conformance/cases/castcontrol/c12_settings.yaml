@@ -1,0 +1,5469 @@
+id: castcontrol.c12_settings
+title: Complete P1 settings guarantees PS-01 through PS-12
+since: spec/v0.18.0
+level: cast-settings
+profiles:
+  - cast-settings
+  - websocket-jsonrpc
+given:
+  device_profile: cast_settings_receiver
+  oracle: reference/cast-settings.mjs
+  source: specs/46-cast-settings.md
+  obligations:
+    - PS-01
+    - PS-02
+    - PS-03
+    - PS-04
+    - PS-05
+    - PS-06
+    - PS-07
+    - PS-08
+    - PS-09
+    - PS-10
+    - PS-11
+    - PS-12
+  method: cast.setPresentationSettings
+scenarios:
+  - name: ps01_complete_capability
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_discover
+          input: {}
+          expect:
+            supported: true
+        id: step_0
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps01_missing_feature
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_discover
+          input:
+            descriptor:
+              presentationSettings: null
+          expect:
+            supported: false
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_capture
+          input:
+            supported: false
+          expect:
+            status: NOT_SUPPORTED
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: capture
+          input: {}
+          expect:
+            status: SUCCESS
+        id: step_2
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps01_overlap
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_discover
+          input:
+            capability:
+              fields:
+                - layoutMode
+                - audioControlMode
+                - audioMixMode
+                - capacity
+                - enabledProtocols
+                - profileHint
+              liveFields:
+                - layoutMode
+                - audioControlMode
+                - audioMixMode
+                - capacity
+              restartOnlyFields:
+                - capacity
+                - enabledProtocols
+                - profileHint
+              supportsPersistence: true
+              capacityChoices:
+                - 1
+                - 2
+                - 4
+                - 9
+                - 16
+              layoutModes:
+                - grid
+                - presentation
+              profileHints:
+                - legacy
+                - unified
+              minEnabledProtocols: 1
+              contentAdaptations:
+                - fixed
+                - auto-fit
+          expect:
+            supported: false
+        id: step_0
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps01_missing_choices
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_discover
+          input:
+            capability:
+              fields:
+                - layoutMode
+                - audioControlMode
+                - audioMixMode
+                - capacity
+                - enabledProtocols
+                - profileHint
+              liveFields:
+                - layoutMode
+                - audioControlMode
+                - audioMixMode
+              restartOnlyFields:
+                - capacity
+                - enabledProtocols
+                - profileHint
+              supportsPersistence: true
+              layoutModes:
+                - grid
+                - presentation
+              profileHints:
+                - legacy
+                - unified
+              minEnabledProtocols: 1
+              contentAdaptations:
+                - fixed
+                - auto-fit
+          expect:
+            supported: false
+        id: step_0
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps01_missing_minimum
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_discover
+          input:
+            capability:
+              fields:
+                - layoutMode
+                - audioControlMode
+                - audioMixMode
+                - capacity
+                - enabledProtocols
+                - profileHint
+              liveFields:
+                - layoutMode
+                - audioControlMode
+                - audioMixMode
+              restartOnlyFields:
+                - capacity
+                - enabledProtocols
+                - profileHint
+              supportsPersistence: true
+              capacityChoices:
+                - 1
+                - 2
+                - 4
+                - 9
+                - 16
+              layoutModes:
+                - grid
+                - presentation
+              profileHints:
+                - legacy
+                - unified
+              contentAdaptations:
+                - fixed
+                - auto-fit
+          expect:
+            supported: false
+        id: step_0
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps01_unknown_field
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_discover
+          input:
+            capability:
+              fields:
+                - layoutMode
+                - audioControlMode
+                - audioMixMode
+                - capacity
+                - enabledProtocols
+                - profileHint
+                - volume
+              liveFields:
+                - layoutMode
+                - audioControlMode
+                - audioMixMode
+              restartOnlyFields:
+                - capacity
+                - enabledProtocols
+                - profileHint
+              supportsPersistence: true
+              capacityChoices:
+                - 1
+                - 2
+                - 4
+                - 9
+                - 16
+              layoutModes:
+                - grid
+                - presentation
+              profileHints:
+                - legacy
+                - unified
+              minEnabledProtocols: 1
+              contentAdaptations:
+                - fixed
+                - auto-fit
+          expect:
+            supported: false
+        id: step_0
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps01_incomplete_partition
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_discover
+          input:
+            capability:
+              fields:
+                - layoutMode
+                - audioControlMode
+                - audioMixMode
+                - capacity
+                - enabledProtocols
+                - profileHint
+              liveFields:
+                - layoutMode
+              restartOnlyFields:
+                - capacity
+                - enabledProtocols
+                - profileHint
+              supportsPersistence: true
+              capacityChoices:
+                - 1
+                - 2
+                - 4
+                - 9
+                - 16
+              layoutModes:
+                - grid
+                - presentation
+              profileHints:
+                - legacy
+                - unified
+              minEnabledProtocols: 1
+              contentAdaptations:
+                - fixed
+                - auto-fit
+          expect:
+            supported: false
+        id: step_0
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps01_missing_event
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_discover
+          input:
+            descriptor:
+              events:
+                - cast.receiversChanged
+                - cast.sessionsChanged
+                - cast.presentationChanged
+                - cast.audioPolicyChanged
+                - cast.controlOperationChanged
+                - cast.windowChanged
+          expect:
+            supported: false
+        id: step_0
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps01_patch_empty
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch: {}
+              persist: false
+          expect:
+            status: INVALID_ARGUMENT
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+            store:
+              writeCount: 0
+            policyCalls: {}
+        id: step_1
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps01_patch_multiple
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 4
+                layoutMode: grid
+              persist: false
+          expect:
+            status: INVALID_ARGUMENT
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+            store:
+              writeCount: 0
+            policyCalls: {}
+        id: step_1
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps01_patch_unknown
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                volume: 2
+              persist: false
+          expect:
+            status: INVALID_ARGUMENT
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+            store:
+              writeCount: 0
+            policyCalls: {}
+        id: step_1
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps01_patch_wrong_type
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: "4"
+              persist: false
+          expect:
+            status: INVALID_ARGUMENT
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+            store:
+              writeCount: 0
+            policyCalls: {}
+        id: step_1
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps01_patch_null
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                layoutMode: null
+              persist: false
+          expect:
+            status: INVALID_ARGUMENT
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+            store:
+              writeCount: 0
+            policyCalls: {}
+        id: step_1
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps01_patch_out_of_choices
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 3
+              persist: false
+          expect:
+            status: OUT_OF_RANGE
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+            store:
+              writeCount: 0
+            policyCalls: {}
+        id: step_1
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps01_patch_zero_capacity
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 0
+              persist: false
+          expect:
+            status: OUT_OF_RANGE
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+            store:
+              writeCount: 0
+            policyCalls: {}
+        id: step_1
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps01_patch_duplicate_protocol
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                enabledProtocols:
+                  - hid
+                  - hid
+              persist: false
+          expect:
+            status: INVALID_ARGUMENT
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+            store:
+              writeCount: 0
+            policyCalls: {}
+        id: step_1
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps01_patch_empty_protocol
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                enabledProtocols: []
+              persist: false
+          expect:
+            status: OUT_OF_RANGE
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+            store:
+              writeCount: 0
+            policyCalls: {}
+        id: step_1
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps01_patch_unsupported_mode
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                audioMixMode: surround
+              persist: false
+          expect:
+            status: NOT_SUPPORTED
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+            store:
+              writeCount: 0
+            policyCalls: {}
+        id: step_1
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps01_patch_unsupported_protocol
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                enabledProtocols:
+                  - other
+              persist: false
+          expect:
+            status: NOT_SUPPORTED
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+            store:
+              writeCount: 0
+            policyCalls: {}
+        id: step_1
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps01_patch_unsupported_profile
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                profileHint: other
+              persist: false
+          expect:
+            status: NOT_SUPPORTED
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+            store:
+              writeCount: 0
+            policyCalls: {}
+        id: step_1
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps01_explicit_empty_allowed
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_observe
+          input:
+            capabilityPatch:
+              minEnabledProtocols: 0
+          expect:
+            observed: true
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                enabledProtocols: []
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+              settingsResult:
+                applicationStatus: pendingRestart
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              configured:
+                enabledProtocols: []
+            control:
+              sessions:
+                - session:
+                    id: session-hid
+                    generation: "9007199254740993"
+                  receiverId: receiver-hid
+                  protocol: hid
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+                - session:
+                    id: session-airplay
+                    generation: "9007199254740994"
+                  receiverId: receiver-airplay
+                  protocol: airplay
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+                - session:
+                    id: session-webcast
+                    generation: "9007199254740995"
+                  receiverId: receiver-webcast
+                  protocol: webcast
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+        id: step_3
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps01_alternative_partition
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_observe
+          input:
+            capabilityPatch:
+              liveFields:
+                - audioControlMode
+                - audioMixMode
+              restartOnlyFields:
+                - layoutMode
+                - capacity
+                - enabledProtocols
+                - profileHint
+            patch:
+              activeStartup:
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+                layoutMode: grid
+          expect:
+            observed: true
+            revision: "8"
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                layoutMode: presentation
+              persist: false
+              expectedSettingsRevision: "8"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              pendingRestart:
+                - layoutMode
+            policyCalls: {}
+            control:
+              presentation:
+                layoutMode: grid
+        id: step_3
+    assertions:
+      - PS-01 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps02_dedup_before_version
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-02
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 4
+              persist: true
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 4
+              persist: true
+              expectedSettingsRevision: "7"
+          expect:
+            operation:
+              state: applied
+              settingsResult:
+                settingsRevision: "8"
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: query
+          input: {}
+          expect:
+            operation:
+              state: applied
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            store:
+              writeCount: 1
+            settings:
+              settingsRevision: "8"
+        id: step_4
+    assertions:
+      - PS-02 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps02_same_key_conflict_value
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-02
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 4
+              persist: true
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 2
+              persist: true
+              expectedSettingsRevision: "7"
+          expect:
+            status: INVALID_ARGUMENT
+            outcomeReason: COMMAND_ID_CONFLICT
+        id: step_1
+    assertions:
+      - PS-02 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps02_same_key_conflict_persist
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-02
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 4
+              persist: true
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 4
+              persist: false
+              expectedSettingsRevision: "7"
+          expect:
+            status: INVALID_ARGUMENT
+            outcomeReason: COMMAND_ID_CONFLICT
+        id: step_1
+    assertions:
+      - PS-02 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps02_same_key_conflict_expected_revision
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-02
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 4
+              persist: true
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 4
+              persist: true
+              expectedSettingsRevision: "8"
+          expect:
+            status: INVALID_ARGUMENT
+            outcomeReason: COMMAND_ID_CONFLICT
+        id: step_1
+    assertions:
+      - PS-02 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps02_queued_version_conflict
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-02
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 4
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                profileHint: legacy
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 44444444-4444-4444-8444-000000000001
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 44444444-4444-4444-8444-000000000001
+          expect:
+            operation:
+              state: rejected
+              outcomeReason: SETTINGS_REVISION_CONFLICT
+              settingsResult:
+                settingsRevision: "8"
+                configurationStatus: notCommitted
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              configured:
+                profileHint: unified
+        id: step_4
+    assertions:
+      - PS-02 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps02_locked_after_queue
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-02
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                layoutMode: presentation
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_observe
+          input:
+            patch:
+              lockedFields:
+                - layoutMode
+          expect:
+            observed: true
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: rejected
+              outcomeReason: SETTINGS_REVISION_CONFLICT
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            policyCalls: {}
+        id: step_3
+    assertions:
+      - PS-02 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps02_current_locked_field
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-02
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_observe
+          input:
+            patch:
+              lockedFields:
+                - layoutMode
+          expect:
+            observed: true
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                layoutMode: presentation
+              persist: false
+              expectedSettingsRevision: "8"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: rejected
+              outcomeReason: SETTINGS_LOCKED
+        id: step_2
+    assertions:
+      - PS-02 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps02_capability_rechecked
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-02
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                layoutMode: presentation
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_observe
+          input:
+            capabilityPatch:
+              layoutModes:
+                - grid
+              contentAdaptations:
+                - fixed
+                - auto-fit
+          expect:
+            observed: true
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: rejected
+              statusCode: 3
+        id: step_2
+    assertions:
+      - PS-02 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps02_same_value_save_default_override
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-02
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                layoutMode: grid
+              persist: true
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+              settingsResult:
+                configurationStatus: unchanged
+                applicationStatus: unchanged
+                persistenceStatus: stored
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              settingsRevision: "8"
+            policyCalls: {}
+            store:
+              writeCount: 1
+              overrides:
+                capacity: 9
+                layoutMode: grid
+        id: step_2
+    assertions:
+      - PS-02 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps02_already_stored_noop
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-02
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 9
+              persist: true
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+              settingsResult:
+                configurationStatus: unchanged
+                applicationStatus: unchanged
+                persistenceStatus: unchanged
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              settingsRevision: "7"
+            store:
+              writeCount: 0
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_publish
+          input: {}
+          expect:
+            published: false
+        id: step_3
+    assertions:
+      - PS-02 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps03_same_mode_no_reset
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-03
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                audioControlMode: manual
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              settingsRevision: "7"
+            policyCalls: {}
+            control:
+              audioPolicy:
+                controlMode: manual
+                mixMode: exclusive
+                enabledSessions:
+                  - id: session-hid
+                    generation: "9007199254740993"
+                effectiveAudioSessions: []
+                masterMuted: false
+        id: step_2
+    assertions:
+      - PS-03 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps03_layout_success_while_settling
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-03
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                layoutMode: presentation
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+              appliedRevision: "2"
+              settingsResult:
+                applicationStatus: applied
+                appliedControlRevision: "2"
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              unappliedFields: []
+            control:
+              presentation:
+                layoutMode: presentation
+                layoutSettling: true
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-hid
+                        generation: "9007199254740993"
+                      slotId: 0
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 1
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-airplay
+                        generation: "9007199254740994"
+                      slotId: 1
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 2
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-webcast
+                        generation: "9007199254740995"
+                      slotId: 2
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                contentAdaptation: auto-fit
+        id: step_2
+    assertions:
+      - PS-03 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps03_audio_mode_owner_semantics
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-03
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                audioControlMode: automatic
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                audioControlMode: manual
+              persist: false
+              expectedSettingsRevision: "8"
+              commandId: 44444444-4444-4444-8444-000000000001
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 44444444-4444-4444-8444-000000000001
+          expect:
+            operation:
+              state: applied
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            control:
+              audioPolicy:
+                controlMode: manual
+                enabledSessions: []
+                effectiveAudioSessions: []
+              sessions:
+                - session:
+                    id: session-hid
+                    generation: "9007199254740993"
+                  receiverId: receiver-hid
+                  protocol: hid
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+                - session:
+                    id: session-airplay
+                    generation: "9007199254740994"
+                  receiverId: receiver-airplay
+                  protocol: airplay
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+                - session:
+                    id: session-webcast
+                    generation: "9007199254740995"
+                  receiverId: receiver-webcast
+                  protocol: webcast
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+              presentation:
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-hid
+                        generation: "9007199254740993"
+                      slotId: 0
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 1
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-airplay
+                        generation: "9007199254740994"
+                      slotId: 1
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 2
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-webcast
+                        generation: "9007199254740995"
+                      slotId: 2
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+            policyCalls:
+              audioControlMode: 2
+        id: step_4
+    assertions:
+      - PS-03 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps03_mix_transition_does_not_restore_old_source
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-03
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.setSessionAudioEnabled
+            targetIndex: 1
+            params:
+              enabled: true
+              commandId: 44444444-4444-4444-8444-00000000000a
+          expect:
+            status: SUCCESS
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: execute
+          input:
+            params:
+              commandId: 44444444-4444-4444-8444-00000000000a
+          expect:
+            operation:
+              state: applied
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                audioMixMode: mix
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                audioMixMode: exclusive
+              persist: false
+              expectedSettingsRevision: "8"
+              commandId: 44444444-4444-4444-8444-000000000001
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_4
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 44444444-4444-4444-8444-000000000001
+          expect:
+            operation:
+              state: applied
+        id: step_5
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                audioMixMode: mix
+              persist: false
+              expectedSettingsRevision: "9"
+              commandId: 44444444-4444-4444-8444-000000000002
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_6
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 44444444-4444-4444-8444-000000000002
+          expect:
+            operation:
+              state: applied
+        id: step_7
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            control:
+              audioPolicy:
+                mixMode: mix
+                enabledSessions:
+                  - id: session-airplay
+                    generation: "9007199254740994"
+              sessions:
+                - session:
+                    id: session-hid
+                    generation: "9007199254740993"
+                  receiverId: receiver-hid
+                  protocol: hid
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+                - session:
+                    id: session-airplay
+                    generation: "9007199254740994"
+                  receiverId: receiver-airplay
+                  protocol: airplay
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+                - session:
+                    id: session-webcast
+                    generation: "9007199254740995"
+                  receiverId: receiver-webcast
+                  protocol: webcast
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+              presentation:
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-hid
+                        generation: "9007199254740993"
+                      slotId: 0
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 1
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-airplay
+                        generation: "9007199254740994"
+                      slotId: 1
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 2
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-webcast
+                        generation: "9007199254740995"
+                      slotId: 2
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+        id: step_8
+    assertions:
+      - PS-03 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps04_restart_only_capacity
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-04
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 2
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+              settingsResult:
+                applicationStatus: pendingRestart
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              pendingRestart:
+                - capacity
+            control:
+              sessions:
+                - session:
+                    id: session-hid
+                    generation: "9007199254740993"
+                  receiverId: receiver-hid
+                  protocol: hid
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+                - session:
+                    id: session-airplay
+                    generation: "9007199254740994"
+                  receiverId: receiver-airplay
+                  protocol: airplay
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+                - session:
+                    id: session-webcast
+                    generation: "9007199254740995"
+                  receiverId: receiver-webcast
+                  protocol: webcast
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+              presentation:
+                started: true
+                lifecycleGeneration: "1"
+                configuredCapacity: 9
+                validationAvailable: true
+                effectiveCapacity: 4
+                appliedCapacity: 4
+                layoutMode: grid
+                layoutSettling: true
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-hid
+                        generation: "9007199254740993"
+                      slotId: 0
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 1
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-airplay
+                        generation: "9007199254740994"
+                      slotId: 1
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 2
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-webcast
+                        generation: "9007199254740995"
+                      slotId: 2
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                validatedCapacity: 4
+                contentAdaptation: auto-fit
+            policyCalls: {}
+        id: step_2
+    assertions:
+      - PS-04 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps04_restart_only_enabledprotocols
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-04
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                enabledProtocols:
+                  - hid
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+              settingsResult:
+                applicationStatus: pendingRestart
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              pendingRestart:
+                - enabledProtocols
+            control:
+              sessions:
+                - session:
+                    id: session-hid
+                    generation: "9007199254740993"
+                  receiverId: receiver-hid
+                  protocol: hid
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+                - session:
+                    id: session-airplay
+                    generation: "9007199254740994"
+                  receiverId: receiver-airplay
+                  protocol: airplay
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+                - session:
+                    id: session-webcast
+                    generation: "9007199254740995"
+                  receiverId: receiver-webcast
+                  protocol: webcast
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+              presentation:
+                started: true
+                lifecycleGeneration: "1"
+                configuredCapacity: 9
+                validationAvailable: true
+                effectiveCapacity: 4
+                appliedCapacity: 4
+                layoutMode: grid
+                layoutSettling: true
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-hid
+                        generation: "9007199254740993"
+                      slotId: 0
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 1
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-airplay
+                        generation: "9007199254740994"
+                      slotId: 1
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 2
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-webcast
+                        generation: "9007199254740995"
+                      slotId: 2
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                validatedCapacity: 4
+                contentAdaptation: auto-fit
+            policyCalls: {}
+        id: step_2
+    assertions:
+      - PS-04 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps04_restart_only_profilehint
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-04
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                profileHint: legacy
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+              settingsResult:
+                applicationStatus: pendingRestart
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              pendingRestart:
+                - profileHint
+            control:
+              sessions:
+                - session:
+                    id: session-hid
+                    generation: "9007199254740993"
+                  receiverId: receiver-hid
+                  protocol: hid
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+                - session:
+                    id: session-airplay
+                    generation: "9007199254740994"
+                  receiverId: receiver-airplay
+                  protocol: airplay
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+                - session:
+                    id: session-webcast
+                    generation: "9007199254740995"
+                  receiverId: receiver-webcast
+                  protocol: webcast
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+              presentation:
+                started: true
+                lifecycleGeneration: "1"
+                configuredCapacity: 9
+                validationAvailable: true
+                effectiveCapacity: 4
+                appliedCapacity: 4
+                layoutMode: grid
+                layoutSettling: true
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-hid
+                        generation: "9007199254740993"
+                      slotId: 0
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 1
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-airplay
+                        generation: "9007199254740994"
+                      slotId: 1
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 2
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-webcast
+                        generation: "9007199254740995"
+                      slotId: 2
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                validatedCapacity: 4
+                contentAdaptation: auto-fit
+            policyCalls: {}
+        id: step_2
+    assertions:
+      - PS-04 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps04_cancel_pending_without_restart
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-04
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 2
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 9
+              persist: false
+              expectedSettingsRevision: "8"
+              commandId: 44444444-4444-4444-8444-000000000001
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 44444444-4444-4444-8444-000000000001
+          expect:
+            operation:
+              state: applied
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              pendingRestart: []
+              activeStartup:
+                capacity: 9
+              applied:
+                capacity: 4
+            control:
+              sessions:
+                - session:
+                    id: session-hid
+                    generation: "9007199254740993"
+                  receiverId: receiver-hid
+                  protocol: hid
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+                - session:
+                    id: session-airplay
+                    generation: "9007199254740994"
+                  receiverId: receiver-airplay
+                  protocol: airplay
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+                - session:
+                    id: session-webcast
+                    generation: "9007199254740995"
+                  receiverId: receiver-webcast
+                  protocol: webcast
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+            policyCalls: {}
+        id: step_4
+    assertions:
+      - PS-04 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps05_limited_capacity_is_not_pending
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-05
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              configured:
+                capacity: 9
+              activeStartup:
+                capacity: 9
+              applied:
+                capacity: 4
+              pendingRestart: []
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_capture
+          input: {}
+          expect:
+            status: SUCCESS
+            result:
+              presentationSettings:
+                pendingRestart: []
+        id: step_1
+    assertions:
+      - PS-05 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps05_validation_unknown_keeps_actual_applied
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-05
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_observe
+          input:
+            presentation:
+              validationAvailable: false
+            omitPresentation:
+              - validatedCapacity
+            patch:
+              applicationIssues:
+                - field: capacity
+                  kind: limitedByHardLimit
+          expect:
+            observed: true
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_capture
+          input: {}
+          expect:
+            status: SUCCESS
+            result:
+              presentation:
+                validationAvailable: false
+                appliedCapacity: 4
+              presentationSettings:
+                pendingRestart: []
+                applied:
+                  capacity: 4
+        id: step_1
+    assertions:
+      - PS-05 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps06_disk_full
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-06
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                layoutMode: presentation
+              persist: true
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            storeFailure: disk_full
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: failed
+              outcomeReason: SETTINGS_PERSIST_FAILED
+              settingsResult:
+                configurationStatus: notCommitted
+                applicationStatus: notAttempted
+                persistenceStatus: failed
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+              applied:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 4
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+              persistError: SETTINGS_PERSIST_FAILED
+            store:
+              state: loaded
+              schemaVersion: 1
+              revision: "1"
+              overrides:
+                capacity: 9
+              writeCount: 0
+            policyCalls: {}
+        id: step_2
+    assertions:
+      - PS-06 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps06_permission_denied
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-06
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                layoutMode: presentation
+              persist: true
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            storeFailure: permission_denied
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: failed
+              outcomeReason: SETTINGS_PERSIST_FAILED
+              settingsResult:
+                configurationStatus: notCommitted
+                applicationStatus: notAttempted
+                persistenceStatus: failed
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+              applied:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 4
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+              persistError: SETTINGS_PERSIST_FAILED
+            store:
+              state: loaded
+              schemaVersion: 1
+              revision: "1"
+              overrides:
+                capacity: 9
+              writeCount: 0
+            policyCalls: {}
+        id: step_2
+    assertions:
+      - PS-06 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps06_replace_failed
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-06
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                layoutMode: presentation
+              persist: true
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            storeFailure: replace_failed
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: failed
+              outcomeReason: SETTINGS_PERSIST_FAILED
+              settingsResult:
+                configurationStatus: notCommitted
+                applicationStatus: notAttempted
+                persistenceStatus: failed
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+              applied:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 4
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+              persistError: SETTINGS_PERSIST_FAILED
+            store:
+              state: loaded
+              schemaVersion: 1
+              revision: "1"
+              overrides:
+                capacity: 9
+              writeCount: 0
+            policyCalls: {}
+        id: step_2
+    assertions:
+      - PS-06 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps07_stored_then_apply_failed_and_explicit_retry
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-07
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                audioControlMode: automatic
+              persist: true
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            applyFailure: true
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: failed
+              settingsResult:
+                configurationStatus: committed
+                applicationStatus: failed
+                persistenceStatus: stored
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              configured:
+                audioControlMode: automatic
+              applied:
+                audioControlMode: manual
+              unappliedFields:
+                - audioControlMode
+            store:
+              writeCount: 1
+            policyCalls:
+              audioControlMode: 1
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                audioControlMode: automatic
+              persist: false
+              expectedSettingsRevision: "8"
+              commandId: 44444444-4444-4444-8444-000000000001
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 44444444-4444-4444-8444-000000000001
+          expect:
+            operation:
+              state: applied
+              settingsResult:
+                configurationStatus: unchanged
+                applicationStatus: applied
+        id: step_4
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              unappliedFields: []
+            store:
+              writeCount: 1
+            policyCalls:
+              audioControlMode: 2
+        id: step_5
+    assertions:
+      - PS-07 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps07_field_only_save_excludes_temporary_layout
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-07
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                layoutMode: presentation
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                audioMixMode: mix
+              persist: true
+              expectedSettingsRevision: "8"
+              commandId: 44444444-4444-4444-8444-000000000001
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 44444444-4444-4444-8444-000000000001
+          expect:
+            operation:
+              state: applied
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              configured:
+                layoutMode: presentation
+              persistedValues:
+                layoutMode: grid
+              unsavedFields:
+                - layoutMode
+            store:
+              overrides:
+                capacity: 9
+                audioMixMode: mix
+              writeCount: 1
+        id: step_4
+    assertions:
+      - PS-07 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps07_structured_partial_policy_observation
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-07
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                audioControlMode: automatic
+              persist: true
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            applyFailure: true
+            observedPolicy: automatic
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: failed
+              appliedRevision: "2"
+              settingsResult:
+                applicationStatus: failed
+                persistenceStatus: stored
+                appliedControlRevision: "2"
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              applied:
+                audioControlMode: automatic
+              unappliedFields: []
+            policyCalls:
+              audioControlMode: 1
+        id: step_2
+    assertions:
+      - PS-07 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps08_lost_receipt_queries_original
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-08
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 4
+              persist: true
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: query
+          input: {}
+          expect:
+            operation:
+              state: applied
+              settingsResult:
+                persistenceStatus: stored
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: advance_clock
+          input:
+            ms: 1000
+          expect:
+            retained: 0
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: query
+          input: {}
+          expect:
+            status: NOT_FOUND
+            outcome: unknown
+        id: step_4
+    assertions:
+      - PS-08 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps08_crash_after_store_new_epoch
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-08
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 4
+              persist: true
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            crashAfterStore: true
+            runtimeInstanceId: 44444444-4444-4444-8444-000000000063
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            restarted: true
+            synchronized: false
+            settings:
+              configured:
+                capacity: 4
+              activeStartup:
+                capacity: 4
+              settingsRevision: "1"
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: query
+          input: {}
+          expect:
+            status: INVALID_STATE
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 4
+              persist: true
+          expect:
+            status: INVALID_STATE
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            store:
+              writeCount: 1
+        id: step_4
+    assertions:
+      - PS-08 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps08_corrupt
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-08
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_store
+          input:
+            patch:
+              state: invalid
+            refresh: true
+          expect:
+            observed: true
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              persisted: false
+              unsavedFields:
+                - layoutMode
+                - audioControlMode
+                - audioMixMode
+                - capacity
+                - enabledProtocols
+                - profileHint
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+              applied:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 4
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                layoutMode: presentation
+              persist: true
+              expectedSettingsRevision: "8"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: failed
+              outcomeReason: SETTINGS_PERSIST_FAILED
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            store:
+              writeCount: 0
+        id: step_4
+    assertions:
+      - PS-08 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps08_unknown_schema
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-08
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_store
+          input:
+            patch:
+              schemaVersion: 99
+            refresh: true
+          expect:
+            observed: true
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              persisted: false
+              unsavedFields:
+                - layoutMode
+                - audioControlMode
+                - audioMixMode
+                - capacity
+                - enabledProtocols
+                - profileHint
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+              applied:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 4
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                layoutMode: presentation
+              persist: true
+              expectedSettingsRevision: "8"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: failed
+              outcomeReason: SETTINGS_PERSIST_FAILED
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            store:
+              writeCount: 0
+        id: step_4
+    assertions:
+      - PS-08 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps08_unavailable
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-08
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_store
+          input:
+            patch:
+              state: unavailable
+            refresh: true
+          expect:
+            observed: true
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              persisted: false
+              unsavedFields:
+                - layoutMode
+                - audioControlMode
+                - audioMixMode
+                - capacity
+                - enabledProtocols
+                - profileHint
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+              applied:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 4
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                layoutMode: presentation
+              persist: true
+              expectedSettingsRevision: "8"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: failed
+              outcomeReason: SETTINGS_PERSIST_FAILED
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            store:
+              writeCount: 0
+        id: step_4
+    assertions:
+      - PS-08 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps08_absent_default_requires_explicit_save
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-08
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_store
+          input:
+            patch:
+              state: absent
+              revision: "0"
+              overrides: {}
+            refresh: true
+          expect:
+            observed: true
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              storageState: absent
+              persisted: true
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                layoutMode: grid
+              persist: true
+              expectedSettingsRevision: "8"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+              settingsResult:
+                configurationStatus: unchanged
+                persistenceStatus: stored
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            store:
+              writeCount: 1
+              overrides:
+                layoutMode: grid
+        id: step_4
+    assertions:
+      - PS-08 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps09_second_writer_busy
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-09
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 4
+              persist: true
+            writerBusy: true
+          expect:
+            status: BUSY
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            store:
+              state: loaded
+              schemaVersion: 1
+              revision: "1"
+              overrides:
+                capacity: 9
+              writeCount: 0
+            settings:
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+        id: step_1
+    assertions:
+      - PS-09 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps09_external_store_change_rejects_overwrite
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-09
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                layoutMode: presentation
+              persist: true
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            waitStore: true
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            waitingStore: true
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_store
+          input:
+            patch:
+              revision: "2"
+              overrides:
+                capacity: 9
+                profileHint: legacy
+          expect:
+            observed: true
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_complete_store
+          input: {}
+          expect:
+            operation:
+              state: rejected
+              outcomeReason: SETTINGS_STORE_CHANGED
+              settingsResult:
+                configurationStatus: notCommitted
+                settingsRevision: "8"
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+              persistedValues:
+                profileHint: legacy
+              unsavedFields:
+                - profileHint
+            store:
+              writeCount: 0
+              overrides:
+                capacity: 9
+                profileHint: legacy
+            policyCalls: {}
+        id: step_4
+    assertions:
+      - PS-09 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps09_slow_store_keeps_p0_available
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-09
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                layoutMode: presentation
+              persist: true
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            waitStore: true
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            waitingStore: true
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_capture
+          input: {}
+          expect:
+            status: SUCCESS
+            result:
+              presentationSettings:
+                settingsRevision: "7"
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params:
+              commandId: 44444444-4444-4444-8444-000000000001
+          expect:
+            status: SUCCESS
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: execute
+          input:
+            params:
+              commandId: 44444444-4444-4444-8444-000000000001
+          expect:
+            operation:
+              state: applied
+        id: step_4
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              commandId: 44444444-4444-4444-8444-000000000002
+              patch:
+                capacity: 4
+              persist: false
+          expect:
+            status: BUSY
+        id: step_5
+      - direction: runtime_local
+        control_model:
+          action: settings_complete_store
+          input: {}
+          expect:
+            operation:
+              state: applied
+        id: step_6
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            writing: false
+            store:
+              writeCount: 1
+            control:
+              presentation:
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: false
+                  - slotId: 1
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-airplay
+                        generation: "9007199254740994"
+                      slotId: 1
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 2
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-webcast
+                        generation: "9007199254740995"
+                      slotId: 2
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+        id: step_7
+    assertions:
+      - PS-09 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps09_late_callback_fenced_after_restart
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-09
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                layoutMode: presentation
+              persist: true
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            waitStore: true
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            waitingStore: true
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_restart
+          input:
+            runtimeInstanceId: 44444444-4444-4444-8444-000000000063
+          expect:
+            restarted: true
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_complete_store
+          input: {}
+          expect:
+            status: INVALID_STATE
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            store:
+              writeCount: 0
+            settings:
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+        id: step_4
+    assertions:
+      - PS-09 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps10_p0_ignores_settings_stream
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-10
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_install
+          input: {}
+          expect:
+            installed: true
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 2
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_publish
+          input: {}
+          expect:
+            published: true
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: receive_event
+          input:
+            source: settings
+          expect:
+            ignored: true
+        id: step_4
+      - direction: runtime_local
+        control_model:
+          action: settings_receive
+          input: {}
+          expect:
+            applied: true
+            awaitControl: false
+        id: step_5
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            control:
+              controlSync:
+                eventSequence: "0"
+            clientSettings:
+              settingsEventSequence: "1"
+        id: step_6
+    assertions:
+      - PS-10 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps10_duplicate_ignored
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-10
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_install
+          input: {}
+          expect:
+            installed: true
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 2
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_publish
+          input: {}
+          expect:
+            published: true
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_receive
+          input: {}
+          expect:
+            applied: true
+        id: step_4
+      - direction: runtime_local
+        control_model:
+          action: settings_receive
+          input: {}
+          expect:
+            ignored: true
+        id: step_5
+    assertions:
+      - PS-10 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps10_gap
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-10
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_install
+          input: {}
+          expect:
+            installed: true
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 2
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_publish
+          input: {}
+          expect:
+            published: true
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_receive
+          input:
+            context:
+              settingsEventSequence: "2"
+            patch:
+              settingsEventSequence: "2"
+          expect:
+            resync: true
+        id: step_4
+    assertions:
+      - PS-10 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps10_unknown_version
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-10
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_install
+          input: {}
+          expect:
+            installed: true
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 2
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_publish
+          input: {}
+          expect:
+            published: true
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_receive
+          input:
+            context:
+              controlVersion: 2
+          expect:
+            resync: true
+        id: step_4
+    assertions:
+      - PS-10 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps10_epoch_change
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-10
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_install
+          input: {}
+          expect:
+            installed: true
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 2
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_publish
+          input: {}
+          expect:
+            published: true
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_receive
+          input:
+            context:
+              runtimeInstanceId: 44444444-4444-4444-8444-000000000063
+          expect:
+            resync: true
+        id: step_4
+    assertions:
+      - PS-10 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps10_cursor_mismatch
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-10
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_install
+          input: {}
+          expect:
+            installed: true
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 2
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_publish
+          input: {}
+          expect:
+            published: true
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_receive
+          input:
+            context:
+              settingsRevision: "99"
+          expect:
+            resync: true
+        id: step_4
+    assertions:
+      - PS-10 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps10_initial_buffer_and_snapshot_barrier
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-10
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 2
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_publish
+          input: {}
+          expect:
+            published: true
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_receive
+          input: {}
+          expect:
+            applied: false
+            buffered: 1
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_install
+          input:
+            state:
+              settingsRevision: "7"
+              settingsEventSequence: "0"
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+              applied:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 4
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+              activeStartup:
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+              pendingRestart: []
+              persisted: true
+              unsavedFields: []
+              unappliedFields: []
+              storageState: loaded
+              lockedFields: []
+              applicationIssues:
+                - field: capacity
+                  kind: limitedByValidation
+              persistedValues:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+              storeRevision: "1"
+              appliedControlRevision: "1"
+          expect:
+            installed: true
+        id: step_4
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            clientSettings:
+              settingsRevision: "8"
+              settingsEventSequence: "1"
+        id: step_5
+    assertions:
+      - PS-10 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps10_settings_buffer_overflow
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-10
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 2
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_publish
+          input: {}
+          expect:
+            published: true
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_receive
+          input:
+            limits:
+              maxEventBufferBytes: 1
+          expect:
+            resync: true
+        id: step_3
+    assertions:
+      - PS-10 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps10_coalesce_without_sequence_hole
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-10
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 2
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                profileHint: legacy
+              persist: false
+              expectedSettingsRevision: "8"
+              commandId: 44444444-4444-4444-8444-000000000001
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 44444444-4444-4444-8444-000000000001
+          expect:
+            operation:
+              state: applied
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_publish
+          input: {}
+          expect:
+            published: true
+        id: step_4
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              settingsRevision: "9"
+              settingsEventSequence: "1"
+            control:
+              controlSync:
+                eventSequence: "0"
+        id: step_5
+    assertions:
+      - PS-10 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps11_two_stream_policy_alignment
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-11
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_install
+          input: {}
+          expect:
+            installed: true
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                audioControlMode: automatic
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_publish
+          input: {}
+          expect:
+            published: true
+        id: step_3
+      - direction: runtime_local
+        control_model:
+          action: settings_receive
+          input: {}
+          expect:
+            applied: true
+            awaitControl: true
+        id: step_4
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            readyForPolicy: false
+        id: step_5
+      - direction: runtime_local
+        control_model:
+          action: receive_event
+          input: {}
+          expect:
+            applied: true
+        id: step_6
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            readyForPolicy: true
+        id: step_7
+      - direction: runtime_local
+        control_model:
+          action: settings_capture
+          input: {}
+          expect:
+            status: SUCCESS
+            result:
+              controlSync:
+                revision: "2"
+                eventSequence: "1"
+              presentationSettings:
+                appliedControlRevision: "2"
+                settingsEventSequence: "1"
+        id: step_8
+    assertions:
+      - PS-11 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps11_split_combined_snapshot_rejected
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-11
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_install
+          input:
+            controlPatch:
+              presentation:
+                started: true
+                lifecycleGeneration: "1"
+                configuredCapacity: 9
+                validationAvailable: true
+                effectiveCapacity: 4
+                appliedCapacity: 4
+                layoutMode: presentation
+                layoutSettling: true
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-hid
+                        generation: "9007199254740993"
+                      slotId: 0
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 1
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-airplay
+                        generation: "9007199254740994"
+                      slotId: 1
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 2
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-webcast
+                        generation: "9007199254740995"
+                      slotId: 2
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                validatedCapacity: 4
+                contentAdaptation: auto-fit
+          expect:
+            resync: true
+        id: step_0
+    assertions:
+      - PS-11 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps11_settings_only_metadata_does_not_fake_p0_version
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-11
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 9
+              persist: true
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_capture
+          input:
+            p0Only: true
+          expect:
+            status: SUCCESS
+        id: step_2
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              settingsRevision: "7"
+              appliedControlRevision: "1"
+            control:
+              controlSync:
+                revision: "1"
+                eventSequence: "0"
+        id: step_3
+    assertions:
+      - PS-11 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps12_forbidden_enabledsessions
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_validate
+          input:
+            patch:
+              enabledSessions: sensitive
+          expect:
+            valid: false
+        id: step_0
+    assertions:
+      - PS-12 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps12_forbidden_sessionkey
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_validate
+          input:
+            patch:
+              sessionKey: sensitive
+          expect:
+            valid: false
+        id: step_0
+    assertions:
+      - PS-12 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps12_forbidden_slotid
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_validate
+          input:
+            patch:
+              slotId: sensitive
+          expect:
+            valid: false
+        id: step_0
+    assertions:
+      - PS-12 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps12_forbidden_privatekey
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_validate
+          input:
+            patch:
+              privateKey: sensitive
+          expect:
+            valid: false
+        id: step_0
+    assertions:
+      - PS-12 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps12_forbidden_passwordhash
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_validate
+          input:
+            patch:
+              passwordHash: sensitive
+          expect:
+            valid: false
+        id: step_0
+    assertions:
+      - PS-12 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps12_temporary_audio_not_a_setting
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_validate
+          input:
+            patch:
+              configured:
+                layoutMode: grid
+                audioControlMode: manual
+                audioMixMode: exclusive
+                capacity: 9
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+                profileHint: unified
+                enabledSessions:
+                  - id: session-hid
+                    generation: "9007199254740993"
+          expect:
+            valid: false
+        id: step_0
+    assertions:
+      - PS-12 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps12_sanitized_store_failure
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                layoutMode: presentation
+              persist: true
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            storeFailure: C:/private/key.pem password=secret
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: failed
+              outcomeReason: SETTINGS_PERSIST_FAILED
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              persistError: SETTINGS_PERSIST_FAILED
+        id: step_2
+    assertions:
+      - PS-12 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps12_legacy_projection_survives_p1
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 2
+              persist: false
+              expectedSettingsRevision: "7"
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            status: SUCCESS
+            operation:
+              state: queued
+              kind: setPresentationSettings
+        id: step_0
+      - direction: runtime_local
+        control_model:
+          action: settings_execute
+          input:
+            params:
+              commandId: 33333333-3333-4333-8333-333333333333
+          expect:
+            operation:
+              state: applied
+        id: step_1
+      - direction: runtime_local
+        control_model:
+          action: legacy_projection
+          input: {}
+          expect:
+            result:
+              receiver:
+                role: receiver
+                protocols:
+                  - hid
+                  - airplay
+                state: ready
+                receiverPhase: rendering
+              sampledAt: 2026-10-20T08:00:00Z
+              session:
+                sessionId: legacy-session
+                protocol: hid
+                receiverPhase: rendering
+        id: step_2
+    assertions:
+      - PS-12 protocol guarantees are checked using substitute settings/store/policy owners.
+  - name: ps12_encoding_settingsrevision_0
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: value
+        direction: runtime_local
+        control_model:
+          action: validate_value
+          input:
+            schema: CastSettingsEventContext
+            value:
+              controlVersion: 1
+              runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+              settingsRevision: "0"
+              settingsEventSequence: "0"
+          expect:
+            valid: true
+    assertions:
+      - Each settings counter remains a canonical decimal string within uint64 in all encodings.
+  - name: ps12_encoding_settingsrevision_1
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: value
+        direction: runtime_local
+        control_model:
+          action: validate_value
+          input:
+            schema: CastSettingsEventContext
+            value:
+              controlVersion: 1
+              runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+              settingsRevision: "9007199254740993"
+              settingsEventSequence: "0"
+          expect:
+            valid: true
+    assertions:
+      - Each settings counter remains a canonical decimal string within uint64 in all encodings.
+  - name: ps12_encoding_settingsrevision_2
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: value
+        direction: runtime_local
+        control_model:
+          action: validate_value
+          input:
+            schema: CastSettingsEventContext
+            value:
+              controlVersion: 1
+              runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+              settingsRevision: "18446744073709551615"
+              settingsEventSequence: "0"
+          expect:
+            valid: true
+    assertions:
+      - Each settings counter remains a canonical decimal string within uint64 in all encodings.
+  - name: ps12_encoding_settingsrevision_3
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: value
+        direction: runtime_local
+        control_model:
+          action: validate_value
+          input:
+            schema: CastSettingsEventContext
+            value:
+              controlVersion: 1
+              runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+              settingsRevision: "-1"
+              settingsEventSequence: "0"
+          expect:
+            valid: false
+    assertions:
+      - Each settings counter remains a canonical decimal string within uint64 in all encodings.
+  - name: ps12_encoding_settingsrevision_4
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: value
+        direction: runtime_local
+        control_model:
+          action: validate_value
+          input:
+            schema: CastSettingsEventContext
+            value:
+              controlVersion: 1
+              runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+              settingsRevision: "01"
+              settingsEventSequence: "0"
+          expect:
+            valid: false
+    assertions:
+      - Each settings counter remains a canonical decimal string within uint64 in all encodings.
+  - name: ps12_encoding_settingsrevision_5
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: value
+        direction: runtime_local
+        control_model:
+          action: validate_value
+          input:
+            schema: CastSettingsEventContext
+            value:
+              controlVersion: 1
+              runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+              settingsRevision: "1e3"
+              settingsEventSequence: "0"
+          expect:
+            valid: false
+    assertions:
+      - Each settings counter remains a canonical decimal string within uint64 in all encodings.
+  - name: ps12_encoding_settingsrevision_6
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: value
+        direction: runtime_local
+        control_model:
+          action: validate_value
+          input:
+            schema: CastSettingsEventContext
+            value:
+              controlVersion: 1
+              runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+              settingsRevision: "1.5"
+              settingsEventSequence: "0"
+          expect:
+            valid: false
+    assertions:
+      - Each settings counter remains a canonical decimal string within uint64 in all encodings.
+  - name: ps12_encoding_settingsrevision_7
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: value
+        direction: runtime_local
+        control_model:
+          action: validate_value
+          input:
+            schema: CastSettingsEventContext
+            value:
+              controlVersion: 1
+              runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+              settingsRevision: "18446744073709551616"
+              settingsEventSequence: "0"
+          expect:
+            valid: false
+    assertions:
+      - Each settings counter remains a canonical decimal string within uint64 in all encodings.
+  - name: ps12_encoding_settingsrevision_8
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: value
+        direction: runtime_local
+        control_model:
+          action: validate_value
+          input:
+            schema: CastSettingsEventContext
+            value:
+              controlVersion: 1
+              runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+              settingsRevision: 0
+              settingsEventSequence: "0"
+          expect:
+            valid: false
+    assertions:
+      - Each settings counter remains a canonical decimal string within uint64 in all encodings.
+  - name: ps12_encoding_settingsrevision_9
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: value
+        direction: runtime_local
+        control_model:
+          action: validate_value
+          input:
+            schema: CastSettingsEventContext
+            value:
+              controlVersion: 1
+              runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+              settingsRevision: null
+              settingsEventSequence: "0"
+          expect:
+            valid: false
+    assertions:
+      - Each settings counter remains a canonical decimal string within uint64 in all encodings.
+  - name: ps12_encoding_settingseventsequence_0
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: value
+        direction: runtime_local
+        control_model:
+          action: validate_value
+          input:
+            schema: CastSettingsEventContext
+            value:
+              controlVersion: 1
+              runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+              settingsRevision: "7"
+              settingsEventSequence: "0"
+          expect:
+            valid: true
+    assertions:
+      - Each settings counter remains a canonical decimal string within uint64 in all encodings.
+  - name: ps12_encoding_settingseventsequence_1
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: value
+        direction: runtime_local
+        control_model:
+          action: validate_value
+          input:
+            schema: CastSettingsEventContext
+            value:
+              controlVersion: 1
+              runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+              settingsRevision: "7"
+              settingsEventSequence: "9007199254740993"
+          expect:
+            valid: true
+    assertions:
+      - Each settings counter remains a canonical decimal string within uint64 in all encodings.
+  - name: ps12_encoding_settingseventsequence_2
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: value
+        direction: runtime_local
+        control_model:
+          action: validate_value
+          input:
+            schema: CastSettingsEventContext
+            value:
+              controlVersion: 1
+              runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+              settingsRevision: "7"
+              settingsEventSequence: "18446744073709551615"
+          expect:
+            valid: true
+    assertions:
+      - Each settings counter remains a canonical decimal string within uint64 in all encodings.
+  - name: ps12_encoding_settingseventsequence_3
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: value
+        direction: runtime_local
+        control_model:
+          action: validate_value
+          input:
+            schema: CastSettingsEventContext
+            value:
+              controlVersion: 1
+              runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+              settingsRevision: "7"
+              settingsEventSequence: "-1"
+          expect:
+            valid: false
+    assertions:
+      - Each settings counter remains a canonical decimal string within uint64 in all encodings.
+  - name: ps12_encoding_settingseventsequence_4
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: value
+        direction: runtime_local
+        control_model:
+          action: validate_value
+          input:
+            schema: CastSettingsEventContext
+            value:
+              controlVersion: 1
+              runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+              settingsRevision: "7"
+              settingsEventSequence: "01"
+          expect:
+            valid: false
+    assertions:
+      - Each settings counter remains a canonical decimal string within uint64 in all encodings.
+  - name: ps12_encoding_settingseventsequence_5
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: value
+        direction: runtime_local
+        control_model:
+          action: validate_value
+          input:
+            schema: CastSettingsEventContext
+            value:
+              controlVersion: 1
+              runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+              settingsRevision: "7"
+              settingsEventSequence: "1e3"
+          expect:
+            valid: false
+    assertions:
+      - Each settings counter remains a canonical decimal string within uint64 in all encodings.
+  - name: ps12_encoding_settingseventsequence_6
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: value
+        direction: runtime_local
+        control_model:
+          action: validate_value
+          input:
+            schema: CastSettingsEventContext
+            value:
+              controlVersion: 1
+              runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+              settingsRevision: "7"
+              settingsEventSequence: "1.5"
+          expect:
+            valid: false
+    assertions:
+      - Each settings counter remains a canonical decimal string within uint64 in all encodings.
+  - name: ps12_encoding_settingseventsequence_7
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: value
+        direction: runtime_local
+        control_model:
+          action: validate_value
+          input:
+            schema: CastSettingsEventContext
+            value:
+              controlVersion: 1
+              runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+              settingsRevision: "7"
+              settingsEventSequence: "18446744073709551616"
+          expect:
+            valid: false
+    assertions:
+      - Each settings counter remains a canonical decimal string within uint64 in all encodings.
+  - name: ps12_encoding_settingseventsequence_8
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: value
+        direction: runtime_local
+        control_model:
+          action: validate_value
+          input:
+            schema: CastSettingsEventContext
+            value:
+              controlVersion: 1
+              runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+              settingsRevision: "7"
+              settingsEventSequence: 0
+          expect:
+            valid: false
+    assertions:
+      - Each settings counter remains a canonical decimal string within uint64 in all encodings.
+  - name: ps12_encoding_settingseventsequence_9
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: value
+        direction: runtime_local
+        control_model:
+          action: validate_value
+          input:
+            schema: CastSettingsEventContext
+            value:
+              controlVersion: 1
+              runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+              settingsRevision: "7"
+              settingsEventSequence: null
+          expect:
+            valid: false
+    assertions:
+      - Each settings counter remains a canonical decimal string within uint64 in all encodings.
+  - name: ps01_explicit_persist_required
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - id: missing
+        direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 4
+          expect:
+            status: INVALID_ARGUMENT
+      - id: version
+        direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              controlVersion: 2
+              patch:
+                capacity: 4
+              persist: false
+          expect:
+            status: NOT_SUPPORTED
+    assertions:
+      - PS-01 explicit protocol condition is enforced.
+  - name: ps02_protocol_set_retry_canonical_order
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-02
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                enabledProtocols:
+                  - webcast
+                  - hid
+                  - airplay
+              persist: false
+          expect:
+            status: SUCCESS
+      - id: apply
+        direction: runtime_local
+        control_model:
+          action: settings_execute
+          input: {}
+          expect:
+            operation:
+              state: applied
+      - id: retry
+        direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                enabledProtocols:
+                  - hid
+                  - airplay
+                  - webcast
+              persist: false
+          expect:
+            operation:
+              state: applied
+      - id: unchanged
+        direction: runtime_local
+        control_model:
+          action: settings_state
+          input: {}
+          expect:
+            settings:
+              settingsRevision: "7"
+            store:
+              writeCount: 0
+    assertions:
+      - PS-02 explicit protocol condition is enforced.
+  - name: ps08_restart_without_file_retains_absence
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-08
+    steps:
+      - id: absent
+        direction: runtime_local
+        control_model:
+          action: settings_store
+          input:
+            patch:
+              state: absent
+              revision: "0"
+              overrides: {}
+            refresh: true
+          expect:
+            observed: true
+      - id: restart
+        direction: runtime_local
+        control_model:
+          action: settings_restart
+          input:
+            runtimeInstanceId: 44444444-4444-4444-8444-000000000099
+          expect:
+            restarted: true
+      - id: capture
+        direction: runtime_local
+        control_model:
+          action: settings_capture
+          input: {}
+          expect:
+            status: SUCCESS
+            result:
+              presentationSettings:
+                storageState: absent
+                pendingRestart: []
+                applied:
+                  capacity: 4
+    assertions:
+      - PS-08 explicit protocol condition is enforced.
+  - name: ps11_settings_only_snapshot_has_epoch_cursor
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-11
+    steps:
+      - id: capture
+        direction: runtime_local
+        control_model:
+          action: settings_capture
+          input:
+            settingsOnly: true
+          expect:
+            status: SUCCESS
+            result:
+              controlSync:
+                runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+              presentationSettings:
+                settingsRevision: "7"
+                settingsEventSequence: "0"
+    assertions:
+      - PS-11 explicit protocol condition is enforced.
+  - name: ps02_invalid_expected_revision_0
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-02
+    steps:
+      - id: request
+        direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 4
+              persist: false
+              expectedSettingsRevision: 9007199254740992
+          expect:
+            status: INVALID_ARGUMENT
+    assertions:
+      - PS-02 explicit protocol condition is enforced.
+  - name: ps02_invalid_expected_revision_1
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-02
+    steps:
+      - id: request
+        direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 4
+              persist: false
+              expectedSettingsRevision: "01"
+          expect:
+            status: INVALID_ARGUMENT
+    assertions:
+      - PS-02 explicit protocol condition is enforced.
+  - name: ps02_invalid_expected_revision_2
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-02
+    steps:
+      - id: request
+        direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 4
+              persist: false
+              expectedSettingsRevision: "1e3"
+          expect:
+            status: INVALID_ARGUMENT
+    assertions:
+      - PS-02 explicit protocol condition is enforced.
+  - name: ps02_invalid_expected_revision_3
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-02
+    steps:
+      - id: request
+        direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 4
+              persist: false
+              expectedSettingsRevision: "18446744073709551616"
+          expect:
+            status: INVALID_ARGUMENT
+    assertions:
+      - PS-02 explicit protocol condition is enforced.
+  - name: ps12_invalid_storerevision_0
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: state
+        direction: runtime_local
+        control_model:
+          action: settings_validate
+          input:
+            patch:
+              storeRevision: 0
+          expect:
+            valid: false
+    assertions:
+      - PS-12 explicit protocol condition is enforced.
+  - name: ps12_invalid_storerevision_1
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: state
+        direction: runtime_local
+        control_model:
+          action: settings_validate
+          input:
+            patch:
+              storeRevision: "-1"
+          expect:
+            valid: false
+    assertions:
+      - PS-12 explicit protocol condition is enforced.
+  - name: ps12_invalid_storerevision_2
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: state
+        direction: runtime_local
+        control_model:
+          action: settings_validate
+          input:
+            patch:
+              storeRevision: "01"
+          expect:
+            valid: false
+    assertions:
+      - PS-12 explicit protocol condition is enforced.
+  - name: ps12_invalid_storerevision_3
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: state
+        direction: runtime_local
+        control_model:
+          action: settings_validate
+          input:
+            patch:
+              storeRevision: "1e3"
+          expect:
+            valid: false
+    assertions:
+      - PS-12 explicit protocol condition is enforced.
+  - name: ps12_invalid_storerevision_4
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: state
+        direction: runtime_local
+        control_model:
+          action: settings_validate
+          input:
+            patch:
+              storeRevision: "18446744073709551616"
+          expect:
+            valid: false
+    assertions:
+      - PS-12 explicit protocol condition is enforced.
+  - name: ps12_invalid_appliedcontrolrevision_0
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: state
+        direction: runtime_local
+        control_model:
+          action: settings_validate
+          input:
+            patch:
+              appliedControlRevision: 0
+          expect:
+            valid: false
+    assertions:
+      - PS-12 explicit protocol condition is enforced.
+  - name: ps12_invalid_appliedcontrolrevision_1
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: state
+        direction: runtime_local
+        control_model:
+          action: settings_validate
+          input:
+            patch:
+              appliedControlRevision: "-1"
+          expect:
+            valid: false
+    assertions:
+      - PS-12 explicit protocol condition is enforced.
+  - name: ps12_invalid_appliedcontrolrevision_2
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: state
+        direction: runtime_local
+        control_model:
+          action: settings_validate
+          input:
+            patch:
+              appliedControlRevision: "01"
+          expect:
+            valid: false
+    assertions:
+      - PS-12 explicit protocol condition is enforced.
+  - name: ps12_invalid_appliedcontrolrevision_3
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: state
+        direction: runtime_local
+        control_model:
+          action: settings_validate
+          input:
+            patch:
+              appliedControlRevision: "1e3"
+          expect:
+            valid: false
+    assertions:
+      - PS-12 explicit protocol condition is enforced.
+  - name: ps12_invalid_appliedcontrolrevision_4
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-12
+    steps:
+      - id: state
+        direction: runtime_local
+        control_model:
+          action: settings_validate
+          input:
+            patch:
+              appliedControlRevision: "18446744073709551616"
+          expect:
+            valid: false
+    assertions:
+      - PS-12 explicit protocol condition is enforced.
+  - name: ps01_persistence_unsupported
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-01
+    steps:
+      - id: cap
+        direction: runtime_local
+        control_model:
+          action: settings_observe
+          input:
+            capabilityPatch:
+              supportsPersistence: false
+          expect:
+            observed: true
+      - id: write
+        direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 2
+              persist: true
+          expect:
+            status: NOT_SUPPORTED
+    assertions:
+      - PS-01 optional support/backpressure guarantee is verified.
+  - name: ps09_retained_result_capacity
+    given:
+      client_axtp_version: 1.0.0
+      obligation: PS-09
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              patch:
+                capacity: 2
+              persist: false
+            limits:
+              maxRetainedResults: 1
+          expect:
+            status: SUCCESS
+      - id: apply
+        direction: runtime_local
+        control_model:
+          action: settings_execute
+          input: {}
+          expect:
+            operation:
+              state: applied
+      - id: full
+        direction: runtime_local
+        control_model:
+          action: settings_admit
+          input:
+            params:
+              commandId: 44444444-4444-4444-8444-000000000001
+              expectedSettingsRevision: "8"
+              patch:
+                profileHint: legacy
+              persist: false
+            limits:
+              maxRetainedResults: 1
+          expect:
+            status: BUSY
+      - id: original
+        direction: runtime_local
+        control_model:
+          action: query
+          input: {}
+          expect:
+            operation:
+              state: applied
+    assertions:
+      - PS-09 optional support/backpressure guarantee is verified.
