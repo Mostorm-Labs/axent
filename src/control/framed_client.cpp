@@ -135,7 +135,7 @@ bool FramedClient::Consume(const std::vector<std::uint8_t>& bytes,std::uint64_t 
     axtp::FrameDecoder decode(capture);decode.onBytes(bytes.data(),bytes.size());if(!capture.frame)return s.fail();
     auto& frame=*capture.frame;
     if(frame.header.frameIndex==0){if(s.nextFragment)return s.fail();s.assemblyHeader=frame.header;s.assembly.clear();s.assemblyDeadline=now+5000;}
-    else if(frame.header.frameIndex!=s.nextFragment||frame.header.messageId!=s.assemblyHeader.messageId||frame.header.payloadType!=s.assemblyHeader.payloadType||frame.header.frameCount!=s.assemblyHeader.frameCount)return s.fail();
+    else if(frame.header.frameIndex!=s.nextFragment||frame.header.messageId!=s.assemblyHeader.messageId||frame.header.payloadType!=s.assemblyHeader.payloadType||frame.header.frameCount!=s.assemblyHeader.frameCount||frame.header.sourceId!=s.assemblyHeader.sourceId||frame.header.destinationId!=s.assemblyHeader.destinationId)return s.fail();
     if(s.assembly.size()+frame.payload.size()>65536)return s.fail();
     s.assembly.insert(s.assembly.end(),frame.payload.begin(),frame.payload.end());
     s.nextFragment=unsigned(frame.header.frameIndex)+1;
@@ -157,6 +157,7 @@ void FramedClient::Tick(std::uint64_t now){
         s.heartbeatSince=now;s.lastHeartbeat=now;s.outbound.sendControl(s.control.makeHeartbeat(s.heartbeatId));
     }
     for(auto it=s.pending.begin();it!=s.pending.end();)if(now>=it->second.deadline){
+        if(s.messages.size()>=128){s.fail();return;}
         s.messages.push_back({FramedMessage::Kind::Response,it->first,it->second.method,"{\"reason\":\"RPC_TIMEOUT\"}",static_cast<std::uint16_t>(axtp::ErrorCode::RpcResponseTimeout)});it=s.pending.erase(it);
     }else ++it;
 }
