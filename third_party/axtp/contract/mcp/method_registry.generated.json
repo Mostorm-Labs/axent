@@ -947,7 +947,7 @@
       "name": "input.openStream",
       "domain": "input",
       "status": "draft",
-      "description": "Open a negotiated input STREAM for a selected target and return the stream epoch, accepted mode, and canvas fencing tokens.",
+      "description": "Prepare a new immutable input context and return actually accepted input types and native limits.",
       "since": "1.0.0",
       "deprecated": false,
       "rpcOp": "request_response",
@@ -978,7 +978,7 @@
       "name": "input.closeStream",
       "domain": "input",
       "status": "draft",
-      "description": "Close a previously opened input STREAM and release any pressed contacts or buttons owned by its epoch.",
+      "description": "Fence and release all input owned by an authenticated session and stream; acknowledge closed only after confirmed cleanup.",
       "since": "1.0.0",
       "deprecated": false,
       "rpcOp": "request_response",
@@ -2540,7 +2540,7 @@
       "name": "cast.getTouchbackState",
       "domain": "cast",
       "status": "draft",
-      "description": "Return per-target touchback gates, negotiated mode, and geometry fence state.",
+      "description": "Return per-target gates, actual input lifecycle, accepted types and presentation state.",
       "since": "1.0.0",
       "deprecated": false,
       "rpcOp": "request_response",
@@ -2593,39 +2593,6 @@
         "UNAVAILABLE"
       ],
       "idHex": "0x161D"
-    },
-    {
-      "id": 5662,
-      "bitOffset": 29,
-      "name": "cast.setTouchbackMode",
-      "domain": "cast",
-      "status": "draft",
-      "description": "Request touch or mouse interpretation for one cast target; switching fences and reopens the input stream.",
-      "since": "1.0.0",
-      "deprecated": false,
-      "rpcOp": "request_response",
-      "requestSchema": "CastTouchbackModeRequest",
-      "responseSchema": "CastTouchbackState",
-      "recommendedEncoding": [
-        "json",
-        "tlv"
-      ],
-      "capabilities": [
-        "cast.touchback"
-      ],
-      "events": [
-        "cast.touchbackChanged"
-      ],
-      "errors": [
-        "SUCCESS",
-        "NOT_SUPPORTED",
-        "INVALID_ARGUMENT",
-        "INVALID_STATE",
-        "BUSY",
-        "NOT_FOUND",
-        "UNAVAILABLE"
-      ],
-      "idHex": "0x161E"
     },
     {
       "id": 5663,

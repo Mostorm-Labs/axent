@@ -401,7 +401,7 @@ methods:
     status: draft
     bitOffset: 27
     since: 1.0.0
-    description: Return per-target touchback gates, negotiated mode, and geometry fence state.
+    description: Return per-target gates, actual input lifecycle, accepted types and presentation state.
     rpc_op: request_response
     request_schema: CastTouchbackTargetRequest
     response_schema: CastTouchbackState
@@ -423,21 +423,6 @@ methods:
     capabilities: [cast.touchback]
     events: [cast.touchbackChanged]
     errors: [SUCCESS, PERMISSION_DENIED, INVALID_ARGUMENT, INVALID_STATE, NOT_FOUND, UNAVAILABLE]
-
-  - id: 0x161E
-    name: cast.setTouchbackMode
-    domain: cast
-    status: draft
-    bitOffset: 29
-    since: 1.0.0
-    description: Request touch or mouse interpretation for one cast target; switching fences and reopens the input stream.
-    rpc_op: request_response
-    request_schema: CastTouchbackModeRequest
-    response_schema: CastTouchbackState
-    recommended_encoding: [json, tlv]
-    capabilities: [cast.touchback]
-    events: [cast.touchbackChanged]
-    errors: [SUCCESS, NOT_SUPPORTED, INVALID_ARGUMENT, INVALID_STATE, BUSY, NOT_FOUND, UNAVAILABLE]
 
   - id: 0x161F
     name: cast.setTouchbackResolutionPreference
@@ -701,10 +686,10 @@ events:
     status: draft
     bitOffset: 20
     since: 1.0.0
-    description: Emitted when per-target touchback gates, mode, resolution, or geometry fencing changes.
+    description: Per-target gate, input lifecycle, accepted types, source quality or geometry changed.
     event_schema: CastTouchbackChangedEvent
     severity: info
-    trigger: [cast.setTouchbackEnabled, cast.setTouchbackMode, cast.setTouchbackResolutionPreference, stream open, stream close, disconnect]
+    trigger: [cast.setTouchbackEnabled, cast.setTouchbackResolutionPreference, stream open, stream close, disconnect]
     capabilities: [cast.touchback]
 
 types:
@@ -3616,88 +3601,100 @@ types:
     kind: object
     description: Per-target touchback state with independent gates and geometry fencing.
     fields:
-      - id: 0x01
+      - id: 1
         name: target
         type: CastTouchbackTarget
         required: true
         description: Complete target identity.
-      - id: 0x02
+      - id: 2
         name: receiverOptIn
         type: bool
         required: true
         description: Receiver-local touchback gate.
-      - id: 0x03
+      - id: 3
         name: controllerRequested
         type: bool
         required: true
         description: Launcher/controller requested gate.
-      - id: 0x04
+      - id: 4
         name: effectiveEnabled
         type: bool
         required: true
         description: Computed effective gate; true only when both gates allow input.
-      - id: 0x05
-        name: requestedMode
-        type: enum
-        enum: [touch, mouse]
-        required: true
-        description: Controller requested input interpretation.
-      - id: 0x06
-        name: negotiatedMode
-        type: enum
-        enum: [touch, mouse, none]
-        required: true
-        description: Mode accepted by the active stream, or none when closed.
-      - id: 0x07
+      - id: 7
         name: resolutionPreference
         type: enum
-        enum: [inherit, prefer1080p]
+        enum:
+          - inherit
+          - prefer1080p
         required: true
-        description: Preserve the sender's current source quality or request 1080p; TouchBatch coordinates remain normalized.
-      - id: 0x08
+        description: Independent source quality preference; normalized input layout does not change.
+      - id: 8
         name: streamId
         type: uint32
         required: false
         description: Active input.stream identifier.
-      - id: 0x09
-        name: epoch
-        type: uint32
-        required: false
-        description: Active input stream epoch.
-      - id: 0x0A
+      - id: 10
         name: canvasRevision
         type: string
         required: true
         max_length: 128
         description: Canvas revision bound to this target.
-      - id: 0x0B
+      - id: 11
         name: geometryRevision
         type: string
         required: true
         max_length: 128
         description: Geometry revision bound to this target.
-      - id: 0x0C
-        name: canvasToken
-        type: uint32
-        required: true
-        description: Canvas fence token.
-      - id: 0x0D
-        name: geometryToken
-        type: uint32
-        required: true
-        description: Geometry fence token.
-      - id: 0x0E
+      - id: 14
         name: revision
         type: string
         required: true
         max_length: 128
         description: Monotonic touchback state revision.
-      - id: 0x0F
+      - id: 15
         name: diagnosticReason
         type: string
         required: false
         max_length: 256
         description: Bounded diagnostic reason.
+      - id: 16
+        name: acceptedInputTypes
+        type: array
+        required: true
+        description: Actual accepted types while active; empty otherwise.
+        array:
+          item_type: string
+      - id: 17
+        name: lifecycleState
+        type: enum
+        required: true
+        description: Truthful per-target input owner lifecycle.
+        enum:
+          - inactive
+          - opening
+          - active
+          - closing
+          - faulted
+          - cleanup_blocked
+      - id: 18
+        name: format
+        type: string
+        required: false
+        description: Actual opened format when a context exists.
+        max_length: 64
+      - id: 19
+        name: resolutionState
+        type: enum
+        required: false
+        enum: [inherit, pending, applied, degraded, unsupported, failed]
+        description: Actual source-quality request state, separate from input readiness and geometry.
+    retired_field_ids:
+      - 5
+      - 6
+      - 9
+      - 12
+      - 13
 
   CastTouchbackEnabledRequest:
     kind: object
@@ -3714,35 +3711,6 @@ types:
         required: true
         description: Requested controller gate.
       - id: 0x03
-        name: commandId
-        type: string
-        required: true
-        max_length: 128
-        description: Idempotency key.
-
-  CastTouchbackModeRequest:
-    kind: object
-    description: Request to set touchback mode for one target.
-    fields:
-      - id: 0x01
-        name: target
-        type: CastTouchbackTarget
-        required: true
-        description: Target identity and generation fence.
-      - id: 0x02
-        name: mode
-        type: enum
-        enum: [touch, mouse]
-        required: true
-        description: Requested input interpretation.
-      - id: 0x03
-        name: requirement
-        type: enum
-        enum: [preferred, required]
-        required: false
-        default: preferred
-        description: Whether a fallback mode is allowed.
-      - id: 0x04
         name: commandId
         type: string
         required: true
@@ -3797,36 +3765,45 @@ types:
     kind: object
     description: Capability descriptor for cast.touchback; AirPlay receivers do not advertise this capability.
     fields:
-      - id: 0x01
+      - id: 1
         name: capability
         type: string
         required: true
         max_length: 32
         description: Fixed capability name cast.touchback.
-      - id: 0x02
+      - id: 2
         name: protocols
         type: array
         array:
           item_type: string
         required: true
         description: Protocol paths supporting touchback, such as webcast and hid; airplay is excluded.
-      - id: 0x03
-        name: supportedModes
-        type: array
-        array:
-          item_type: string
-        required: true
-        description: Supported input modes, with touch preferred by default.
-      - id: 0x04
+      - id: 4
         name: supportsPerTarget
         type: bool
         required: true
         description: Whether state is independently controlled for each route.
-      - id: 0x05
+      - id: 5
         name: supportsControlPlane
         type: bool
         required: true
         description: Whether launcher control-plane gate methods are supported.
+      - id: 6
+        name: inputTypes
+        type: array
+        required: true
+        description: Actually implemented capture semantics for the product route.
+        array:
+          item_type: string
+      - id: 7
+        name: formats
+        type: array
+        required: true
+        description: Explicit supported typed input formats.
+        array:
+          item_type: string
+    retired_field_ids:
+      - 3
 
 capabilities:
   - id: 0x1601
@@ -3959,6 +3936,12 @@ capabilities:
     domain: cast
     status: draft
     since: 1.0.0
-    description: Device supports per-target touchback control and negotiated touch or mouse input; AirPlay is excluded.
+    description: Per-target input gate and presentation policy; event semantics are explicit and AirPlay is excluded.
     type: object
     schema: CastTouchbackCapability
+
+retired_allocations:
+  - kind: method
+    id: 5662
+    domain: cast
+    bitOffset: 29

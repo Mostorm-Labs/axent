@@ -149,6 +149,17 @@ Profile 或 capability 不匹配 MUST 只降级受影响的 operation。已注�
 
 Runtime 仓库 MUST 声明自己支持的 profile，并绑定精确 spec tag、commit 或 release artifact metadata。
 
+## 退役分配与 Typed Input
+
+移除已生成 draft 方法时，`retired_allocations` 保留 kind/id/domain/bitOffset；
+bitOffset 的连续性计算包含这些不可用槽，支持掩码不重新编号。退役记录不是
+可调用方法，不进入有效 method lookup。schema 的 `retired_field_ids` 同样禁止
+复用；source/IR/JSON 均保留墓碑且验证碰撞。
+
+Typed Input 的允许类型、控制上下文、7×N Touch 与 Mouse 变体见
+[48-input-stream](48-input-stream.md)；数据面事实由 input domain 的 input_stream
+元数据进入生成 IR、文档、向量及 C++ 常量，不在某个产品私造第二份布局。
+
 ## 校验
 
 生成器校验 MUST 至少检查：

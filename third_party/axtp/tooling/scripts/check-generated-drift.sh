@@ -10,7 +10,12 @@ if [[ ! -f "$cli" ]]; then
   exit 1
 fi
 
-tmp="$(mktemp -d "${TMPDIR:-/tmp}/axtp-generated-drift.XXXXXX")"
+tmp_base="$(cd "${TMPDIR:-/tmp}" && pwd -P)"
+tmp="$(mktemp -d "$tmp_base/axtp-generated-drift.XXXXXX")"
+case "$tmp" in
+  "$tmp_base"/axtp-generated-drift.*) ;;
+  *) echo "Unsafe temporary output path" >&2; exit 1 ;;
+esac
 trap 'rm -rf "$tmp"' EXIT
 
 mkdir -p "$tmp/contract/protocol" "$tmp/generated"

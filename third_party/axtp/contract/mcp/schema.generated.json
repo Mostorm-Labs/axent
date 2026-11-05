@@ -9697,6 +9697,13 @@
       "name": "CastTouchbackState",
       "type": "object",
       "description": "Per-target touchback state with independent gates and geometry fencing.",
+      "retiredFieldIds": [
+        5,
+        6,
+        9,
+        12,
+        13
+      ],
       "fields": [
         {
           "id": 1,
@@ -9731,31 +9738,6 @@
           "description": "Computed effective gate; true only when both gates allow input."
         },
         {
-          "id": 5,
-          "name": "requestedMode",
-          "type": "enum",
-          "required": true,
-          "deprecated": false,
-          "enum": [
-            "touch",
-            "mouse"
-          ],
-          "description": "Controller requested input interpretation."
-        },
-        {
-          "id": 6,
-          "name": "negotiatedMode",
-          "type": "enum",
-          "required": true,
-          "deprecated": false,
-          "enum": [
-            "touch",
-            "mouse",
-            "none"
-          ],
-          "description": "Mode accepted by the active stream, or none when closed."
-        },
-        {
           "id": 7,
           "name": "resolutionPreference",
           "type": "enum",
@@ -9765,7 +9747,7 @@
             "inherit",
             "prefer1080p"
           ],
-          "description": "Preserve the sender's current source quality or request 1080p; TouchBatch coordinates remain normalized."
+          "description": "Independent source quality preference; normalized input layout does not change."
         },
         {
           "id": 8,
@@ -9774,14 +9756,6 @@
           "required": false,
           "deprecated": false,
           "description": "Active input.stream identifier."
-        },
-        {
-          "id": 9,
-          "name": "epoch",
-          "type": "uint32",
-          "required": false,
-          "deprecated": false,
-          "description": "Active input stream epoch."
         },
         {
           "id": 10,
@@ -9802,22 +9776,6 @@
           "description": "Geometry revision bound to this target."
         },
         {
-          "id": 12,
-          "name": "canvasToken",
-          "type": "uint32",
-          "required": true,
-          "deprecated": false,
-          "description": "Canvas fence token."
-        },
-        {
-          "id": 13,
-          "name": "geometryToken",
-          "type": "uint32",
-          "required": true,
-          "deprecated": false,
-          "description": "Geometry fence token."
-        },
-        {
           "id": 14,
           "name": "revision",
           "type": "string",
@@ -9834,6 +9792,58 @@
           "deprecated": false,
           "maxLength": 256,
           "description": "Bounded diagnostic reason."
+        },
+        {
+          "id": 16,
+          "name": "acceptedInputTypes",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Actual accepted types while active; empty otherwise."
+        },
+        {
+          "id": 17,
+          "name": "lifecycleState",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "inactive",
+            "opening",
+            "active",
+            "closing",
+            "faulted",
+            "cleanup_blocked"
+          ],
+          "description": "Truthful per-target input owner lifecycle."
+        },
+        {
+          "id": 18,
+          "name": "format",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "Actual opened format when a context exists."
+        },
+        {
+          "id": 19,
+          "name": "resolutionState",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "inherit",
+            "pending",
+            "applied",
+            "degraded",
+            "unsupported",
+            "failed"
+          ],
+          "description": "Actual source-quality request state, separate from input readiness and geometry."
         }
       ]
     },
@@ -9860,55 +9870,6 @@
         },
         {
           "id": 3,
-          "name": "commandId",
-          "type": "string",
-          "required": true,
-          "deprecated": false,
-          "maxLength": 128,
-          "description": "Idempotency key."
-        }
-      ]
-    },
-    {
-      "name": "CastTouchbackModeRequest",
-      "type": "object",
-      "description": "Request to set touchback mode for one target.",
-      "fields": [
-        {
-          "id": 1,
-          "name": "target",
-          "type": "CastTouchbackTarget",
-          "required": true,
-          "deprecated": false,
-          "description": "Target identity and generation fence."
-        },
-        {
-          "id": 2,
-          "name": "mode",
-          "type": "enum",
-          "required": true,
-          "deprecated": false,
-          "enum": [
-            "touch",
-            "mouse"
-          ],
-          "description": "Requested input interpretation."
-        },
-        {
-          "id": 3,
-          "name": "requirement",
-          "type": "enum",
-          "required": false,
-          "deprecated": false,
-          "default": "preferred",
-          "enum": [
-            "preferred",
-            "required"
-          ],
-          "description": "Whether a fallback mode is allowed."
-        },
-        {
-          "id": 4,
           "name": "commandId",
           "type": "string",
           "required": true,
@@ -9992,6 +9953,9 @@
       "name": "CastTouchbackCapability",
       "type": "object",
       "description": "Capability descriptor for cast.touchback; AirPlay receivers do not advertise this capability.",
+      "retiredFieldIds": [
+        3
+      ],
       "fields": [
         {
           "id": 1,
@@ -10014,17 +9978,6 @@
           "description": "Protocol paths supporting touchback, such as webcast and hid; airplay is excluded."
         },
         {
-          "id": 3,
-          "name": "supportedModes",
-          "type": "array",
-          "required": true,
-          "deprecated": false,
-          "array": {
-            "itemType": "string"
-          },
-          "description": "Supported input modes, with touch preferred by default."
-        },
-        {
           "id": 4,
           "name": "supportsPerTarget",
           "type": "bool",
@@ -10039,6 +9992,28 @@
           "required": true,
           "deprecated": false,
           "description": "Whether launcher control-plane gate methods are supported."
+        },
+        {
+          "id": 6,
+          "name": "inputTypes",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Actually implemented capture semantics for the product route."
+        },
+        {
+          "id": 7,
+          "name": "formats",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Explicit supported typed input formats."
         }
       ]
     },
@@ -11336,6 +11311,18 @@
       "name": "InputOpenStreamParams",
       "type": "object",
       "description": "Request to open the canonical input.stream touchback business stream.",
+      "retiredFieldIds": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
       "fields": [
         {
           "id": 1,
@@ -11343,6 +11330,8 @@
           "type": "uint32",
           "required": true,
           "deprecated": false,
+          "min": 1,
+          "max": 1,
           "description": "Control-plane contract version."
         },
         {
@@ -11380,104 +11369,9 @@
           "required": true,
           "deprecated": false,
           "enum": [
-            "touch-batch-v1"
+            "input-sample-v1"
           ],
           "description": "Canonical binary payload format after the AXTP STREAM header."
-        },
-        {
-          "id": 6,
-          "name": "preferredMode",
-          "type": "enum",
-          "required": false,
-          "deprecated": false,
-          "default": "touch",
-          "enum": [
-            "touch",
-            "mouse"
-          ],
-          "description": "Preferred input interpretation; touch is the default."
-        },
-        {
-          "id": 7,
-          "name": "supportedModes",
-          "type": "array",
-          "required": true,
-          "deprecated": false,
-          "array": {
-            "itemType": "string"
-          },
-          "description": "Modes the requester can consume, normally touch and mouse."
-        },
-        {
-          "id": 8,
-          "name": "canvasRevision",
-          "type": "string",
-          "required": true,
-          "deprecated": false,
-          "maxLength": 128,
-          "description": "Canvas revision used to produce normalized coordinates."
-        },
-        {
-          "id": 9,
-          "name": "geometryRevision",
-          "type": "string",
-          "required": true,
-          "deprecated": false,
-          "maxLength": 128,
-          "description": "Geometry revision used to map the viewport."
-        },
-        {
-          "id": 10,
-          "name": "canvasToken",
-          "type": "uint32",
-          "required": true,
-          "deprecated": false,
-          "description": "Numeric canvas fence token."
-        },
-        {
-          "id": 11,
-          "name": "geometryToken",
-          "type": "uint32",
-          "required": true,
-          "deprecated": false,
-          "description": "Numeric geometry fence token."
-        },
-        {
-          "id": 12,
-          "name": "maxBatchEvents",
-          "type": "uint16",
-          "required": false,
-          "deprecated": false,
-          "description": "Maximum touch events per batch accepted by the requester."
-        },
-        {
-          "id": 13,
-          "name": "maxFrameBytes",
-          "type": "uint32",
-          "required": false,
-          "deprecated": false,
-          "description": "Maximum complete STREAM frame size accepted by the requester."
-        },
-        {
-          "id": 14,
-          "name": "maxContacts",
-          "type": "uint16",
-          "required": false,
-          "deprecated": false,
-          "description": "Maximum simultaneous contacts supported by the requester."
-        },
-        {
-          "id": 15,
-          "name": "modeRequirement",
-          "type": "enum",
-          "required": false,
-          "deprecated": false,
-          "default": "preferred",
-          "enum": [
-            "preferred",
-            "required"
-          ],
-          "description": "Whether preferredMode may fall back to another supported mode."
         },
         {
           "id": 16,
@@ -11487,6 +11381,52 @@
           "deprecated": false,
           "maxLength": 128,
           "description": "Idempotency key for the open request."
+        },
+        {
+          "id": 17,
+          "name": "sourceBindingId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 128,
+          "description": "Opaque source binding supplied by the authenticated media/device integration; validated against current local capture/input region."
+        },
+        {
+          "id": 18,
+          "name": "inputTypes",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Nonempty unique offered semantics: touch and/or mouse."
+        },
+        {
+          "id": 19,
+          "name": "maxDataBytes",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "min": 8,
+          "max": 4096,
+          "description": "Maximum input data bytes, including inputType; excludes STREAM and Frame."
+        },
+        {
+          "id": 20,
+          "name": "touch",
+          "type": "InputTouchConstraints",
+          "required": false,
+          "deprecated": false,
+          "description": "Required exactly when touch is offered."
+        },
+        {
+          "id": 21,
+          "name": "mouse",
+          "type": "InputMouseConstraints",
+          "required": false,
+          "deprecated": false,
+          "description": "Required exactly when mouse is offered."
         }
       ]
     },
@@ -11494,6 +11434,15 @@
       "name": "InputOpenStreamResult",
       "type": "object",
       "description": "Result of input.openStream negotiation.",
+      "retiredFieldIds": [
+        2,
+        3,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
       "fields": [
         {
           "id": 1,
@@ -11501,27 +11450,8 @@
           "type": "uint32",
           "required": true,
           "deprecated": false,
+          "min": 1,
           "description": "AXTP STREAM identifier."
-        },
-        {
-          "id": 2,
-          "name": "epoch",
-          "type": "uint32",
-          "required": true,
-          "deprecated": false,
-          "description": "Input ownership epoch; changes after reset and reopen."
-        },
-        {
-          "id": 3,
-          "name": "acceptedMode",
-          "type": "enum",
-          "required": true,
-          "deprecated": false,
-          "enum": [
-            "touch",
-            "mouse"
-          ],
-          "description": "Mode accepted for this stream."
         },
         {
           "id": 4,
@@ -11530,49 +11460,9 @@
           "required": true,
           "deprecated": false,
           "enum": [
-            "touch-batch-v1"
+            "input-sample-v1"
           ],
           "description": "Canonical binary payload format."
-        },
-        {
-          "id": 5,
-          "name": "canvasToken",
-          "type": "uint32",
-          "required": true,
-          "deprecated": false,
-          "description": "Canvas token bound to this stream epoch."
-        },
-        {
-          "id": 6,
-          "name": "geometryToken",
-          "type": "uint32",
-          "required": true,
-          "deprecated": false,
-          "description": "Geometry token bound to this stream epoch."
-        },
-        {
-          "id": 7,
-          "name": "maxBatchEvents",
-          "type": "uint16",
-          "required": false,
-          "deprecated": false,
-          "description": "Maximum events per accepted batch."
-        },
-        {
-          "id": 8,
-          "name": "maxFrameBytes",
-          "type": "uint32",
-          "required": false,
-          "deprecated": false,
-          "description": "Maximum complete STREAM frame size."
-        },
-        {
-          "id": 9,
-          "name": "maxContacts",
-          "type": "uint16",
-          "required": false,
-          "deprecated": false,
-          "description": "Maximum simultaneous contacts."
         },
         {
           "id": 10,
@@ -11589,14 +11479,54 @@
           "type": "bool",
           "required": true,
           "deprecated": false,
-          "description": "Whether the owner lane accepted the request; true does not imply effective touchback enablement."
+          "description": "True only when authentication, current binding, permission, geometry, exclusive native owner and preparation have succeeded."
+        },
+        {
+          "id": 12,
+          "name": "acceptedInputTypes",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Nonempty unique subset of offered input types."
+        },
+        {
+          "id": 13,
+          "name": "maxDataBytes",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "min": 8,
+          "max": 4096,
+          "description": "Actual input data budget, no greater than request/native/transport limits."
+        },
+        {
+          "id": 14,
+          "name": "touch",
+          "type": "InputTouchConstraints",
+          "required": false,
+          "deprecated": false,
+          "description": "Present exactly when touch is accepted."
+        },
+        {
+          "id": 15,
+          "name": "mouse",
+          "type": "InputMouseConstraints",
+          "required": false,
+          "deprecated": false,
+          "description": "Present exactly when mouse is accepted."
         }
       ]
     },
     {
       "name": "InputCloseStreamParams",
       "type": "object",
-      "description": "Request to close an input.stream epoch and release active input state.",
+      "description": "Close an immutable input context; failed native cleanup remains retryable and never reports closed.",
+      "retiredFieldIds": [
+        6
+      ],
       "fields": [
         {
           "id": 1,
@@ -11604,6 +11534,8 @@
           "type": "uint32",
           "required": true,
           "deprecated": false,
+          "min": 1,
+          "max": 1,
           "description": "Control-plane contract version."
         },
         {
@@ -11640,15 +11572,8 @@
           "type": "uint32",
           "required": true,
           "deprecated": false,
+          "min": 1,
           "description": "AXTP STREAM identifier to close."
-        },
-        {
-          "id": 6,
-          "name": "epoch",
-          "type": "uint32",
-          "required": true,
-          "deprecated": false,
-          "description": "Input ownership epoch to close."
         },
         {
           "id": 7,
@@ -11661,8 +11586,8 @@
             "route_changed",
             "disconnect",
             "timeout",
-            "reset",
-            "shutdown"
+            "shutdown",
+            "profile_failure"
           ],
           "description": "Reason for closing the stream."
         },
@@ -11689,6 +11614,9 @@
       "name": "InputCloseStreamResult",
       "type": "object",
       "description": "Result of input.closeStream.",
+      "retiredFieldIds": [
+        2
+      ],
       "fields": [
         {
           "id": 1,
@@ -11699,20 +11627,12 @@
           "description": "AXTP STREAM identifier."
         },
         {
-          "id": 2,
-          "name": "epoch",
-          "type": "uint32",
-          "required": true,
-          "deprecated": false,
-          "description": "Closed input ownership epoch."
-        },
-        {
           "id": 3,
           "name": "closed",
           "type": "bool",
           "required": true,
           "deprecated": false,
-          "description": "Whether the stream is now closed."
+          "description": "True only after all native state owned by this context is confirmed released; cleanupPending is an UNAVAILABLE error."
         },
         {
           "id": 4,
@@ -11738,6 +11658,14 @@
       "name": "InputStreamCapability",
       "type": "object",
       "description": "Capability descriptor for input.stream.",
+      "retiredFieldIds": [
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
       "fields": [
         {
           "id": 1,
@@ -11768,18 +11696,7 @@
           "array": {
             "itemType": "string"
           },
-          "description": "Supported input stream formats, including touch-batch-v1."
-        },
-        {
-          "id": 4,
-          "name": "inputModes",
-          "type": "array",
-          "required": true,
-          "deprecated": false,
-          "array": {
-            "itemType": "string"
-          },
-          "description": "Supported modes, including touch and mouse."
+          "description": "Explicit layouts supported by this implementation; this revision defines input-sample-v1."
         },
         {
           "id": 5,
@@ -11793,44 +11710,123 @@
           "description": "Data-channel delivery requirement; ordinary packets have no application ACK."
         },
         {
-          "id": 6,
-          "name": "supportsReset",
-          "type": "bool",
+          "id": 11,
+          "name": "inputTypes",
+          "type": "array",
           "required": true,
           "deprecated": false,
-          "description": "Whether ordered reset frames are supported."
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Implemented input semantics, distinct from attached physical devices."
         },
         {
-          "id": 7,
-          "name": "supportsMoveCoalescing",
-          "type": "bool",
-          "required": true,
-          "deprecated": false,
-          "description": "Whether move events may be coalesced while down/up/cancel ordering is preserved."
-        },
-        {
-          "id": 8,
-          "name": "maxBatchEvents",
-          "type": "uint16",
-          "required": false,
-          "deprecated": false,
-          "description": "Advertised maximum events per batch."
-        },
-        {
-          "id": 9,
-          "name": "maxFrameBytes",
+          "id": 12,
+          "name": "maxDataBytes",
           "type": "uint32",
-          "required": false,
+          "required": true,
           "deprecated": false,
-          "description": "Advertised maximum complete STREAM frame size."
+          "min": 8,
+          "max": 4096,
+          "description": "Maximum input data bytes including type."
         },
         {
-          "id": 10,
+          "id": 13,
+          "name": "touch",
+          "type": "InputTouchConstraints",
+          "required": false,
+          "deprecated": false,
+          "description": "Present exactly when touch is implemented."
+        },
+        {
+          "id": 14,
+          "name": "mouse",
+          "type": "InputMouseConstraints",
+          "required": false,
+          "deprecated": false,
+          "description": "Present exactly when mouse is implemented."
+        },
+        {
+          "id": 15,
+          "name": "profiles",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Implemented input profiles; AXTP-TYPED-INPUT-V1 requires the common stream-state subset."
+        }
+      ]
+    },
+    {
+      "name": "InputTouchConstraints",
+      "type": "object",
+      "description": "Limits include all records in one complete sample, including terminal records.",
+      "fields": [
+        {
+          "id": 1,
           "name": "maxContacts",
           "type": "uint16",
-          "required": false,
+          "required": true,
           "deprecated": false,
-          "description": "Advertised maximum simultaneous contacts."
+          "min": 1,
+          "max": 256,
+          "description": "Maximum records in a complete Touch sample; bounded by native complete-frame capacity and floor((maxDataBytes-1)/7)."
+        }
+      ]
+    },
+    {
+      "name": "InputMouseConstraints",
+      "type": "object",
+      "description": "Actually supported logical absolute Mouse features; unsupported actions never silently convert.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "buttonsMask",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "min": 0,
+          "max": 31,
+          "description": "Allowed buttons: Left=1, Right=2, Middle=4, Back=8, Forward=16."
+        },
+        {
+          "id": 2,
+          "name": "modifierMask",
+          "type": "uint16",
+          "required": true,
+          "deprecated": false,
+          "min": 0,
+          "max": 15,
+          "description": "Allowed Shift=1, Ctrl=2, Alt=4, Meta=8; nonzero requires reliable owned release."
+        },
+        {
+          "id": 3,
+          "name": "allowChords",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether more than one logical button can be held."
+        },
+        {
+          "id": 4,
+          "name": "wheelUnits",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Unique supported units: detent120 and/or regionQ16_16; empty disables Wheel."
+        },
+        {
+          "id": 5,
+          "name": "continuousScroll",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Requires regionQ16_16 and phase/anchor support; otherwise false."
         }
       ]
     },
@@ -17425,6 +17421,257 @@
           "description": "Estimated bitrate in kbps."
         }
       ]
+    }
+  ],
+  "inputStream": {
+    "format": "input-sample-v1",
+    "byteOrder": "big-endian",
+    "streamHeaderBytes": 16,
+    "typeBytes": 1,
+    "maxDataBytes": 4096,
+    "inputTypes": {
+      "touch": 1,
+      "mouse": 2
+    },
+    "touch": {
+      "recordBytes": 7,
+      "maxContacts": 256,
+      "sampling": "complete",
+      "phases": {
+        "down": 0,
+        "move": 1,
+        "up": 2,
+        "cancel": 3
+      },
+      "fields": [
+        {
+          "name": "contactId",
+          "offset": 0,
+          "bytes": 2,
+          "type": "uint16"
+        },
+        {
+          "name": "phase",
+          "offset": 2,
+          "bytes": 1,
+          "type": "uint8"
+        },
+        {
+          "name": "x",
+          "offset": 3,
+          "bytes": 2,
+          "type": "uint16"
+        },
+        {
+          "name": "y",
+          "offset": 5,
+          "bytes": 2,
+          "type": "uint16"
+        }
+      ]
+    },
+    "mouse": {
+      "buttons": {
+        "left": 1,
+        "right": 2,
+        "middle": 4,
+        "back": 8,
+        "forward": 16
+      },
+      "modifiers": {
+        "shift": 1,
+        "ctrl": 2,
+        "alt": 4,
+        "meta": 8
+      },
+      "wheelUnits": {
+        "detent120": 0,
+        "regionQ16_16": 1
+      },
+      "wheelPhases": {
+        "none": 0,
+        "began": 1,
+        "changed": 2,
+        "ended": 3,
+        "cancelled": 4
+      },
+      "records": [
+        {
+          "name": "move",
+          "kind": 0,
+          "bytes": 11,
+          "fields": [
+            {
+              "name": "eventKind",
+              "offset": 0,
+              "bytes": 1,
+              "type": "uint8"
+            },
+            {
+              "name": "modifiers",
+              "offset": 1,
+              "bytes": 2,
+              "type": "uint16"
+            },
+            {
+              "name": "buttons",
+              "offset": 3,
+              "bytes": 4,
+              "type": "uint32"
+            },
+            {
+              "name": "x",
+              "offset": 7,
+              "bytes": 2,
+              "type": "uint16"
+            },
+            {
+              "name": "y",
+              "offset": 9,
+              "bytes": 2,
+              "type": "uint16"
+            }
+          ]
+        },
+        {
+          "name": "buttons",
+          "kind": 1,
+          "bytes": 11,
+          "fields": [
+            {
+              "name": "eventKind",
+              "offset": 0,
+              "bytes": 1,
+              "type": "uint8"
+            },
+            {
+              "name": "modifiers",
+              "offset": 1,
+              "bytes": 2,
+              "type": "uint16"
+            },
+            {
+              "name": "buttons",
+              "offset": 3,
+              "bytes": 4,
+              "type": "uint32"
+            },
+            {
+              "name": "x",
+              "offset": 7,
+              "bytes": 2,
+              "type": "uint16"
+            },
+            {
+              "name": "y",
+              "offset": 9,
+              "bytes": 2,
+              "type": "uint16"
+            }
+          ]
+        },
+        {
+          "name": "wheel",
+          "kind": 2,
+          "bytes": 21,
+          "fields": [
+            {
+              "name": "eventKind",
+              "offset": 0,
+              "bytes": 1,
+              "type": "uint8"
+            },
+            {
+              "name": "modifiers",
+              "offset": 1,
+              "bytes": 2,
+              "type": "uint16"
+            },
+            {
+              "name": "buttons",
+              "offset": 3,
+              "bytes": 4,
+              "type": "uint32"
+            },
+            {
+              "name": "x",
+              "offset": 7,
+              "bytes": 2,
+              "type": "uint16"
+            },
+            {
+              "name": "y",
+              "offset": 9,
+              "bytes": 2,
+              "type": "uint16"
+            },
+            {
+              "name": "wheelUnit",
+              "offset": 11,
+              "bytes": 1,
+              "type": "uint8"
+            },
+            {
+              "name": "wheelPhase",
+              "offset": 12,
+              "bytes": 1,
+              "type": "uint8"
+            },
+            {
+              "name": "wheelX",
+              "offset": 13,
+              "bytes": 4,
+              "type": "int32"
+            },
+            {
+              "name": "wheelY",
+              "offset": 17,
+              "bytes": 4,
+              "type": "int32"
+            }
+          ]
+        },
+        {
+          "name": "cancel",
+          "kind": 3,
+          "bytes": 1,
+          "fields": [
+            {
+              "name": "eventKind",
+              "offset": 0,
+              "bytes": 1,
+              "type": "uint8"
+            }
+          ]
+        },
+        {
+          "name": "modifiers",
+          "kind": 4,
+          "bytes": 3,
+          "fields": [
+            {
+              "name": "eventKind",
+              "offset": 0,
+              "bytes": 1,
+              "type": "uint8"
+            },
+            {
+              "name": "modifiers",
+              "offset": 1,
+              "bytes": 2,
+              "type": "uint16"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "retiredAllocations": [
+    {
+      "kind": "method",
+      "id": 5662,
+      "domain": "cast",
+      "bitOffset": 29
     }
   ]
 }

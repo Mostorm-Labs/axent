@@ -1,0 +1,35 @@
+id: input.queue_and_late_prepare
+title: Fence removes queued input and late prepare cannot reactivate a stale generation
+since: spec/v0.18.0
+level: typed-input
+profiles: [typed-input]
+given: {device_profile: typed_input}
+steps:
+  - direction: runtime_local
+    input_model: {action: prepare, input: {}, expect: {lifecycleState: opening}}
+  - direction: runtime_local
+    input_model: {action: invalidate, input: {}, expect: {lifecycleState: closed}}
+  - direction: runtime_local
+    input_model: {action: complete_prepare, input: {}, expect: {errorContains: stale prepare, lifecycleState: closed}}
+  - direction: runtime_local
+    input_model: {action: open, input: {commandId: open-2}, expect: {streamId: 1}}
+  - direction: runtime_local
+    input_model:
+      action: enqueue
+      input: {streamId: 1, seqId: 1, cursor: 1000, inputType: touch, records: [{contactId: 7, phase: 0, x: 10000, y: 20000}]}
+      expect: {queueLength: 1, submitted: 0}
+  - direction: runtime_local
+    input_model:
+      action: enqueue
+      input: {streamId: 1, seqId: 2, cursor: 2000, inputType: touch, records: [{contactId: 7, phase: 1, x: 10000, y: 20000}]}
+      expect: {queueLength: 2, submitted: 0}
+  - direction: runtime_local
+    input_model:
+      action: enqueue
+      input: {streamId: 1, seqId: 3, cursor: 3000, inputType: touch, records: [{contactId: 7, phase: 2, x: 10000, y: 20000}]}
+      expect: {errorContains: overflow, queueLength: 0, submitted: 0, lifecycleState: closed}
+  - direction: runtime_local
+    input_model: {action: pump, input: {}, expect: {submitted: 0}}
+assertions:
+  - No stale completion or queued Down can inject after the generation is fenced.
+  - Overflow is explicit and causes cleanup rather than dropping a terminal record silently.

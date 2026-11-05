@@ -91,6 +91,7 @@ function mapSchemas(raw: any): SchemaDefinition[] {
       name,
       kind: String(entry.kind ?? "object"),
       description: entry.description === undefined ? undefined : String(entry.description),
+      retiredFieldIds: entry.retiredFieldIds,
       fields: asArray(entry.fields).map((field) => mapSchemaField(field, name))
     };
   });
@@ -357,6 +358,8 @@ export function loadProtocolDefinitionFromRaw(specRoot: string, sourcePath: stri
   return {
     specRoot,
     sourcePath,
+    inputStream: raw.inputStream,
+    retiredAllocations: raw.retiredAllocations,
     protocol: mapProtocol(raw.protocol),
     overview: mapOverview(raw.overview),
     architecture: mapArchitecture(raw.architecture),

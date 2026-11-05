@@ -1,386 +1,601 @@
 domain: input
-description: Input control and injection streams, including negotiated touchback pointer input.
-
+description: Explicitly typed input samples with control-bound context and independent local output policy.
 methods:
-  - id: 0x0A01
+  - id: 2561
     name: input.openStream
     domain: input
     status: draft
     bitOffset: 0
     since: 1.0.0
-    description: Open a negotiated input STREAM for a selected target and return the stream epoch, accepted mode, and canvas fencing tokens.
+    description: Prepare a new immutable input context and return actually accepted input types and native limits.
     rpc_op: request_response
     request_schema: InputOpenStreamParams
     response_schema: InputOpenStreamResult
-    recommended_encoding: [json, tlv]
-    capabilities: [input.stream]
-    errors: [SUCCESS, NOT_SUPPORTED, PERMISSION_DENIED, INVALID_ARGUMENT, INVALID_STATE, BUSY, UNAVAILABLE]
-
-  - id: 0x0A02
+    recommended_encoding:
+      - json
+      - tlv
+    capabilities:
+      - input.stream
+    errors:
+      - SUCCESS
+      - NOT_SUPPORTED
+      - PERMISSION_DENIED
+      - INVALID_ARGUMENT
+      - INVALID_STATE
+      - BUSY
+      - UNAVAILABLE
+  - id: 2562
     name: input.closeStream
     domain: input
     status: draft
     bitOffset: 1
     since: 1.0.0
-    description: Close a previously opened input STREAM and release any pressed contacts or buttons owned by its epoch.
+    description: Fence and release all input owned by an authenticated session and stream; acknowledge closed only after
+      confirmed cleanup.
     rpc_op: request_response
     request_schema: InputCloseStreamParams
     response_schema: InputCloseStreamResult
-    recommended_encoding: [json, tlv]
-    capabilities: [input.stream]
-    errors: [SUCCESS, STREAM_NOT_FOUND, STREAM_CLOSED, INVALID_ARGUMENT, INVALID_STATE, UNAVAILABLE]
-
+    recommended_encoding:
+      - json
+      - tlv
+    capabilities:
+      - input.stream
+    errors:
+      - SUCCESS
+      - STREAM_NOT_FOUND
+      - STREAM_CLOSED
+      - INVALID_ARGUMENT
+      - INVALID_STATE
+      - UNAVAILABLE
 types:
   InputStreamTarget:
     kind: object
     description: Complete target identity used to fence an input stream against stale sessions and bindings.
     fields:
-      - id: 0x01
+      - id: 1
         name: sessionId
         type: string
         required: true
         max_length: 128
         description: Stable cast session identifier.
-      - id: 0x02
+      - id: 2
         name: sessionGeneration
         type: string
         required: true
         max_length: 32
         description: Decimal-string session generation.
-      - id: 0x03
+      - id: 3
         name: slotId
         type: string
         required: true
         max_length: 128
         description: Per-route or per-display slot identifier.
-      - id: 0x04
+      - id: 4
         name: bindingGeneration
         type: string
         required: true
         max_length: 32
         description: Decimal-string binding generation for the selected route.
-      - id: 0x05
+      - id: 5
         name: lifecycleGeneration
         type: string
         required: true
         max_length: 32
         description: Decimal-string receiver lifecycle generation.
-
   InputOpenStreamParams:
     kind: object
     description: Request to open the canonical input.stream touchback business stream.
     fields:
-      - id: 0x01
+      - id: 1
         name: controlVersion
         type: uint32
         required: true
         description: Control-plane contract version.
-      - id: 0x02
+        min: 1
+        max: 1
+      - id: 2
         name: runtimeInstanceId
         type: string
         required: true
         max_length: 128
         description: Runtime instance that owns the request.
-      - id: 0x03
+      - id: 3
         name: target
         type: InputStreamTarget
         required: true
         description: Target identity and generation fence.
-      - id: 0x04
+      - id: 4
         name: streamKind
         type: enum
-        enum: [touchback]
+        enum:
+          - touchback
         required: true
         description: Business stream kind; v1 is touchback.
-      - id: 0x05
+      - id: 5
         name: format
         type: enum
-        enum: [touch-batch-v1]
+        enum:
+          - input-sample-v1
         required: true
         description: Canonical binary payload format after the AXTP STREAM header.
-      - id: 0x06
-        name: preferredMode
-        type: enum
-        enum: [touch, mouse]
-        required: false
-        default: touch
-        description: Preferred input interpretation; touch is the default.
-      - id: 0x07
-        name: supportedModes
-        type: array
-        array:
-          item_type: string
-        required: true
-        description: Modes the requester can consume, normally touch and mouse.
-      - id: 0x08
-        name: canvasRevision
-        type: string
-        required: true
-        max_length: 128
-        description: Canvas revision used to produce normalized coordinates.
-      - id: 0x09
-        name: geometryRevision
-        type: string
-        required: true
-        max_length: 128
-        description: Geometry revision used to map the viewport.
-      - id: 0x0A
-        name: canvasToken
-        type: uint32
-        required: true
-        description: Numeric canvas fence token.
-      - id: 0x0B
-        name: geometryToken
-        type: uint32
-        required: true
-        description: Numeric geometry fence token.
-      - id: 0x0C
-        name: maxBatchEvents
-        type: uint16
-        required: false
-        description: Maximum touch events per batch accepted by the requester.
-      - id: 0x0D
-        name: maxFrameBytes
-        type: uint32
-        required: false
-        description: Maximum complete STREAM frame size accepted by the requester.
-      - id: 0x0E
-        name: maxContacts
-        type: uint16
-        required: false
-        description: Maximum simultaneous contacts supported by the requester.
-      - id: 0x0F
-        name: modeRequirement
-        type: enum
-        enum: [preferred, required]
-        required: false
-        default: preferred
-        description: Whether preferredMode may fall back to another supported mode.
-      - id: 0x10
+      - id: 16
         name: commandId
         type: string
         required: true
         max_length: 128
         description: Idempotency key for the open request.
-
+      - id: 17
+        name: sourceBindingId
+        type: string
+        required: true
+        description: Opaque source binding supplied by the authenticated media/device integration; validated against current
+          local capture/input region.
+        max_length: 128
+      - id: 18
+        name: inputTypes
+        type: array
+        required: true
+        description: "Nonempty unique offered semantics: touch and/or mouse."
+        array:
+          item_type: string
+      - id: 19
+        name: maxDataBytes
+        type: uint32
+        required: true
+        description: Maximum input data bytes, including inputType; excludes STREAM and Frame.
+        min: 8
+        max: 4096
+      - id: 20
+        name: touch
+        type: InputTouchConstraints
+        required: false
+        description: Required exactly when touch is offered.
+      - id: 21
+        name: mouse
+        type: InputMouseConstraints
+        required: false
+        description: Required exactly when mouse is offered.
+    retired_field_ids:
+      - 6
+      - 7
+      - 8
+      - 9
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
   InputOpenStreamResult:
     kind: object
     description: Result of input.openStream negotiation.
     fields:
-      - id: 0x01
+      - id: 1
         name: streamId
         type: uint32
         required: true
         description: AXTP STREAM identifier.
-      - id: 0x02
-        name: epoch
-        type: uint32
-        required: true
-        description: Input ownership epoch; changes after reset and reopen.
-      - id: 0x03
-        name: acceptedMode
-        type: enum
-        enum: [touch, mouse]
-        required: true
-        description: Mode accepted for this stream.
-      - id: 0x04
+        min: 1
+      - id: 4
         name: format
         type: enum
-        enum: [touch-batch-v1]
+        enum:
+          - input-sample-v1
         required: true
         description: Canonical binary payload format.
-      - id: 0x05
-        name: canvasToken
-        type: uint32
-        required: true
-        description: Canvas token bound to this stream epoch.
-      - id: 0x06
-        name: geometryToken
-        type: uint32
-        required: true
-        description: Geometry token bound to this stream epoch.
-      - id: 0x07
-        name: maxBatchEvents
-        type: uint16
-        required: false
-        description: Maximum events per accepted batch.
-      - id: 0x08
-        name: maxFrameBytes
-        type: uint32
-        required: false
-        description: Maximum complete STREAM frame size.
-      - id: 0x09
-        name: maxContacts
-        type: uint16
-        required: false
-        description: Maximum simultaneous contacts.
-      - id: 0x0A
+      - id: 10
         name: revision
         type: string
         required: true
         max_length: 128
         description: Receiver input stream state revision.
-      - id: 0x0B
+      - id: 11
         name: accepted
         type: bool
         required: true
-        description: Whether the owner lane accepted the request; true does not imply effective touchback enablement.
-
+        description: True only when authentication, current binding, permission, geometry, exclusive native owner and
+          preparation have succeeded.
+      - id: 12
+        name: acceptedInputTypes
+        type: array
+        required: true
+        description: Nonempty unique subset of offered input types.
+        array:
+          item_type: string
+      - id: 13
+        name: maxDataBytes
+        type: uint32
+        required: true
+        description: Actual input data budget, no greater than request/native/transport limits.
+        min: 8
+        max: 4096
+      - id: 14
+        name: touch
+        type: InputTouchConstraints
+        required: false
+        description: Present exactly when touch is accepted.
+      - id: 15
+        name: mouse
+        type: InputMouseConstraints
+        required: false
+        description: Present exactly when mouse is accepted.
+    retired_field_ids:
+      - 2
+      - 3
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
   InputCloseStreamParams:
     kind: object
-    description: Request to close an input.stream epoch and release active input state.
+    description: Close an immutable input context; failed native cleanup remains retryable and never reports closed.
     fields:
-      - id: 0x01
+      - id: 1
         name: controlVersion
         type: uint32
         required: true
         description: Control-plane contract version.
-      - id: 0x02
+        min: 1
+        max: 1
+      - id: 2
         name: runtimeInstanceId
         type: string
         required: true
         max_length: 128
         description: Runtime instance that owns the request.
-      - id: 0x03
+      - id: 3
         name: target
         type: InputStreamTarget
         required: true
         description: Target identity and generation fence.
-      - id: 0x04
+      - id: 4
         name: streamKind
         type: enum
-        enum: [touchback]
+        enum:
+          - touchback
         required: true
         description: Business stream kind; v1 is touchback.
-      - id: 0x05
+      - id: 5
         name: streamId
         type: uint32
         required: true
         description: AXTP STREAM identifier to close.
-      - id: 0x06
-        name: epoch
-        type: uint32
-        required: true
-        description: Input ownership epoch to close.
-      - id: 0x07
+        min: 1
+      - id: 7
         name: reason
         type: enum
-        enum: [requested, route_changed, disconnect, timeout, reset, shutdown]
+        enum:
+          - requested
+          - route_changed
+          - disconnect
+          - timeout
+          - shutdown
+          - profile_failure
         required: false
         description: Reason for closing the stream.
-      - id: 0x08
+      - id: 8
         name: finalSeqId
         type: uint32
         required: false
         description: Last sequence number accepted before close.
-      - id: 0x09
+      - id: 9
         name: commandId
         type: string
         required: true
         max_length: 128
         description: Idempotency key for the close request.
-
+    retired_field_ids:
+      - 6
   InputCloseStreamResult:
     kind: object
     description: Result of input.closeStream.
     fields:
-      - id: 0x01
+      - id: 1
         name: streamId
         type: uint32
         required: true
         description: AXTP STREAM identifier.
-      - id: 0x02
-        name: epoch
-        type: uint32
-        required: true
-        description: Closed input ownership epoch.
-      - id: 0x03
+      - id: 3
         name: closed
         type: bool
         required: true
-        description: Whether the stream is now closed.
-      - id: 0x04
+        description: True only after all native state owned by this context is confirmed released; cleanupPending is an
+          UNAVAILABLE error.
+      - id: 4
         name: alreadyClosed
         type: bool
         required: false
         default: false
         description: Whether the stream was already closed and the operation converged idempotently.
-      - id: 0x05
+      - id: 5
         name: revision
         type: string
         required: true
         max_length: 128
         description: Receiver input stream state revision after close.
-
+    retired_field_ids:
+      - 2
   InputStreamCapability:
     kind: object
     description: Capability descriptor for input.stream.
     fields:
-      - id: 0x01
+      - id: 1
         name: capability
         type: string
         required: true
         max_length: 32
         description: Fixed capability name input.stream.
-      - id: 0x02
+      - id: 2
         name: direction
         type: enum
-        enum: [receiver_to_source]
+        enum:
+          - receiver_to_source
         required: true
         description: Touchback data flows from the receiver to the source.
-      - id: 0x03
+      - id: 3
         name: formats
         type: array
         array:
           item_type: string
         required: true
-        description: Supported input stream formats, including touch-batch-v1.
-      - id: 0x04
-        name: inputModes
-        type: array
-        array:
-          item_type: string
-        required: true
-        description: Supported modes, including touch and mouse.
-      - id: 0x05
+        description: Explicit layouts supported by this implementation; this revision defines input-sample-v1.
+      - id: 5
         name: reliability
         type: enum
-        enum: [ordered_reliable]
+        enum:
+          - ordered_reliable
         required: true
         description: Data-channel delivery requirement; ordinary packets have no application ACK.
-      - id: 0x06
-        name: supportsReset
-        type: bool
+      - id: 11
+        name: inputTypes
+        type: array
         required: true
-        description: Whether ordered reset frames are supported.
-      - id: 0x07
-        name: supportsMoveCoalescing
-        type: bool
-        required: true
-        description: Whether move events may be coalesced while down/up/cancel ordering is preserved.
-      - id: 0x08
-        name: maxBatchEvents
-        type: uint16
-        required: false
-        description: Advertised maximum events per batch.
-      - id: 0x09
-        name: maxFrameBytes
+        description: Implemented input semantics, distinct from attached physical devices.
+        array:
+          item_type: string
+      - id: 12
+        name: maxDataBytes
         type: uint32
+        required: true
+        description: Maximum input data bytes including type.
+        min: 8
+        max: 4096
+      - id: 13
+        name: touch
+        type: InputTouchConstraints
         required: false
-        description: Advertised maximum complete STREAM frame size.
-      - id: 0x0A
+        description: Present exactly when touch is implemented.
+      - id: 14
+        name: mouse
+        type: InputMouseConstraints
+        required: false
+        description: Present exactly when mouse is implemented.
+      - id: 15
+        name: profiles
+        type: array
+        required: true
+        description: Implemented input profiles; AXTP-TYPED-INPUT-V1 requires the common stream-state subset.
+        array:
+          item_type: string
+    retired_field_ids:
+      - 4
+      - 6
+      - 7
+      - 8
+      - 9
+      - 10
+  InputTouchConstraints:
+    kind: object
+    description: Limits include all records in one complete sample, including terminal records.
+    fields:
+      - id: 1
         name: maxContacts
         type: uint16
-        required: false
-        description: Advertised maximum simultaneous contacts.
-
+        required: true
+        description: Maximum records in a complete Touch sample; bounded by native complete-frame capacity and
+          floor((maxDataBytes-1)/7).
+        min: 1
+        max: 256
+  InputMouseConstraints:
+    kind: object
+    description: Actually supported logical absolute Mouse features; unsupported actions never silently convert.
+    fields:
+      - id: 1
+        name: buttonsMask
+        type: uint32
+        required: true
+        description: "Allowed buttons: Left=1, Right=2, Middle=4, Back=8, Forward=16."
+        min: 0
+        max: 31
+      - id: 2
+        name: modifierMask
+        type: uint16
+        required: true
+        description: Allowed Shift=1, Ctrl=2, Alt=4, Meta=8; nonzero requires reliable owned release.
+        min: 0
+        max: 15
+      - id: 3
+        name: allowChords
+        type: bool
+        required: true
+        description: Whether more than one logical button can be held.
+      - id: 4
+        name: wheelUnits
+        type: array
+        required: true
+        description: "Unique supported units: detent120 and/or regionQ16_16; empty disables Wheel."
+        array:
+          item_type: string
+      - id: 5
+        name: continuousScroll
+        type: bool
+        required: true
+        description: Requires regionQ16_16 and phase/anchor support; otherwise false.
 capabilities:
-  - id: 0x0A01
+  - id: 2561
     name: input.stream
     domain: input
     status: draft
     since: 1.0.0
-    description: Device supports negotiated receiver-to-source input STREAMs with touch and mouse interpretation.
+    description: Supports explicitly typed receiver-to-source input; format and actual native features are negotiated once on open.
     type: object
     schema: InputStreamCapability
-
+input_stream:
+  format: input-sample-v1
+  byteOrder: big-endian
+  streamHeaderBytes: 16
+  typeBytes: 1
+  maxDataBytes: 4096
+  inputTypes:
+    touch: 1
+    mouse: 2
+  touch:
+    recordBytes: 7
+    maxContacts: 256
+    sampling: complete
+    phases:
+      down: 0
+      move: 1
+      up: 2
+      cancel: 3
+    fields:
+      - name: contactId
+        offset: 0
+        bytes: 2
+        type: uint16
+      - name: phase
+        offset: 2
+        bytes: 1
+        type: uint8
+      - name: x
+        offset: 3
+        bytes: 2
+        type: uint16
+      - name: y
+        offset: 5
+        bytes: 2
+        type: uint16
+  mouse:
+    buttons:
+      left: 1
+      right: 2
+      middle: 4
+      back: 8
+      forward: 16
+    modifiers:
+      shift: 1
+      ctrl: 2
+      alt: 4
+      meta: 8
+    wheelUnits:
+      detent120: 0
+      regionQ16_16: 1
+    wheelPhases:
+      none: 0
+      began: 1
+      changed: 2
+      ended: 3
+      cancelled: 4
+    records:
+      - name: move
+        kind: 0
+        bytes: 11
+        fields: &a1
+          - &a2
+            name: eventKind
+            offset: 0
+            bytes: 1
+            type: uint8
+          - &a3
+            name: modifiers
+            offset: 1
+            bytes: 2
+            type: uint16
+          - &a4
+            name: buttons
+            offset: 3
+            bytes: 4
+            type: uint32
+          - &a5
+            name: x
+            offset: 7
+            bytes: 2
+            type: uint16
+          - &a6
+            name: y
+            offset: 9
+            bytes: 2
+            type: uint16
+      - name: buttons
+        kind: 1
+        bytes: 11
+        fields: *a1
+      - name: wheel
+        kind: 2
+        bytes: 21
+        fields:
+          - *a2
+          - *a3
+          - *a4
+          - *a5
+          - *a6
+          - name: wheelUnit
+            offset: 11
+            bytes: 1
+            type: uint8
+          - name: wheelPhase
+            offset: 12
+            bytes: 1
+            type: uint8
+          - name: wheelX
+            offset: 13
+            bytes: 4
+            type: int32
+          - name: wheelY
+            offset: 17
+            bytes: 4
+            type: int32
+      - name: cancel
+        kind: 3
+        bytes: 1
+        fields:
+          - name: eventKind
+            offset: 0
+            bytes: 1
+            type: uint8
+      - name: modifiers
+        kind: 4
+        bytes: 3
+        fields:
+          - name: eventKind
+            offset: 0
+            bytes: 1
+            type: uint8
+          - name: modifiers
+            offset: 1
+            bytes: 2
+            type: uint16
+profiles:
+  - name: AXTP-TYPED-INPUT-V1
+    since: 1.0.0
+    status: experimental
+    requiredMethods:
+      - input.openStream
+      - input.closeStream
+      - stream.getState
+    requiredEvents:
+      - stream.stateChanged
+    requiredErrors:
+      - NOT_SUPPORTED
+      - PERMISSION_DENIED
+      - INVALID_ARGUMENT
+      - INVALID_STATE
+      - BUSY
+      - UNAVAILABLE
+    transportProfiles:
+      - AXTP-TCP
+      - AXTP-USB-HID
+      - AXTP-WEBRTC-DC
+    frameProfiles:
+      - STANDARD_FRAME

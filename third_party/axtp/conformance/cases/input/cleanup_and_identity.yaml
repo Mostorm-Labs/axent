@@ -1,0 +1,36 @@
+id: input.cleanup_and_identity
+title: Failed native release blocks reopen and retired stream IDs cannot alter a new owner
+since: spec/v0.18.0
+level: typed-input
+profiles: [typed-input]
+given: {device_profile: typed_input}
+steps:
+  - direction: runtime_local
+    input_model: {action: open, input: {}, expect: {streamId: 1}}
+  - direction: runtime_local
+    input_model:
+      action: data
+      input: {streamId: 1, seqId: 1, cursor: 1000, inputType: touch, records: [{contactId: 7, phase: 0, x: 10000, y: 20000}]}
+      expect: {activeContacts: 1}
+  - direction: runtime_local
+    input_model: {action: cleanup_result, input: {success: false}, expect: {activeContacts: 1}}
+  - direction: runtime_local
+    input_model: {action: close, input: {}, expect: {errorContains: cleanupPending, lifecycleState: closing, activeContacts: 1}}
+  - direction: runtime_local
+    input_model: {action: open, input: {commandId: open-2}, expect: {errorContains: BUSY}}
+  - direction: runtime_local
+    input_model: {action: cleanup_result, input: {success: true}, expect: {lifecycleState: closing}}
+  - direction: runtime_local
+    input_model: {action: close, input: {}, expect: {closed: true, activeContacts: 0}}
+  - direction: runtime_local
+    input_model: {action: open, input: {commandId: open-2}, expect: {streamId: 2}}
+  - direction: runtime_local
+    input_model:
+      action: data
+      input: {streamId: 1, seqId: 2, cursor: 2000, inputType: touch, records: [{contactId: 7, phase: 2, x: 10000, y: 20000}]}
+      expect: {errorContains: retired, lifecycleState: streaming, streamId: 2}
+  - direction: runtime_local
+    input_model: {action: close, input: {sessionId: foreign}, expect: {errorContains: identity, lifecycleState: streaming}}
+assertions:
+  - A close cache never hides cleanupPending; retry can complete actual cleanup.
+  - Reopen uses a fresh ID and stale or foreign input cannot release the current owner.

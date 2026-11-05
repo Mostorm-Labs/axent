@@ -5,209 +5,188 @@ generated: false
 domain: cast
 feature: cast.touchback
 registry: ""
-lastReviewed: 2026-11-03
+lastReviewed: 2026-11-05
 ---
 
-# NearCast Touchback: WebCast and NA20/NT10 Relay Flow
+# Typed Input R2：WebCast 与 NA20/NT10 端到端流程
 
-> 本文是 Stage 10 flow，不是机器可读协议事实。method、event、schema、ID 和
-> 字段的正式来源是 `contract/registry/**` 及其生成产物。
+本文是与本轮正式合同对齐的业务 flow；机器字段以 registry/generated 为准，样例见
+[input.stream R2](../protocol/input/input.stream.md)，门控见
+[cast.touchback](../protocol/cast/cast.touchback.md)，目标见
+[业务需求](../business/nearcast-touchback.md)。旧流程由 Git e986dcf 追溯。
 
-## 1. Actors and transport boundary
-
-```text
-Tauri sender / Launcher  ◄──── authenticated RPC/control + touchback data ────  NearCast receiver
-        ▲                              WebCast DataChannel                         │
-        │                                                                         │ AXTP input.stream
-        │                                                                         ▼
-        └──────── Windows input injection ◄────────────── NA20 relay ◄────────── NT10 Touch-to-HID
-```
-
-WebCast 的 DataChannel 只是 AXTP `input.stream` 的承载适配器。HID 路径不经过
-DataChannel，但复用相同的 `streamKind=touchback`、`touch-batch-v1`、epoch、
-sequence、token 和 reset 语义。音频和视频仍使用各自 stream；关闭 touch stream
-不能重启媒体 stream。
-
-## 2. Discovery and trust
-
-1. NearCast receiver 在局域网发布统一的 NearCast mDNS 服务，TXT 记录提供
-   runtime instance、版本、控制端点和能力摘要。不要再以 `_webcast._tcp`
-   作为第二套协议服务；WebCast 是 NearCast 的 capability/protocol 字段。
-2. Tauri sender 扫描服务并展示候选列表。候选只代表可连接，不代表授权。
-3. 首次 HTTPS/control 连接展示设备指纹；用户确认后 sender 固定信任该指纹。
-4. sender 获取 `cast.getControlCapabilities` 和 `cast.getStatus`，只选择含有
-   `cast.presentation`/`cast.touchback` 且协议不是 AirPlay 的 target。
-5. sender 发送“显示投屏码”产品消息；receiver 在本地悬浮窗显示 code。投屏码
-   仍是现场确认步骤，不被 mDNS 或 touch stream 替代。
-
-## 3. WebCast first-use sequence
+## 1. 角色、方向和三层就绪
 
 ```text
-Sender                  Receiver                 AXTP/adapter
-  |  discover + trust       |                       |
-  |----------------------->|                       |
-  | getControlCapabilities  |                       |
-  |----------------------->|                       |
-  |<-----------------------| cast.presentation/touchback
-  | select target           |                       |
-  | setPresentationSettings |                       |
-  |----------------------->| validate/CAS/rebuild  |
-  |<-----------------------| presentationSettingsChanged
-  | setTouchbackEnabled     |                       |
-  |----------------------->| controllerRequested   |
-  |<-----------------------| touchbackChanged      |
-  | local receiverOptIn=on  |                       |
-  |                         | effectiveEnabled     |
-  |                         | input.openStream     |
-  |------------------------>| streamId, epoch, mode |
-  |<------------------------|                       |
-  |                         | binary TouchBatch    |
-  |<------------------------| validate/fence       |
-  | reset/close or disconnect| release + close       |
-  |<------------------------|                       |
+媒体：TX ───────────────► NearCast RX
+输入：TX native ◄─ InputEngine ◄─ AXTP/Axent ◄─ RX Touch/Mouse 采集
+HID：NT10 input ◄─ 通用 session/stream route ◄─ NA20 ◄─ RX
 ```
 
-`accepted=true` 只表示请求进入 owner lane；receiver 必须等
-`effectiveEnabled=true` 和 `modeState=active`（在产品状态层）后才发送 batch。
-没有 active stream 时，任何触控输入都应被 receiver 本地吞掉或显示不可用状态。
+RX 为 input producer/logical client，TX/NT10 为 consumer/logical server。
+媒体发送者、DC 创建者与 RPC client 不是同一个定义。区分 transport connected、
+AXTP APP_READY、input Active；前两者均不授予 native 注入权限。
 
-## 4. Control-plane state transitions
+## 2. 发现、信任和媒体关联
 
-### 4.1 Per-target gates
+1. RX 按已有 NearCast mDNS 提供候选与能力摘要；名称/IP 不作为身份或授权。
+2. TX 首次连接确认指纹，后续固定信任；投屏码继续按现场产品流程显示/校验。
+3. TX 读取 cast.getControlCapabilities/getStatus，选择确切 target；AirPlay 无
+   touchback capability，保持普通媒体，不尝试 open 输入。
+4. 建立媒体时保存认证来源与 RX 完整 target 的关联。slot 复用、新 runtime 或
+   session/binding/lifecycle generation 变化都不能沿用旧输入许可。
+5. TX 对真实采集/输入区域生成绑定；认证媒体/设备来源描述提供 sourceBindingId，
+   RX open 带回，TX 验证实际区域；缺少该描述就拒绝，禁止根据自报句柄猜测。
+
+## 3. WebCast 标准承载建立
 
 ```text
-inactive
-  ├─ receiverOptIn=false                 ──► inactive
-  ├─ controllerRequested=false           ──► inactive
-  └─ both true + capability + WebCast    ──► negotiating
-                                             ├─ open accepted ──► active
-                                             └─ NOT_SUPPORTED / denied ──► unavailable
+RX producer                           TX consumer
+  |--- 关联既有认证媒体的 control DC -----|
+  |--- CONTROL OPEN -------------------->|
+  |<-- CONTROL ACCEPT -------------------|
+  |<-- RPC Hello ------------------------|
+  |--- RPC Identify -------------------->|
+  |<-- RPC Identified -------------------|
+  |    APP_READY（还不能注入）            |
 ```
 
-每个 target 的完整 identity 是 `sessionId + sessionGeneration + slotId +
-bindingGeneration + lifecycleGeneration`。slot 下标、投屏码、IP、MAC、窗口句柄
-都不能单独作为 fencing key。目标 generation 不匹配时返回标准错误并在诊断中
-注明 stale target，不能把请求应用到新 slot。
+上图沿用 Core logical client/server 方向。AXTP-WEBRTC-DC 的 ordered/reliable DC 上 AXTP 全部
+使用 binary Standard Frame；现有非 AXTP product text 继续原 handler。RPC JSON
+仍需要 rpcEncoding byte 和 sid/op/d，不额外套私有 AXTP JSON。peer/session 固定绑定本次认证媒体与控制 DC 实例，
+重连/peer 变化使旧 context 失效；复用 session 也必须满足本 profile 的身份与角色。READY 不变成额外必需握手，不启用
+逐输入 ACK，也不改变媒体 RTP。
 
-### 4.2 Mode switching
+## 4. 能力、订阅和 gate
 
-`touch` 是默认 preferred。`mouse` 被显式要求时是 required；对端不支持就
-进入 unavailable，不得静默回退。运行中切换严格执行：
+RX 声明实际可采集软件类型，TX 声明可解码类型和实际 native 功能。初版 RX
+只请求 Touch，即使协议同时定义 Mouse。以后已经实现 Mouse 的 RX 可开流允许
+两类，插入设备不再改变记录解释。无共同类型明确失败，native 不自动转换。
+
+open 前订阅 stream.stateChanged 状态子集和 cast.touchbackChanged。前者用于
+输入终点停流/清理状态，后者用于 RX 产品 owner；不能用一个覆盖另一个的所有权。
+stream.getState 可恢复通用状态，但 NOT_FOUND/传输关闭不证明 native 已清理。
+
+receiverOptIn 默认 false，controllerRequested 是控制 intent。任一不满足保持
+inactive；启用请求可以被接受并处于 pending，effective 只有实际 Active 才 true。
+等待期间出现 gate/target 变化提升 generation，取消该 pending；不能晚激活。
+
+## 5. open/prepare 与当前请求确认
 
 ```text
-switching
-→ fence new events
-→ send ordered/idempotent reset
-→ release receiver-side contacts/buttons
-→ input.closeStream(streamKind=touchback)
-→ input.openStream(new preferred/required mode)
-→ active(new mode) 或 unavailable
+RX target owner                       TX input owner
+  | gate+target+binding+APP_READY         |
+  |--- input.openStream ---------------->|
+  |                                      | 验证身份/目标/来源
+  |                                      | native probe + geometry + 独占
+  |                                      | prepare，分配非零新 streamId
+  |<-- 实际允许类型/约束，accepted=true ---|
+  | 检查 pending/generation/gates          |
+  | Active，只接收新生命周期              |
+  |--- STREAM(seq=1,cursor,data) --------->| 校验→映射→提交
 ```
 
-### 4.3 Canvas/geometry change
+format/类型限额/maxDataBytes 在此确认，sourceBinding 不逐包发送。成功必须已准备好
+消费；不能把“收到开流请求”当 accepted=true。第二个 native owner 返回 BUSY。
+commandId 绑定调用者、目标和请求语义；同键异内容拒绝，旧成功不能复活已关闭流。
+两端 prepare/open 有界超时，晚资源按旧 generation 清理，结果不明则 Blocked。
+
+## 6. Touch 一次采样、多指同包
+
+data=inputType(1B)+TouchRecord(7B)×N，N 精确从长度推导。同一个采样只对应一个
+cursor，不能把多个时刻的记录平铺。本版使用完整采样：
+
+| seq | data 记录 | data 字节 | native 提交后的活动指 |
+|---:|---|---:|---|
+| 1 | type=Touch；7Down、8Down | 15 | 7,8 |
+| 2 | type=Touch；7Move、8Move | 15 | 7,8 |
+| 3 | type=Touch；7Up、8Move | 15 | 8 |
+| 4 | type=Touch；8Up | 8 | 空 |
+
+静止活动指仍可 Move 原坐标。本次终止指发送一次，下一采样移除；不能根据缺失
+推断 Up。RX 先聚合一次真实采样，再按 target 构建该流完整集合；采集 API 只有
+逐 pointer 消息时须证明其帧分组，不能把任意发送队列 drain 当作一个采样。
+
+ID 唯一、Down/Move/Up 前置状态、记录总数和坐标先整组验证，再映射 native ID
+并提交。失败不先提交合法的另一根手指；native 部分成功则记前缀/清理，不虚构
+系统原子回滚。maxContacts 包含本采样的终态记录；超出已协商能力就拒绝/清理，
+不能拆成两个没有原始采样语义的包。
+
+## 7. Mouse 与类型交错
+
+后续 RX 实现真实 Mouse 采集后，每包一个 Mouse 事件，Move/Buttons/Wheel/
+Cancel/Modifiers 按精确变体解码。正式规范明确按钮、修饰键与滚动单位/阶段/anchor。
+按钮为事件后的完整状态，Move/Wheel 不能暗中改变按钮；结束释放必须可观察。
 
 ```text
-settings patch accepted
-→ transition=rebuilding / waitingKeyFrame
-→ fence input and reset
-→ close old epoch
-→ atomically apply new canvas after safe keyframe
-→ increment canvasRevision and geometryRevision
-→ open new epoch with new canvasToken/geometryToken
+seq1 Touch 7Down,8Down
+seq2 Mouse Move             # Touch 7/8 仍活动
+seq3 Touch 7Up,8Move
+seq4 Mouse LeftDown
+seq5 Touch 8Up
+seq6 Mouse LeftUp
 ```
 
-旧画布的最后一帧可以继续显示；重建失败保留旧 applied canvas，并用新 epoch
-重新绑定旧 token。改变一条 target 的 viewport 不得改变另一条 target。
+全流 seq 严格递增，cursor 单调非递减；没有类型切换协商/隐式 reset。Mouse Cancel
+只取消 Mouse，Touch Cancel 只结束指定接触，整流 close 才释放全部 owner 状态。
+设备移除由 RX 本地映射决定取消范围，不新增每包 deviceId。
 
-## 5. WebCast data-plane sequence
+## 8. 正常关闭、事件丢失和重连
 
-1. 控制面 owner（通常是 receiver 在双门开启后）发起或确认
-   `input.openStream`，请求带 `streamKind=touchback`、`format=touch-batch-v1`、
-   `preferredMode`/`supportedModes`、target generations、canvas/geometry
-   revisions and tokens，以及 sender 的 `commandId`。
-2. `InputOpenStreamResult` 返回独立 `streamId`、`epoch`、`acceptedMode`、
-   tokens、limits 和 revision；双方都缓存同一 stream binding。
-3. receiver → sender 的 DataChannel 每条 binary message 为：标准 16B AXTP STREAM header + 28B
-   TouchBatch header + 16B records。不要在 DataChannel 另加 JSON envelope。
-4. sender 校验 `streamId`、epoch、sequence、tokens、长度、kind、phase 和
-   CRC，并在对应 Windows source 上执行输入。正常 batch 只执行数据处理，不回 ACK。
-5. `down/up/cancel` 依序进入 owner；连续 move 可按 contact 合并。应用队列
-   超限时清除 move、释放 active 状态、发送 reset 并重建 epoch。
-6. receiver 在 DataChannel close、target 变化、失焦、UI 隐藏或控制面关闭时
-   发送 reset/close；sender 即使没收到 close 也必须通过 timeout/disconnect
-   本地释放 Windows pressed state。
+1. 任一 gate 关闭，RX 同步 fence generation 并停采集/入队，发布 closing。
+2. RX 用完整身份/target/streamId 发 input.closeStream；控制传输未成功不妨碍
+   本地先清理采集/映射。finalSeqId 用于诊断，不授权重放或无限等待。
+3. TX 停止接收该 context、隔离队列、等待在飞任务收敛，按本 owner 账本释放。
+4. 释放已确认才 closed；不明返回 UNAVAILABLE/cleanupPending 并保持 closing/
+   blocked。重试同一 close 可继续清理，不能缓存未释放为成功。
+5. RX 若漏事件先停止可疑流，通过 stream.getState/input.closeStream 收敛，
+   cast.getTouchbackState 获取 RX 当前产品快照；不是靠旧 effective 恢复。
+6. 断线两端独立清理，不等远端 Reset。重连重新认证、快照、来源绑定和新开流。
+   同 session 不复用 streamId；新 session 也不能复活旧回调/资源账本。
 
-## 6. NA20/NT10 relay sequence
+## 9. 几何、权限与 source 变化
 
-```text
-NearCast receiver / input producer    NA20 relay                 NT10 endpoint
-          | input.openStream             |                           |
-          |----------------------------->| validate target/session   |
-          |                              |--------------------------->|
-          | TouchBatch(STREAM)           | opaque forward            |
-          |=============================>|===========================>|
-          |                              |                           | validate
-          |                              |                           | map normalized x/y
-          |                              |                           | emit HID report
-          | input.close/reset            | forward in order          |
-          |----------------------------->|--------------------------->|
-          |                              |                           | release
-```
+RX 布局仅改变显示时可本地重算归一化，受影响指明确 Cancel。TX 来源/区域/
+方向/单位/权限改变：先 fence 旧输入、释放、退役 ID，再应用/验证新绑定，最后
+新 open；媒体按自身流程继续。质量 intent 可接受/降级/拒绝，不等于 applied 几何。
 
-### NA20 MUST
+权限撤销、native 错误或目标消失由 TX 先本地停止，通过通用状态通知 RX；收到
+非 streaming 状态的 RX 停止发送并确认业务清理。旧流事件不能关闭新 owner，
+旧异步回调只能记旧代结果。
 
-- 保留并按顺序转发 streamId、seqId/cursor、epoch、canvasToken、geometryToken、
-  phase、buttons、wheel、reset 和 close 语义；
-- 对 session/stream/epoch 不匹配、transport error、队列溢出和断链停止转发，
-  报告诊断，并确保 NT10 收到 release/reset；
-- 不改变坐标，不把 `touch` 转成 `mouse`，不识别长按，不生成新的 relay
-  capability，不重排 down/up/cancel；
-- 不因 touch stream close 关闭音频或视频 stream。
+## 10. 故障与恢复矩阵
 
-### NT10 MUST
-
-- 验证 stream/epoch/sequence/generation、长度、CRC 和 token；
-- 根据已协商 canvas/geometry 把 normalized `x/y` 映射到本地触摸/桌面分辨率；
-- 在 `touch` 模式生成 contact HID，在 `mouse` 模式生成 primary/secondary/
-  middle、drag、wheel 和 modifiers；
-- 对 reset、timeout、disconnect、sequence gap、generation change 和 HID 注入
-  失败发送 release/cancel，禁止保留按下状态；
-- 暴露 accepted sequence、reset/gap count、last epoch 和 HID injection error
-  诊断。
-
-## 7. Error and recovery matrix
-
-| 条件 | Receiver/NA20 行为 | Sender/NT10 可观察结果 |
+| 故障 | 立即处理 | 恢复条件 |
 |---|---|---|
-| AirPlay target | 不广告 `cast.touchback`，不 open | `NOT_SUPPORTED`/能力缺失 |
-| stale target/generation | 拒绝，不落到新 slot | 标记 target 过期，重新查询 status |
-| old canvas/geometry token | 丢弃 batch，计数，不重放 | `STALE_GEOMETRY` 诊断详情或等价标准错误 |
-| seq gap/CRC/invalid length | 停止普通输入，release，reset，重建 epoch | `modeState=unavailable` 直到新 open |
-| queue overflow | 丢弃过期 move，保留安全释放路径 | reset/reopen |
-| DataChannel/session close | 本地释放并关闭 stream | 需要重新建立控制面和 stream |
-| NA20 relay loss | stop forwarding and release | NT10 释放 HID；媒体 stream 独立处理 |
-| Windows injection/UAC failure | 不伪装成已生效；上报诊断并 release | `effectiveEnabled` 与 `injectionError` 分开 |
+| 无能力/无权限/无映射 | 拒绝 open，报告原因 | 条件改变后明确新 open |
+| 外来/退役 streamId | 丢弃计数 | 不影响合法 owner |
+| CRC/Frame 损坏 | 不信任其中 ID，按绑定链路错误策略停止 | 链路/输入 context 明确恢复 |
+| 跳序/坏长度/未知类型 | 当前 context 故障并释放 | 新 ID；不跳过继续生命周期 |
+| 完整 Touch 集合非法 | 不提交本采样任何前缀 | 清理当前输入 |
+| 队列满/超龄 | fence，优先释放 | 不静默丢终态，不重放 |
+| native 部分失败 | 记录确定前缀，尝试 release | 无法确认则禁止新 owner |
+| close/prepare 超时 | 退役本地 generation | 晚资源清理确认，不能晚激活 |
 
-## 8. Protocol coverage
+所有队列、重试、pending 和清理等待有界。协议层、native submitted 与应用消费
+各自记录；不依赖 injectionCount 宣称触摸生效。输入失败隔离于媒体和无关 RPC。
 
-| Flow step | AXTP fact | Source of truth |
-|---|---|---|
-| capability discovery | `cast.getControlCapabilities`, `cast.presentation`, `cast.touchback`, `input.stream` | generated registry |
-| canvas query/update | `cast.getPresentationSettings`, `cast.setPresentationSettings`, `cast.presentationSettingsChanged` | `cast.presentation.md` + registry |
-| gate/mode/resolution | `cast.getTouchbackState`, `cast.setTouchbackEnabled`, `cast.setTouchbackMode`, `cast.setTouchbackResolutionPreference`, `cast.touchbackChanged` | `cast.touchback.md` + registry |
-| stream open/close | `input.openStream`, `input.closeStream` | `input.stream.md` + registry |
-| continuous data | AXTP STREAM + `touch-batch-v1` | `input.stream.md` |
-| reset/release | ordered stream control frame and close semantics | `input.stream.md` |
+## 11. NA20/NT10 路径
 
-## 9. Acceptance matrix
+RX 经 NA20 将同一 input.stream 语义传给 NT10。能力、来源绑定、open、close 和
+目标授权仍指向真实终点；中继使用既有通用转发，不新增猜测性 relay capability。
+逐跳 Frame source/destination、分片和 CRC 可重建，业务 data 必须保持原义。
 
-- 单路与双路同时投屏，关闭一路不影响另一路；
-- receiverOptIn/controllerRequested 任一关闭时无数据注入；
-- touch preferred、mouse preferred、mouse required 不支持时的明确失败；
-- 画布固定/自适应、旋转/镜像/fit、旧 token 拒绝和重建无黑屏；
-- down/move/up、长按右键、长按拖选、wheel、cancel 和失焦释放；
-- DataChannel close、seq gap、CRC、未知 version、队列溢出和重连；
-- AirPlay 无 touchback capability；
-- NA20 字节/顺序透传，NT10 坐标/按钮/wheel/HID release；
-- 生成 registry、AXTP boundary check、Windows target/test、`git diff --check` 和
-  clean recursive checkout。
+NA20 路由依据控制建立的 session/stream table，不解析 Touch、Mouse 或坐标。
+本版要求保持端到端逻辑 session/context，不声明两个独立 RPC session 的桥接；
+同号 streamId 不能代替认证/路由关联，未来桥接只能由通用 stream 路由实现。NT10 声明真实 HID/native 能力、完整帧上限和故障释放责任；Mouse-only
+终点不自动接受 native Touch。各跳断开本地停流，终点不等 NA20 消息才释放。
+
+## 12. 评审与验收
+
+R2 裁决已落实到 specs/registry/生成器和正式 corpus；本 flow 与 input/cast 正文
+一起替换旧单模式方案。Runtime/Axent 精确绑定、跨语言 codec 与 profile 验证后
+才完成 TI-1；RX/TX 生产接入和真实硬件验收属于后续里程碑，不能由模型代替。
+
+联合验收必须覆盖同采样 1/2/5 指、终态、类型交错、目标隔离、门控、几何、队列、
+native 部分失败/blocked、关闭重开/断线和媒体持续；真实 Windows Touch 与 macOS
+实际 Mouse/Scroll 能力分别取证，不能互相替代。

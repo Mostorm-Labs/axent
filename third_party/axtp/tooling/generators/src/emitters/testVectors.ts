@@ -3,6 +3,7 @@ import { rm } from "node:fs/promises";
 import type { SpecModel } from "../models.js";
 import { toJsonStable, writeTextFile } from "../util.js";
 import { castControlEncodingVectors, castSettingsEncodingVectors } from "./castControlVectors.js";
+import { emitInputStreamVectors } from "./inputStreamVectors.js";
 
 interface Vector {
   name: string;
@@ -41,8 +42,9 @@ export async function emitTestVectorFiles(_spec: SpecModel, dir: string): Promis
 
   const controlVectors = castControlEncodingVectors(_spec);
   const settingsVectors = castSettingsEncodingVectors(_spec);
+  const inputStream = await emitInputStreamVectors(_spec, dir);
   await Promise.all([
-    writeTextFile(path.join(dir, "manifest.json"), toJsonStable({ vectors, ...(controlVectors ? {
+    writeTextFile(path.join(dir, "manifest.json"), toJsonStable({ vectors, ...(inputStream ? {inputStream} : {}), ...(controlVectors ? {
       schemaVectors: [{ schema: "CastSessionRef", pairsFile: "cast_control_encoding.json" },
         ...(settingsVectors ? [{ schema: "CastSettingsEventContext", pairsFile: "cast_settings_encoding.json" }] : [])]
     } : {}) })),

@@ -88,7 +88,6 @@
 | `0x161B` | `cast.setPresentationFocus` | cast | draft | CastSetPresentationFocusParams | CastControlOperation | - |
 | `0x161C` | `cast.getTouchbackState` | cast | draft | CastTouchbackTargetRequest | CastTouchbackState | - |
 | `0x161D` | `cast.setTouchbackEnabled` | cast | draft | CastTouchbackEnabledRequest | CastTouchbackState | - |
-| `0x161E` | `cast.setTouchbackMode` | cast | draft | CastTouchbackModeRequest | CastTouchbackState | - |
 | `0x161F` | `cast.setTouchbackResolutionPreference` | cast | draft | CastTouchbackResolutionRequest | CastTouchbackState | - |
 | `0x1701` | `software.getConfig` | software | draft | SoftwareGetConfigParams | SoftwareConfig | - |
 | `0x1702` | `software.setConfig` | software | draft | SoftwareSetConfigParams | SoftwareSetConfigResult | - |

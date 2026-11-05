@@ -131,6 +131,15 @@ TLV 规则：
 6. TLV object decoding 使用 schema-local field ids；field names 不在 wire 上。
 7. Packed array encoding 只在 schema/profile 定义 element width 和 layout 时允许。
 
+## Typed Input 二进制记录
+
+input-sample-v1 是 profile-specific packed data，不是 TLV 对象：
+`inputType:u8 + TouchRecord(7B)×N`，或 `inputType:u8 + 单个 Mouse 事件变体`。
+没有额外 input header、count/length/CRC32 或逐包绑定字段；完整 AXTP Frame 与
+标准 STREAM16 仍负责其原有机制。精确布局、约束、采样/按钮生命周期、能力
+与拒绝规则见 [48-input-stream](48-input-stream.md)。生成器必须验证紧凑偏移和
+精确长度，字段不能依 C/C++ struct padding 编码。
+
 ## 字段编号
 
 Schema field id 规则：

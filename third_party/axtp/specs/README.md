@@ -24,6 +24,7 @@
 | [45-cast-control.md](45-cast-control.md) | 可选多路投屏控制 v1：精确目标、原子快照、事件组、操作恢复和兼容保证。 |
 | [46-cast-settings.md](46-cast-settings.md) | 可选呈现配置 v1：单字段 patch、生效/保存部分结果、独立设置流和双屏障快照。 |
 | [47-cast-webcast-backend.md](47-cast-webcast-backend.md) | 可选 WebCast 云端/本地信令状态、独立事件流、重连快照及隐私边界。 |
+| [48-input-stream.md](48-input-stream.md) | Typed Input v1：控制/业务流程、Touch 多指采样、Mouse、完整 Frame 和安全释放。 |
 | [50-tooling.md](50-tooling.md) | Registry YAML 到 Protocol IR、生成器行为、版本和发布绑定。 |
 
 ## 权威顺序

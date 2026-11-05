@@ -1,0 +1,4 @@
+# The vendored development snapshot is fingerprinted byte-for-byte.
+third_party/axtp/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+# Historical evidence is copied verbatim, including original significant spaces.
+third_party/axtp/workspace/legacy-migration/evidence/** -whitespace

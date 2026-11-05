@@ -1,5 +1,8 @@
 # Axent
 
+The [Typed Input v1 contract](docs/dev/TYPED_INPUT_V1.md) provides JSON-free
+Touch/Mouse samples and private AXTP framing adapters for product hosts.
+
 Axent is a device-control runtime core with a stable extension and host model.
 It exposes AXTP-oriented control surfaces, manages device sessions, and routes
 device commands through AXDP, AXTP, TEA, or mock adapters without accepting

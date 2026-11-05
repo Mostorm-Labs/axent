@@ -1,0 +1,6 @@
+id: typed-input
+title: AXTP-TYPED-INPUT-V1
+since: spec/v0.18.0
+description: Optional unpublished R2 development contract. No existing profile gains new required cases; native/system evidence remains separate.
+capabilities: [input.stream, cast.touchback]
+oracle: reference/input-stream.mjs

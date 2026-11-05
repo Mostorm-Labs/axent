@@ -1,0 +1,724 @@
+{
+  "status": "draft-review",
+  "contract": false,
+  "generated": false,
+  "format": "input-sample-v1",
+  "scope": "Review examples only; not adopted vectors or production/runtime conformance",
+  "constraints": {
+    "maxDataBytes": 4096,
+    "maxContacts": 10,
+    "buttonsMask": 31,
+    "modifierMask": 15
+  },
+  "cases": [
+    {
+      "id": "touch-single",
+      "valid": true,
+      "frames": [
+        {
+          "hex": "41 58 01 03 00 18 01 10 00 01 00 01 00 00 00 07 00 00 00 01 00 00 00 00 00 00 03 e8 01 00 07 00 27 10 4e 20 85 fb",
+          "expected": {
+            "streamId": 7,
+            "seqId": 1,
+            "cursor": 1000,
+            "dataBytes": 8,
+            "frameBytes": 38,
+            "inputType": "touch",
+            "records": [
+              {
+                "contactId": 7,
+                "phase": 0,
+                "x": 10000,
+                "y": 20000
+              }
+            ]
+          }
+        },
+        {
+          "hex": "41 58 01 03 00 18 01 10 00 02 00 01 00 00 00 07 00 00 00 02 00 00 00 00 00 00 07 d0 01 00 07 01 2a f8 52 08 82 8c",
+          "expected": {
+            "streamId": 7,
+            "seqId": 2,
+            "cursor": 2000,
+            "dataBytes": 8,
+            "frameBytes": 38,
+            "inputType": "touch",
+            "records": [
+              {
+                "contactId": 7,
+                "phase": 1,
+                "x": 11000,
+                "y": 21000
+              }
+            ]
+          }
+        },
+        {
+          "hex": "41 58 01 03 00 18 01 10 00 03 00 01 00 00 00 07 00 00 00 03 00 00 00 00 00 00 0b b8 01 00 07 02 2a f8 52 08 5f 7e",
+          "expected": {
+            "streamId": 7,
+            "seqId": 3,
+            "cursor": 3000,
+            "dataBytes": 8,
+            "frameBytes": 38,
+            "inputType": "touch",
+            "records": [
+              {
+                "contactId": 7,
+                "phase": 2,
+                "x": 11000,
+                "y": 21000
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "touch-two-same-sample-terminal",
+      "valid": true,
+      "frames": [
+        {
+          "hex": "41 58 01 03 00 1f 01 10 00 01 00 01 00 00 00 07 00 00 00 01 00 00 00 00 00 00 03 e8 01 00 07 00 27 10 4e 20 00 08 00 75 30 9c 40 3c 56",
+          "expected": {
+            "streamId": 7,
+            "seqId": 1,
+            "cursor": 1000,
+            "dataBytes": 15,
+            "frameBytes": 45,
+            "inputType": "touch",
+            "records": [
+              {
+                "contactId": 7,
+                "phase": 0,
+                "x": 10000,
+                "y": 20000
+              },
+              {
+                "contactId": 8,
+                "phase": 0,
+                "x": 30000,
+                "y": 40000
+              }
+            ]
+          }
+        },
+        {
+          "hex": "41 58 01 03 00 1f 01 10 00 02 00 01 00 00 00 07 00 00 00 02 00 00 00 00 00 00 07 d0 01 00 07 01 2a f8 52 08 00 08 01 79 18 a0 28 cf 9d",
+          "expected": {
+            "streamId": 7,
+            "seqId": 2,
+            "cursor": 2000,
+            "dataBytes": 15,
+            "frameBytes": 45,
+            "inputType": "touch",
+            "records": [
+              {
+                "contactId": 7,
+                "phase": 1,
+                "x": 11000,
+                "y": 21000
+              },
+              {
+                "contactId": 8,
+                "phase": 1,
+                "x": 31000,
+                "y": 41000
+              }
+            ]
+          }
+        },
+        {
+          "hex": "41 58 01 03 00 1f 01 10 00 03 00 01 00 00 00 07 00 00 00 03 00 00 00 00 00 00 0b b8 01 00 07 02 2a f8 52 08 00 08 01 79 18 a0 28 7e 05",
+          "expected": {
+            "streamId": 7,
+            "seqId": 3,
+            "cursor": 3000,
+            "dataBytes": 15,
+            "frameBytes": 45,
+            "inputType": "touch",
+            "records": [
+              {
+                "contactId": 7,
+                "phase": 2,
+                "x": 11000,
+                "y": 21000
+              },
+              {
+                "contactId": 8,
+                "phase": 1,
+                "x": 31000,
+                "y": 41000
+              }
+            ]
+          }
+        },
+        {
+          "hex": "41 58 01 03 00 18 01 10 00 04 00 01 00 00 00 07 00 00 00 04 00 00 00 00 00 00 0f a0 01 00 08 02 79 18 a0 28 4a c2",
+          "expected": {
+            "streamId": 7,
+            "seqId": 4,
+            "cursor": 4000,
+            "dataBytes": 8,
+            "frameBytes": 38,
+            "inputType": "touch",
+            "records": [
+              {
+                "contactId": 8,
+                "phase": 2,
+                "x": 31000,
+                "y": 41000
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "touch-five",
+      "valid": true,
+      "frames": [
+        {
+          "hex": "41 58 01 03 00 34 01 10 00 01 00 01 00 00 00 07 00 00 00 01 00 00 00 00 00 00 03 e8 01 00 01 00 13 88 0f a0 00 02 00 27 10 1f 40 00 03 00 3a 98 2e e0 00 04 00 4e 20 3e 80 00 05 00 61 a8 4e 20 54 5c",
+          "expected": {
+            "streamId": 7,
+            "seqId": 1,
+            "cursor": 1000,
+            "dataBytes": 36,
+            "frameBytes": 66,
+            "inputType": "touch",
+            "records": [
+              {
+                "contactId": 1,
+                "phase": 0,
+                "x": 5000,
+                "y": 4000
+              },
+              {
+                "contactId": 2,
+                "phase": 0,
+                "x": 10000,
+                "y": 8000
+              },
+              {
+                "contactId": 3,
+                "phase": 0,
+                "x": 15000,
+                "y": 12000
+              },
+              {
+                "contactId": 4,
+                "phase": 0,
+                "x": 20000,
+                "y": 16000
+              },
+              {
+                "contactId": 5,
+                "phase": 0,
+                "x": 25000,
+                "y": 20000
+              }
+            ]
+          }
+        },
+        {
+          "hex": "41 58 01 03 00 34 01 10 00 02 00 01 00 00 00 07 00 00 00 02 00 00 00 00 00 00 07 d0 01 00 01 01 13 88 0f a0 00 02 01 27 10 1f 40 00 03 01 3a 98 2e e0 00 04 01 4e 20 3e 80 00 05 01 61 a8 4e 20 be b1",
+          "expected": {
+            "streamId": 7,
+            "seqId": 2,
+            "cursor": 2000,
+            "dataBytes": 36,
+            "frameBytes": 66,
+            "inputType": "touch",
+            "records": [
+              {
+                "contactId": 1,
+                "phase": 1,
+                "x": 5000,
+                "y": 4000
+              },
+              {
+                "contactId": 2,
+                "phase": 1,
+                "x": 10000,
+                "y": 8000
+              },
+              {
+                "contactId": 3,
+                "phase": 1,
+                "x": 15000,
+                "y": 12000
+              },
+              {
+                "contactId": 4,
+                "phase": 1,
+                "x": 20000,
+                "y": 16000
+              },
+              {
+                "contactId": 5,
+                "phase": 1,
+                "x": 25000,
+                "y": 20000
+              }
+            ]
+          }
+        },
+        {
+          "hex": "41 58 01 03 00 34 01 10 00 03 00 01 00 00 00 07 00 00 00 03 00 00 00 00 00 00 0b b8 01 00 01 03 13 88 0f a0 00 02 03 27 10 1f 40 00 03 03 3a 98 2e e0 00 04 03 4e 20 3e 80 00 05 03 61 a8 4e 20 49 85",
+          "expected": {
+            "streamId": 7,
+            "seqId": 3,
+            "cursor": 3000,
+            "dataBytes": 36,
+            "frameBytes": 66,
+            "inputType": "touch",
+            "records": [
+              {
+                "contactId": 1,
+                "phase": 3,
+                "x": 5000,
+                "y": 4000
+              },
+              {
+                "contactId": 2,
+                "phase": 3,
+                "x": 10000,
+                "y": 8000
+              },
+              {
+                "contactId": 3,
+                "phase": 3,
+                "x": 15000,
+                "y": 12000
+              },
+              {
+                "contactId": 4,
+                "phase": 3,
+                "x": 20000,
+                "y": 16000
+              },
+              {
+                "contactId": 5,
+                "phase": 3,
+                "x": 25000,
+                "y": 20000
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "mixed-types-independent",
+      "valid": true,
+      "frames": [
+        {
+          "hex": "41 58 01 03 00 1f 01 10 00 01 00 01 00 00 00 07 00 00 00 01 00 00 00 00 00 00 03 e8 01 00 07 00 27 10 4e 20 00 08 00 75 30 9c 40 3c 56",
+          "expected": {
+            "streamId": 7,
+            "seqId": 1,
+            "cursor": 1000,
+            "dataBytes": 15,
+            "frameBytes": 45,
+            "inputType": "touch",
+            "records": [
+              {
+                "contactId": 7,
+                "phase": 0,
+                "x": 10000,
+                "y": 20000
+              },
+              {
+                "contactId": 8,
+                "phase": 0,
+                "x": 30000,
+                "y": 40000
+              }
+            ]
+          }
+        },
+        {
+          "hex": "41 58 01 03 00 1c 01 10 00 02 00 01 00 00 00 07 00 00 00 02 00 00 00 00 00 00 07 d0 02 00 00 00 00 00 00 00 80 00 80 00 69 a0",
+          "expected": {
+            "streamId": 7,
+            "seqId": 2,
+            "cursor": 2000,
+            "dataBytes": 12,
+            "frameBytes": 42,
+            "inputType": "mouse",
+            "eventKind": 0,
+            "modifiers": 0,
+            "buttons": 0,
+            "x": 32768,
+            "y": 32768
+          }
+        },
+        {
+          "hex": "41 58 01 03 00 1f 01 10 00 03 00 01 00 00 00 07 00 00 00 03 00 00 00 00 00 00 0b b8 01 00 07 02 2a f8 52 08 00 08 01 79 18 a0 28 7e 05",
+          "expected": {
+            "streamId": 7,
+            "seqId": 3,
+            "cursor": 3000,
+            "dataBytes": 15,
+            "frameBytes": 45,
+            "inputType": "touch",
+            "records": [
+              {
+                "contactId": 7,
+                "phase": 2,
+                "x": 11000,
+                "y": 21000
+              },
+              {
+                "contactId": 8,
+                "phase": 1,
+                "x": 31000,
+                "y": 41000
+              }
+            ]
+          }
+        },
+        {
+          "hex": "41 58 01 03 00 1c 01 10 00 04 00 01 00 00 00 07 00 00 00 04 00 00 00 00 00 00 0f a0 02 01 00 00 00 00 00 01 80 00 80 00 59 3c",
+          "expected": {
+            "streamId": 7,
+            "seqId": 4,
+            "cursor": 4000,
+            "dataBytes": 12,
+            "frameBytes": 42,
+            "inputType": "mouse",
+            "eventKind": 1,
+            "modifiers": 0,
+            "buttons": 1,
+            "x": 32768,
+            "y": 32768
+          }
+        },
+        {
+          "hex": "41 58 01 03 00 18 01 10 00 05 00 01 00 00 00 07 00 00 00 05 00 00 00 00 00 00 13 88 01 00 08 02 79 18 a0 28 b2 ad",
+          "expected": {
+            "streamId": 7,
+            "seqId": 5,
+            "cursor": 5000,
+            "dataBytes": 8,
+            "frameBytes": 38,
+            "inputType": "touch",
+            "records": [
+              {
+                "contactId": 8,
+                "phase": 2,
+                "x": 31000,
+                "y": 41000
+              }
+            ]
+          }
+        },
+        {
+          "hex": "41 58 01 03 00 1c 01 10 00 06 00 01 00 00 00 07 00 00 00 06 00 00 00 00 00 00 17 70 02 01 00 00 00 00 00 00 80 00 80 00 90 8b",
+          "expected": {
+            "streamId": 7,
+            "seqId": 6,
+            "cursor": 6000,
+            "dataBytes": 12,
+            "frameBytes": 42,
+            "inputType": "mouse",
+            "eventKind": 1,
+            "modifiers": 0,
+            "buttons": 0,
+            "x": 32768,
+            "y": 32768
+          }
+        },
+        {
+          "hex": "41 58 01 03 00 14 01 10 00 07 00 01 00 00 00 07 00 00 00 07 00 00 00 00 00 00 1b 58 02 04 00 02 72 93",
+          "expected": {
+            "streamId": 7,
+            "seqId": 7,
+            "cursor": 7000,
+            "dataBytes": 4,
+            "frameBytes": 34,
+            "inputType": "mouse",
+            "eventKind": 4,
+            "modifiers": 2
+          }
+        },
+        {
+          "hex": "41 58 01 03 00 14 01 10 00 08 00 01 00 00 00 07 00 00 00 08 00 00 00 00 00 00 1f 40 02 04 00 00 a0 7e",
+          "expected": {
+            "streamId": 7,
+            "seqId": 8,
+            "cursor": 8000,
+            "dataBytes": 4,
+            "frameBytes": 34,
+            "inputType": "mouse",
+            "eventKind": 4,
+            "modifiers": 0
+          }
+        },
+        {
+          "hex": "41 58 01 03 00 12 01 10 00 09 00 01 00 00 00 07 00 00 00 09 00 00 00 00 00 00 23 28 02 03 1d 03",
+          "expected": {
+            "streamId": 7,
+            "seqId": 9,
+            "cursor": 9000,
+            "dataBytes": 2,
+            "frameBytes": 32,
+            "inputType": "mouse",
+            "eventKind": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "mouse-wheel-units-and-phases",
+      "valid": true,
+      "frames": [
+        {
+          "hex": "41 58 01 03 00 1c 01 10 00 01 00 01 00 00 00 07 00 00 00 01 00 00 00 00 00 00 03 e8 02 00 00 00 00 00 00 00 80 00 80 00 48 e2",
+          "expected": {
+            "streamId": 7,
+            "seqId": 1,
+            "cursor": 1000,
+            "dataBytes": 12,
+            "frameBytes": 42,
+            "inputType": "mouse",
+            "eventKind": 0,
+            "modifiers": 0,
+            "buttons": 0,
+            "x": 32768,
+            "y": 32768
+          }
+        },
+        {
+          "hex": "41 58 01 03 00 26 01 10 00 02 00 01 00 00 00 07 00 00 00 02 00 00 00 00 00 00 07 d0 02 02 00 00 00 00 00 00 80 00 80 00 00 00 00 00 00 00 00 00 00 78 ef 3a",
+          "expected": {
+            "streamId": 7,
+            "seqId": 2,
+            "cursor": 2000,
+            "dataBytes": 22,
+            "frameBytes": 52,
+            "inputType": "mouse",
+            "eventKind": 2,
+            "modifiers": 0,
+            "buttons": 0,
+            "x": 32768,
+            "y": 32768,
+            "wheelUnit": 0,
+            "wheelPhase": 0,
+            "wheelX": 0,
+            "wheelY": 120
+          }
+        },
+        {
+          "hex": "41 58 01 03 00 26 01 10 00 03 00 01 00 00 00 07 00 00 00 03 00 00 00 00 00 00 0b b8 02 02 00 00 00 00 00 00 80 00 80 00 01 01 00 00 00 00 00 00 00 00 6f 30",
+          "expected": {
+            "streamId": 7,
+            "seqId": 3,
+            "cursor": 3000,
+            "dataBytes": 22,
+            "frameBytes": 52,
+            "inputType": "mouse",
+            "eventKind": 2,
+            "modifiers": 0,
+            "buttons": 0,
+            "x": 32768,
+            "y": 32768,
+            "wheelUnit": 1,
+            "wheelPhase": 1,
+            "wheelX": 0,
+            "wheelY": 0
+          }
+        },
+        {
+          "hex": "41 58 01 03 00 26 01 10 00 04 00 01 00 00 00 07 00 00 00 04 00 00 00 00 00 00 0f a0 02 02 00 00 00 00 00 00 80 00 80 00 01 02 ff ff f0 00 00 00 20 00 90 2e",
+          "expected": {
+            "streamId": 7,
+            "seqId": 4,
+            "cursor": 4000,
+            "dataBytes": 22,
+            "frameBytes": 52,
+            "inputType": "mouse",
+            "eventKind": 2,
+            "modifiers": 0,
+            "buttons": 0,
+            "x": 32768,
+            "y": 32768,
+            "wheelUnit": 1,
+            "wheelPhase": 2,
+            "wheelX": -4096,
+            "wheelY": 8192
+          }
+        },
+        {
+          "hex": "41 58 01 03 00 26 01 10 00 05 00 01 00 00 00 07 00 00 00 05 00 00 00 00 00 00 13 88 02 02 00 00 00 00 00 00 80 00 80 00 01 03 00 00 00 00 00 00 00 00 a7 11",
+          "expected": {
+            "streamId": 7,
+            "seqId": 5,
+            "cursor": 5000,
+            "dataBytes": 22,
+            "frameBytes": 52,
+            "inputType": "mouse",
+            "eventKind": 2,
+            "modifiers": 0,
+            "buttons": 0,
+            "x": 32768,
+            "y": 32768,
+            "wheelUnit": 1,
+            "wheelPhase": 3,
+            "wheelX": 0,
+            "wheelY": 0
+          }
+        },
+        {
+          "hex": "41 58 01 03 00 12 01 10 00 06 00 01 00 00 00 07 00 00 00 06 00 00 00 00 00 00 17 70 02 03 41 b1",
+          "expected": {
+            "streamId": 7,
+            "seqId": 6,
+            "cursor": 6000,
+            "dataBytes": 2,
+            "frameBytes": 32,
+            "inputType": "mouse",
+            "eventKind": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "bad-crc",
+      "valid": false,
+      "frames": [
+        {
+          "hex": "41 58 01 03 00 18 01 10 00 01 00 01 00 00 00 07 00 00 00 01 00 00 00 00 00 00 03 e8 01 00 07 00 27 10 4e 20 85 fa"
+        }
+      ],
+      "expectedError": "frame-crc"
+    },
+    {
+      "id": "truncated-frame",
+      "valid": false,
+      "frames": [
+        {
+          "hex": "41 58 01 03 00 18 01 10 00 01 00 01 00 00 00 07 00 00 00 01 00 00 00 00 00 00 03 e8 01 00 07 00 27 10 4e 20 85"
+        }
+      ],
+      "expectedError": "frame-length"
+    },
+    {
+      "id": "touch-extra-byte",
+      "valid": false,
+      "frames": [
+        {
+          "hex": "41 58 01 03 00 19 01 10 00 01 00 01 00 00 00 07 00 00 00 01 00 00 00 00 00 00 03 e8 01 00 07 00 27 10 4e 20 00 63 6b"
+        }
+      ],
+      "expectedError": "touch-length"
+    },
+    {
+      "id": "touch-duplicate",
+      "valid": false,
+      "frames": [
+        {
+          "hex": "41 58 01 03 00 1f 01 10 00 01 00 01 00 00 00 07 00 00 00 01 00 00 00 00 00 00 03 e8 01 00 07 00 27 10 4e 20 00 07 00 27 10 4e 20 f8 23"
+        }
+      ],
+      "expectedError": "touch-duplicate"
+    },
+    {
+      "id": "touch-orphan",
+      "valid": false,
+      "frames": [
+        {
+          "hex": "41 58 01 03 00 18 01 10 00 01 00 01 00 00 00 07 00 00 00 01 00 00 00 00 00 00 03 e8 01 00 07 01 2a f8 52 08 fc c8"
+        }
+      ],
+      "expectedError": "touch-orphan"
+    },
+    {
+      "id": "touch-missing-active",
+      "valid": false,
+      "frames": [
+        {
+          "hex": "41 58 01 03 00 1f 01 10 00 01 00 01 00 00 00 07 00 00 00 01 00 00 00 00 00 00 03 e8 01 00 07 00 27 10 4e 20 00 08 00 75 30 9c 40 3c 56"
+        },
+        {
+          "hex": "41 58 01 03 00 18 01 10 00 02 00 01 00 00 00 07 00 00 00 02 00 00 00 00 00 00 07 d0 01 00 07 01 2a f8 52 08 82 8c"
+        }
+      ],
+      "expectedError": "touch-missing-active"
+    },
+    {
+      "id": "unknown-input-type",
+      "valid": false,
+      "frames": [
+        {
+          "hex": "41 58 01 03 00 12 01 10 00 01 00 01 00 00 00 07 00 00 00 01 00 00 00 00 00 00 03 e8 ff 00 34 bc"
+        }
+      ],
+      "expectedError": "input-type"
+    },
+    {
+      "id": "move-changes-buttons",
+      "valid": false,
+      "frames": [
+        {
+          "hex": "41 58 01 03 00 1c 01 10 00 01 00 01 00 00 00 07 00 00 00 01 00 00 00 00 00 00 03 e8 02 00 00 00 00 00 00 01 80 00 80 00 e2 b3"
+        }
+      ],
+      "expectedError": "mouse-implicit-buttons"
+    },
+    {
+      "id": "unknown-button-bit",
+      "valid": false,
+      "frames": [
+        {
+          "hex": "41 58 01 03 00 1c 01 10 00 01 00 01 00 00 00 07 00 00 00 01 00 00 00 00 00 00 03 e8 02 01 00 00 00 00 00 20 80 00 80 00 98 1f"
+        }
+      ],
+      "expectedError": "button-bits"
+    },
+    {
+      "id": "unknown-modifier-bit",
+      "valid": false,
+      "frames": [
+        {
+          "hex": "41 58 01 03 00 14 01 10 00 01 00 01 00 00 00 07 00 00 00 01 00 00 00 00 00 00 03 e8 02 04 00 10 b8 68"
+        }
+      ],
+      "expectedError": "modifier-bits"
+    },
+    {
+      "id": "continuous-without-begin",
+      "valid": false,
+      "frames": [
+        {
+          "hex": "41 58 01 03 00 26 01 10 00 01 00 01 00 00 00 07 00 00 00 01 00 00 00 00 00 00 03 e8 02 02 00 00 00 00 00 00 80 00 80 00 01 02 00 00 00 00 00 00 00 64 5a 53"
+        }
+      ],
+      "expectedError": "wheel-without-begin-or-anchor-change"
+    },
+    {
+      "id": "zero-detent",
+      "valid": false,
+      "frames": [
+        {
+          "hex": "41 58 01 03 00 26 01 10 00 01 00 01 00 00 00 07 00 00 00 01 00 00 00 00 00 00 03 e8 02 02 00 00 00 00 00 00 80 00 80 00 00 00 00 00 00 00 00 00 00 00 df 53"
+        }
+      ],
+      "expectedError": "wheel-detent"
+    },
+    {
+      "id": "seq-gap",
+      "valid": false,
+      "frames": [
+        {
+          "hex": "41 58 01 03 00 18 01 10 00 01 00 01 00 00 00 07 00 00 00 01 00 00 00 00 00 00 03 e8 01 00 07 00 27 10 4e 20 85 fb"
+        },
+        {
+          "hex": "41 58 01 03 00 18 01 10 00 03 00 01 00 00 00 07 00 00 00 03 00 00 00 00 00 00 0b b8 01 00 07 01 2a f8 52 08 b1 ac"
+        }
+      ],
+      "expectedError": "seq-gap"
+    }
+  ]
+}

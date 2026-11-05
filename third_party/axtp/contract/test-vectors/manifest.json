@@ -62,6 +62,10 @@
       "expectError": "COMPACT_MESSAGE_ID_OVERFLOW"
     }
   ],
+  "inputStream": {
+    "format": "input-sample-v1",
+    "file": "input_stream.json"
+  },
   "schemaVectors": [
     {
       "schema": "CastSessionRef",

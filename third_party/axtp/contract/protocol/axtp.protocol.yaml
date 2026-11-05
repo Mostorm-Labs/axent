@@ -167,6 +167,26 @@ transports:
     logicalServer: Device
     helloSender: Device
     notes: Device initiates the WebSocket connection but remains the Logical Server.
+  - name: AXTP-WEBRTC-DC
+    family: webrtc-datachannel
+    mode: standard-framed
+    frameProfile: STANDARD_FRAME
+    production: false
+    rpcEncodings:
+      - JSON
+      - CBOR
+      - MSGPACK
+      - JSON_BINARY
+    supportsControl: true
+    supportsStream: true
+    physicalClient: DataChannel initiator
+    physicalServer: DataChannel peer
+    logicalClient: Input producer
+    logicalServer: Input consumer
+    helloSender: Input consumer
+    usage: Typed input over an ordered reliable binary DataChannel bound to the existing authenticated media peer.
+    notes: Full Standard Frame only. CONTROL then RPC APP_READY; product text demultiplexing is outside AXTP. No per-input
+      ACK.
 payloadTypes:
   - name: CONTROL
     id: 1
@@ -224,6 +244,146 @@ compatibility:
     - Stable methodId, eventId and error code values must not be reused.
     - Legacy command mappings may be preserved as metadata under methods[].legacy.
     - Low-bandwidth Compact transports are documented as a degradation path outside AXTP v1 Core.
+inputStream:
+  format: input-sample-v1
+  byteOrder: big-endian
+  streamHeaderBytes: 16
+  typeBytes: 1
+  maxDataBytes: 4096
+  inputTypes:
+    touch: 1
+    mouse: 2
+  touch:
+    recordBytes: 7
+    maxContacts: 256
+    sampling: complete
+    phases:
+      down: 0
+      move: 1
+      up: 2
+      cancel: 3
+    fields:
+      - name: contactId
+        offset: 0
+        bytes: 2
+        type: uint16
+      - name: phase
+        offset: 2
+        bytes: 1
+        type: uint8
+      - name: x
+        offset: 3
+        bytes: 2
+        type: uint16
+      - name: y
+        offset: 5
+        bytes: 2
+        type: uint16
+  mouse:
+    buttons:
+      left: 1
+      right: 2
+      middle: 4
+      back: 8
+      forward: 16
+    modifiers:
+      shift: 1
+      ctrl: 2
+      alt: 4
+      meta: 8
+    wheelUnits:
+      detent120: 0
+      regionQ16_16: 1
+    wheelPhases:
+      none: 0
+      began: 1
+      changed: 2
+      ended: 3
+      cancelled: 4
+    records:
+      - name: move
+        kind: 0
+        bytes: 11
+        fields: &a1
+          - &a2
+            name: eventKind
+            offset: 0
+            bytes: 1
+            type: uint8
+          - &a3
+            name: modifiers
+            offset: 1
+            bytes: 2
+            type: uint16
+          - &a4
+            name: buttons
+            offset: 3
+            bytes: 4
+            type: uint32
+          - &a5
+            name: x
+            offset: 7
+            bytes: 2
+            type: uint16
+          - &a6
+            name: y
+            offset: 9
+            bytes: 2
+            type: uint16
+      - name: buttons
+        kind: 1
+        bytes: 11
+        fields: *a1
+      - name: wheel
+        kind: 2
+        bytes: 21
+        fields:
+          - *a2
+          - *a3
+          - *a4
+          - *a5
+          - *a6
+          - name: wheelUnit
+            offset: 11
+            bytes: 1
+            type: uint8
+          - name: wheelPhase
+            offset: 12
+            bytes: 1
+            type: uint8
+          - name: wheelX
+            offset: 13
+            bytes: 4
+            type: int32
+          - name: wheelY
+            offset: 17
+            bytes: 4
+            type: int32
+      - name: cancel
+        kind: 3
+        bytes: 1
+        fields:
+          - name: eventKind
+            offset: 0
+            bytes: 1
+            type: uint8
+      - name: modifiers
+        kind: 4
+        bytes: 3
+        fields:
+          - name: eventKind
+            offset: 0
+            bytes: 1
+            type: uint8
+          - name: modifiers
+            offset: 1
+            bytes: 2
+            type: uint16
+retiredAllocations:
+  - kind: method
+    id: 5662
+    domain: cast
+    bitOffset: 29
 schemas:
   Empty:
     kind: object
@@ -6592,6 +6752,12 @@ schemas:
   CastTouchbackState:
     kind: object
     description: Per-target touchback state with independent gates and geometry fencing.
+    retiredFieldIds:
+      - 5
+      - 6
+      - 9
+      - 12
+      - 13
     fields:
       - fieldId: 1
         name: target
@@ -6613,23 +6779,6 @@ schemas:
         type: bool
         required: true
         description: Computed effective gate; true only when both gates allow input.
-      - fieldId: 5
-        name: requestedMode
-        type: enum
-        required: true
-        enumValues:
-          - touch
-          - mouse
-        description: Controller requested input interpretation.
-      - fieldId: 6
-        name: negotiatedMode
-        type: enum
-        required: true
-        enumValues:
-          - touch
-          - mouse
-          - none
-        description: Mode accepted by the active stream, or none when closed.
       - fieldId: 7
         name: resolutionPreference
         type: enum
@@ -6637,17 +6786,12 @@ schemas:
         enumValues:
           - inherit
           - prefer1080p
-        description: Preserve the sender's current source quality or request 1080p; TouchBatch coordinates remain normalized.
+        description: Independent source quality preference; normalized input layout does not change.
       - fieldId: 8
         name: streamId
         type: uint32
         required: false
         description: Active input.stream identifier.
-      - fieldId: 9
-        name: epoch
-        type: uint32
-        required: false
-        description: Active input stream epoch.
       - fieldId: 10
         name: canvasRevision
         type: string
@@ -6660,16 +6804,6 @@ schemas:
         required: true
         maxLength: 128
         description: Geometry revision bound to this target.
-      - fieldId: 12
-        name: canvasToken
-        type: uint32
-        required: true
-        description: Canvas fence token.
-      - fieldId: 13
-        name: geometryToken
-        type: uint32
-        required: true
-        description: Geometry fence token.
       - fieldId: 14
         name: revision
         type: string
@@ -6682,6 +6816,43 @@ schemas:
         required: false
         maxLength: 256
         description: Bounded diagnostic reason.
+      - fieldId: 16
+        name: acceptedInputTypes
+        type: array
+        required: true
+        array:
+          itemType: string
+        description: Actual accepted types while active; empty otherwise.
+      - fieldId: 17
+        name: lifecycleState
+        type: enum
+        required: true
+        enumValues:
+          - inactive
+          - opening
+          - active
+          - closing
+          - faulted
+          - cleanup_blocked
+        description: Truthful per-target input owner lifecycle.
+      - fieldId: 18
+        name: format
+        type: string
+        required: false
+        maxLength: 64
+        description: Actual opened format when a context exists.
+      - fieldId: 19
+        name: resolutionState
+        type: enum
+        required: false
+        enumValues:
+          - inherit
+          - pending
+          - applied
+          - degraded
+          - unsupported
+          - failed
+        description: Actual source-quality request state, separate from input readiness and geometry.
   CastTouchbackEnabledRequest:
     kind: object
     description: Request to set the controller touchback gate for one target.
@@ -6697,38 +6868,6 @@ schemas:
         required: true
         description: Requested controller gate.
       - fieldId: 3
-        name: commandId
-        type: string
-        required: true
-        maxLength: 128
-        description: Idempotency key.
-  CastTouchbackModeRequest:
-    kind: object
-    description: Request to set touchback mode for one target.
-    fields:
-      - fieldId: 1
-        name: target
-        type: CastTouchbackTarget
-        required: true
-        description: Target identity and generation fence.
-      - fieldId: 2
-        name: mode
-        type: enum
-        required: true
-        enumValues:
-          - touch
-          - mouse
-        description: Requested input interpretation.
-      - fieldId: 3
-        name: requirement
-        type: enum
-        required: false
-        default: preferred
-        enumValues:
-          - preferred
-          - required
-        description: Whether a fallback mode is allowed.
-      - fieldId: 4
         name: commandId
         type: string
         required: true
@@ -6781,6 +6920,8 @@ schemas:
   CastTouchbackCapability:
     kind: object
     description: Capability descriptor for cast.touchback; AirPlay receivers do not advertise this capability.
+    retiredFieldIds:
+      - 3
     fields:
       - fieldId: 1
         name: capability
@@ -6795,13 +6936,6 @@ schemas:
         array:
           itemType: string
         description: Protocol paths supporting touchback, such as webcast and hid; airplay is excluded.
-      - fieldId: 3
-        name: supportedModes
-        type: array
-        required: true
-        array:
-          itemType: string
-        description: Supported input modes, with touch preferred by default.
       - fieldId: 4
         name: supportsPerTarget
         type: bool
@@ -6812,6 +6946,20 @@ schemas:
         type: bool
         required: true
         description: Whether launcher control-plane gate methods are supported.
+      - fieldId: 6
+        name: inputTypes
+        type: array
+        required: true
+        array:
+          itemType: string
+        description: Actually implemented capture semantics for the product route.
+      - fieldId: 7
+        name: formats
+        type: array
+        required: true
+        array:
+          itemType: string
+        description: Explicit supported typed input formats.
   GetDeviceInfoParams:
     kind: object
     description: Optional selector for the read-only device information snapshot.
@@ -7681,11 +7829,24 @@ schemas:
   InputOpenStreamParams:
     kind: object
     description: Request to open the canonical input.stream touchback business stream.
+    retiredFieldIds:
+      - 6
+      - 7
+      - 8
+      - 9
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
     fields:
       - fieldId: 1
         name: controlVersion
         type: uint32
         required: true
+        min: 1
+        max: 1
         description: Control-plane contract version.
       - fieldId: 2
         name: runtimeInstanceId
@@ -7710,130 +7871,70 @@ schemas:
         type: enum
         required: true
         enumValues:
-          - touch-batch-v1
+          - input-sample-v1
         description: Canonical binary payload format after the AXTP STREAM header.
-      - fieldId: 6
-        name: preferredMode
-        type: enum
-        required: false
-        default: touch
-        enumValues:
-          - touch
-          - mouse
-        description: Preferred input interpretation; touch is the default.
-      - fieldId: 7
-        name: supportedModes
-        type: array
-        required: true
-        array:
-          itemType: string
-        description: Modes the requester can consume, normally touch and mouse.
-      - fieldId: 8
-        name: canvasRevision
-        type: string
-        required: true
-        maxLength: 128
-        description: Canvas revision used to produce normalized coordinates.
-      - fieldId: 9
-        name: geometryRevision
-        type: string
-        required: true
-        maxLength: 128
-        description: Geometry revision used to map the viewport.
-      - fieldId: 10
-        name: canvasToken
-        type: uint32
-        required: true
-        description: Numeric canvas fence token.
-      - fieldId: 11
-        name: geometryToken
-        type: uint32
-        required: true
-        description: Numeric geometry fence token.
-      - fieldId: 12
-        name: maxBatchEvents
-        type: uint16
-        required: false
-        description: Maximum touch events per batch accepted by the requester.
-      - fieldId: 13
-        name: maxFrameBytes
-        type: uint32
-        required: false
-        description: Maximum complete STREAM frame size accepted by the requester.
-      - fieldId: 14
-        name: maxContacts
-        type: uint16
-        required: false
-        description: Maximum simultaneous contacts supported by the requester.
-      - fieldId: 15
-        name: modeRequirement
-        type: enum
-        required: false
-        default: preferred
-        enumValues:
-          - preferred
-          - required
-        description: Whether preferredMode may fall back to another supported mode.
       - fieldId: 16
         name: commandId
         type: string
         required: true
         maxLength: 128
         description: Idempotency key for the open request.
+      - fieldId: 17
+        name: sourceBindingId
+        type: string
+        required: true
+        maxLength: 128
+        description: Opaque source binding supplied by the authenticated media/device integration; validated against current
+          local capture/input region.
+      - fieldId: 18
+        name: inputTypes
+        type: array
+        required: true
+        array:
+          itemType: string
+        description: "Nonempty unique offered semantics: touch and/or mouse."
+      - fieldId: 19
+        name: maxDataBytes
+        type: uint32
+        required: true
+        min: 8
+        max: 4096
+        description: Maximum input data bytes, including inputType; excludes STREAM and Frame.
+      - fieldId: 20
+        name: touch
+        type: InputTouchConstraints
+        required: false
+        description: Required exactly when touch is offered.
+      - fieldId: 21
+        name: mouse
+        type: InputMouseConstraints
+        required: false
+        description: Required exactly when mouse is offered.
   InputOpenStreamResult:
     kind: object
     description: Result of input.openStream negotiation.
+    retiredFieldIds:
+      - 2
+      - 3
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
     fields:
       - fieldId: 1
         name: streamId
         type: uint32
         required: true
+        min: 1
         description: AXTP STREAM identifier.
-      - fieldId: 2
-        name: epoch
-        type: uint32
-        required: true
-        description: Input ownership epoch; changes after reset and reopen.
-      - fieldId: 3
-        name: acceptedMode
-        type: enum
-        required: true
-        enumValues:
-          - touch
-          - mouse
-        description: Mode accepted for this stream.
       - fieldId: 4
         name: format
         type: enum
         required: true
         enumValues:
-          - touch-batch-v1
+          - input-sample-v1
         description: Canonical binary payload format.
-      - fieldId: 5
-        name: canvasToken
-        type: uint32
-        required: true
-        description: Canvas token bound to this stream epoch.
-      - fieldId: 6
-        name: geometryToken
-        type: uint32
-        required: true
-        description: Geometry token bound to this stream epoch.
-      - fieldId: 7
-        name: maxBatchEvents
-        type: uint16
-        required: false
-        description: Maximum events per accepted batch.
-      - fieldId: 8
-        name: maxFrameBytes
-        type: uint32
-        required: false
-        description: Maximum complete STREAM frame size.
-      - fieldId: 9
-        name: maxContacts
-        type: uint16
-        required: false
-        description: Maximum simultaneous contacts.
       - fieldId: 10
         name: revision
         type: string
@@ -7844,15 +7945,44 @@ schemas:
         name: accepted
         type: bool
         required: true
-        description: Whether the owner lane accepted the request; true does not imply effective touchback enablement.
+        description: True only when authentication, current binding, permission, geometry, exclusive native owner and
+          preparation have succeeded.
+      - fieldId: 12
+        name: acceptedInputTypes
+        type: array
+        required: true
+        array:
+          itemType: string
+        description: Nonempty unique subset of offered input types.
+      - fieldId: 13
+        name: maxDataBytes
+        type: uint32
+        required: true
+        min: 8
+        max: 4096
+        description: Actual input data budget, no greater than request/native/transport limits.
+      - fieldId: 14
+        name: touch
+        type: InputTouchConstraints
+        required: false
+        description: Present exactly when touch is accepted.
+      - fieldId: 15
+        name: mouse
+        type: InputMouseConstraints
+        required: false
+        description: Present exactly when mouse is accepted.
   InputCloseStreamParams:
     kind: object
-    description: Request to close an input.stream epoch and release active input state.
+    description: Close an immutable input context; failed native cleanup remains retryable and never reports closed.
+    retiredFieldIds:
+      - 6
     fields:
       - fieldId: 1
         name: controlVersion
         type: uint32
         required: true
+        min: 1
+        max: 1
         description: Control-plane contract version.
       - fieldId: 2
         name: runtimeInstanceId
@@ -7876,12 +8006,8 @@ schemas:
         name: streamId
         type: uint32
         required: true
+        min: 1
         description: AXTP STREAM identifier to close.
-      - fieldId: 6
-        name: epoch
-        type: uint32
-        required: true
-        description: Input ownership epoch to close.
       - fieldId: 7
         name: reason
         type: enum
@@ -7891,8 +8017,8 @@ schemas:
           - route_changed
           - disconnect
           - timeout
-          - reset
           - shutdown
+          - profile_failure
         description: Reason for closing the stream.
       - fieldId: 8
         name: finalSeqId
@@ -7908,22 +8034,20 @@ schemas:
   InputCloseStreamResult:
     kind: object
     description: Result of input.closeStream.
+    retiredFieldIds:
+      - 2
     fields:
       - fieldId: 1
         name: streamId
         type: uint32
         required: true
         description: AXTP STREAM identifier.
-      - fieldId: 2
-        name: epoch
-        type: uint32
-        required: true
-        description: Closed input ownership epoch.
       - fieldId: 3
         name: closed
         type: bool
         required: true
-        description: Whether the stream is now closed.
+        description: True only after all native state owned by this context is confirmed released; cleanupPending is an
+          UNAVAILABLE error.
       - fieldId: 4
         name: alreadyClosed
         type: bool
@@ -7939,6 +8063,13 @@ schemas:
   InputStreamCapability:
     kind: object
     description: Capability descriptor for input.stream.
+    retiredFieldIds:
+      - 4
+      - 6
+      - 7
+      - 8
+      - 9
+      - 10
     fields:
       - fieldId: 1
         name: capability
@@ -7959,14 +8090,7 @@ schemas:
         required: true
         array:
           itemType: string
-        description: Supported input stream formats, including touch-batch-v1.
-      - fieldId: 4
-        name: inputModes
-        type: array
-        required: true
-        array:
-          itemType: string
-        description: Supported modes, including touch and mouse.
+        description: Explicit layouts supported by this implementation; this revision defines input-sample-v1.
       - fieldId: 5
         name: reliability
         type: enum
@@ -7974,31 +8098,84 @@ schemas:
         enumValues:
           - ordered_reliable
         description: Data-channel delivery requirement; ordinary packets have no application ACK.
-      - fieldId: 6
-        name: supportsReset
-        type: bool
+      - fieldId: 11
+        name: inputTypes
+        type: array
         required: true
-        description: Whether ordered reset frames are supported.
-      - fieldId: 7
-        name: supportsMoveCoalescing
-        type: bool
-        required: true
-        description: Whether move events may be coalesced while down/up/cancel ordering is preserved.
-      - fieldId: 8
-        name: maxBatchEvents
-        type: uint16
-        required: false
-        description: Advertised maximum events per batch.
-      - fieldId: 9
-        name: maxFrameBytes
+        array:
+          itemType: string
+        description: Implemented input semantics, distinct from attached physical devices.
+      - fieldId: 12
+        name: maxDataBytes
         type: uint32
+        required: true
+        min: 8
+        max: 4096
+        description: Maximum input data bytes including type.
+      - fieldId: 13
+        name: touch
+        type: InputTouchConstraints
         required: false
-        description: Advertised maximum complete STREAM frame size.
-      - fieldId: 10
+        description: Present exactly when touch is implemented.
+      - fieldId: 14
+        name: mouse
+        type: InputMouseConstraints
+        required: false
+        description: Present exactly when mouse is implemented.
+      - fieldId: 15
+        name: profiles
+        type: array
+        required: true
+        array:
+          itemType: string
+        description: Implemented input profiles; AXTP-TYPED-INPUT-V1 requires the common stream-state subset.
+  InputTouchConstraints:
+    kind: object
+    description: Limits include all records in one complete sample, including terminal records.
+    fields:
+      - fieldId: 1
         name: maxContacts
         type: uint16
-        required: false
-        description: Advertised maximum simultaneous contacts.
+        required: true
+        min: 1
+        max: 256
+        description: Maximum records in a complete Touch sample; bounded by native complete-frame capacity and
+          floor((maxDataBytes-1)/7).
+  InputMouseConstraints:
+    kind: object
+    description: Actually supported logical absolute Mouse features; unsupported actions never silently convert.
+    fields:
+      - fieldId: 1
+        name: buttonsMask
+        type: uint32
+        required: true
+        min: 0
+        max: 31
+        description: "Allowed buttons: Left=1, Right=2, Middle=4, Back=8, Forward=16."
+      - fieldId: 2
+        name: modifierMask
+        type: uint16
+        required: true
+        min: 0
+        max: 15
+        description: Allowed Shift=1, Ctrl=2, Alt=4, Meta=8; nonzero requires reliable owned release.
+      - fieldId: 3
+        name: allowChords
+        type: bool
+        required: true
+        description: Whether more than one logical button can be held.
+      - fieldId: 4
+        name: wheelUnits
+        type: array
+        required: true
+        array:
+          itemType: string
+        description: "Unique supported units: detent120 and/or regionQ16_16; empty disables Wheel."
+      - fieldId: 5
+        name: continuousScroll
+        type: bool
+        required: true
+        description: Requires regionQ16_16 and phase/anchor support; otherwise false.
   NetworkGetInterfacesParams:
     kind: object
     description: Selector for network interface enumeration.
@@ -12517,7 +12694,7 @@ methods:
       - BUSY
       - UNAVAILABLE
   - name: cast.getTouchbackState
-    description: Return per-target touchback gates, negotiated mode, and geometry fence state.
+    description: Return per-target gates, actual input lifecycle, accepted types and presentation state.
     methodId: 5660
     bitOffset: 27
     domain: cast
@@ -12561,32 +12738,6 @@ methods:
       - PERMISSION_DENIED
       - INVALID_ARGUMENT
       - INVALID_STATE
-      - NOT_FOUND
-      - UNAVAILABLE
-  - name: cast.setTouchbackMode
-    description: Request touch or mouse interpretation for one cast target; switching fences and reopens the input stream.
-    methodId: 5662
-    bitOffset: 29
-    domain: cast
-    since: 1.0.0
-    status: draft
-    request:
-      type: CastTouchbackModeRequest
-    response:
-      type: CastTouchbackState
-    encodings:
-      - json
-      - tlv
-    capabilities:
-      - cast.touchback
-    events:
-      - cast.touchbackChanged
-    errors:
-      - SUCCESS
-      - NOT_SUPPORTED
-      - INVALID_ARGUMENT
-      - INVALID_STATE
-      - BUSY
       - NOT_FOUND
       - UNAVAILABLE
   - name: cast.setTouchbackResolutionPreference
@@ -12803,8 +12954,7 @@ methods:
       - NOT_FOUND
       - FW_TRANSFER_NOT_STARTED
   - name: input.openStream
-    description: Open a negotiated input STREAM for a selected target and return the stream epoch, accepted mode, and canvas
-      fencing tokens.
+    description: Prepare a new immutable input context and return actually accepted input types and native limits.
     methodId: 2561
     bitOffset: 0
     domain: input
@@ -12829,7 +12979,8 @@ methods:
       - BUSY
       - UNAVAILABLE
   - name: input.closeStream
-    description: Close a previously opened input STREAM and release any pressed contacts or buttons owned by its epoch.
+    description: Fence and release all input owned by an authenticated session and stream; acknowledge closed only after
+      confirmed cleanup.
     methodId: 2562
     bitOffset: 1
     domain: input
@@ -14489,7 +14640,7 @@ events:
     capabilities:
       - cast.airplayControl
   - name: cast.touchbackChanged
-    description: Emitted when per-target touchback gates, mode, resolution, or geometry fencing changes.
+    description: Per-target gate, input lifecycle, accepted types, source quality or geometry changed.
     eventId: 5653
     bitOffset: 20
     domain: cast
@@ -14500,7 +14651,6 @@ events:
     severity: info
     trigger:
       - cast.setTouchbackEnabled
-      - cast.setTouchbackMode
       - cast.setTouchbackResolutionPreference
       - stream open
       - stream close
@@ -16287,7 +16437,7 @@ capabilities:
     type: object
     schema: CastAirPlayControlCapability
   - name: cast.touchback
-    description: Device supports per-target touchback control and negotiated touch or mouse input; AirPlay is excluded.
+    description: Per-target input gate and presentation policy; event semantics are explicit and AirPlay is excluded.
     capabilityId: 5647
     domain: cast
     since: 1.0.0
@@ -16320,7 +16470,7 @@ capabilities:
     type: object
     schema: FirmwareUpdateCapabilities
   - name: input.stream
-    description: Device supports negotiated receiver-to-source input STREAMs with touch and mouse interpretation.
+    description: Supports explicitly typed receiver-to-source input; format and actual native features are negotiated once on open.
     capabilityId: 2561
     domain: input
     since: 1.0.0
@@ -16423,9 +16573,9 @@ profiles:
   - name: AXTP-MVP
     since: 1.0.0
     status: stable
-    requiredMethods: &a1 []
-    requiredEvents: &a2 []
-    requiredErrors: &a3
+    requiredMethods: &a7 []
+    requiredEvents: &a8 []
+    requiredErrors: &a9
       - SUCCESS
       - RPC_METHOD_NOT_FOUND
       - RPC_PARAM_INVALID
@@ -16443,9 +16593,31 @@ profiles:
     since: 1.0.0
     status: stable
     extends: AXTP-MVP
-    requiredMethods: *a1
-    requiredEvents: *a2
-    requiredErrors: *a3
+    requiredMethods: *a7
+    requiredEvents: *a8
+    requiredErrors: *a9
     transportProfiles:
       - AXTP-USB-HID
     frameProfile: STANDARD_FRAME
+  - name: AXTP-TYPED-INPUT-V1
+    since: 1.0.0
+    status: experimental
+    requiredMethods:
+      - input.openStream
+      - input.closeStream
+      - stream.getState
+    requiredEvents:
+      - stream.stateChanged
+    requiredErrors:
+      - NOT_SUPPORTED
+      - PERMISSION_DENIED
+      - INVALID_ARGUMENT
+      - INVALID_STATE
+      - BUSY
+      - UNAVAILABLE
+    transportProfiles:
+      - AXTP-TCP
+      - AXTP-USB-HID
+      - AXTP-WEBRTC-DC
+    frameProfiles:
+      - STANDARD_FRAME

@@ -61,6 +61,7 @@ Transport profile 固定外层 envelope。AXTP 不在运行时协商 Standard Fr
 |---|---|---|
 | `AXTP-TCP` | TCP 字节流上的 Standard Framed。 | 接收方 SHOULD 扫描 magic、解析 12B header、读取 payload 和 CRC，然后分发。 |
 | `AXTP-USB-HID` | report/packet 上的 Standard Framed。 | Packet 边界不能替代 header/CRC 校验。 |
+| `AXTP-WEBRTC-DC` | 绑定认证媒体 peer 的 ordered/reliable binary DataChannel 上 Standard Framed。 | 完整 Frame、CONTROL/RPC APP_READY；产品 text 独立分流，input 细则见 [Typed Input](48-input-stream.md)。 |
 | `AXTP-WS-JSON` | WebSocket Unframed JSON。 | 仅 RPC；没有 CONTROL、STREAM、CRC、Standard Frame Header 或 JSON_BINARY fixed header。 |
 | `AXTP-WS-CLOUD-REVERSE` | WebSocket Unframed JSON。 | 同样是仅 RPC 的 wire shape；物理连接方向可以不同于逻辑角色。 |
 

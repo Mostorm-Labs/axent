@@ -68,6 +68,16 @@
         "expect": { "type": "object", "minProperties": 1, "additionalProperties": true }
       }
     },
+    "inputModel": {
+      "type": "object",
+      "required": ["action", "input", "expect"],
+      "additionalProperties": false,
+      "properties": {
+        "action": {"enum": ["vectors", "gate", "open", "prepare", "complete_prepare", "data", "enqueue", "pump", "cleanup_result", "close", "invalidate", "readiness", "snapshot"]},
+        "input": {"type": "object", "additionalProperties": true},
+        "expect": {"type": "object", "minProperties": 1, "additionalProperties": true}
+      }
+    },
     "direction": {
       "type": "string",
       "enum": ["client_to_server", "server_to_client", "peer_to_runtime", "client_observes", "runtime_local"]
@@ -342,10 +352,12 @@
         "error": { "$ref": "#/$defs/error" },
         "registry_lookup": { "$ref": "#/$defs/registryLookup" },
         "control_model": { "$ref": "#/$defs/controlModel" },
+        "input_model": { "$ref": "#/$defs/inputModel" },
         "expect": { "$ref": "#/$defs/expect" }
       },
       "oneOf": [
         { "required": ["control_model"] },
+        { "required": ["input_model"] },
         { "required": ["rpc"] },
         { "required": ["jsonrpc"] },
         { "required": ["control"] },

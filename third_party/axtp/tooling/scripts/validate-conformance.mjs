@@ -4,6 +4,7 @@ import path from "node:path";
 import { createRequire } from "node:module";
 import { runControlCase } from "../../conformance/reference/cast-control.mjs";
 import { CastSettingsModel } from "../../conformance/reference/cast-settings.mjs";
+import { runInputCase } from "../../conformance/reference/input-stream.mjs";
 
 const root = path.resolve(process.argv[2] ?? process.cwd());
 const requireFromGenerators = createRequire(path.join(root, "tooling", "generators", "package.json"));
@@ -319,6 +320,8 @@ function validateCaseReferences(label, value, refs) {
       if (schema && !refs.schemaNames.has(schema)) fail(`${stepLabel} references unknown model schema: ${schema}`);
       validateKnownStatus(`${stepLabel}.control_model.expect.status`, step.control_model.expect?.status, refs.errorNames);
     }
+    if (step.input_model && (value.level !== "typed-input" || step.direction !== "runtime_local"))
+      fail(`${stepLabel}.input_model requires typed-input/runtime_local`);
 
     if (step.registry_lookup?.capability && !refs.capabilityNames.has(step.registry_lookup.capability)) {
       fail(`${stepLabel}.registry_lookup.capability references unknown capability: ${step.registry_lookup.capability}`);
@@ -418,6 +421,7 @@ const caseFiles = walkYaml(path.join(conformanceDir, "cases"));
 const casesById = new Map();
 let controlScenarios = 0;
 let controlObservations = 0;
+let inputObservations = 0;
 for (const file of caseFiles) {
   const label = path.relative(root, file);
   const value = readYaml(file);
@@ -448,6 +452,14 @@ for (const file of caseFiles) {
       controlObservations += runControlCase(value, fixture, source.types, codes, fixture.settings ? CastSettingsModel : undefined);
       controlScenarios += value.scenarios?.length ?? 1;
     } catch (error) { fail(`${label}: cast control reference oracle failed: ${error.message}`); }
+  }
+  if (value.level === "typed-input") {
+    try {
+      const source = readYaml(path.join(root, "contract/registry/domains/input/domain.yaml"));
+      const fixture = refs.fixtureValues.get(value.given?.device_profile);
+      if (!fixture) throw new Error("missing typed input fixture");
+      inputObservations += runInputCase(value, fixture, source.input_stream, root);
+    } catch (error) { fail(`${label}: typed input oracle failed: ${error.message}`); }
   }
 }
 
@@ -482,6 +494,7 @@ if (errors.length > 0) {
 console.log(`[OK] conformance manifest: ${manifest.conformance.version} (${manifest.conformance.spec_min})`);
 console.log(`[OK] conformance cases: ${casesById.size}`);
 if (controlScenarios) console.log(`[OK] cast-control reference: ${controlScenarios} scenarios, ${controlObservations} observations (substitute owners only)`);
+if (inputObservations) console.log(`[OK] typed-input reference: ${inputObservations} observations (substitute native owners only)`);
 for (const [profile, count] of [...profileCounts.entries()].sort(([a], [b]) => a.localeCompare(b))) {
   console.log(`[OK] profile coverage: ${profile}=${count}`);
 }

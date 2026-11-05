@@ -618,6 +618,7 @@ export function renderProtocolMarkdown(model: ProtocolModel): string {
     ...renderWireExamples(model),
     "",
     ...renderCapabilityDiscovery(model),
+    ...(model.inputStream ? renderInputStream(model) : []),
     "",
     "## Generated Method Index",
     "",
@@ -683,4 +684,23 @@ export function renderProtocolMarkdown(model: ProtocolModel): string {
 
 export async function emitProtocolMarkdown(model: ProtocolModel, outDir: string): Promise<void> {
   await writeTextFile(path.join(outDir, "protocol.md"), renderProtocolMarkdown(model));
+}
+
+function renderInputStream(model: ProtocolModel): string[] {
+  const w = model.inputStream!;
+  const fieldRows = (fields: typeof w.touch.fields) => fields.map(f => [f.name,String(f.offset),f.type,String(f.bytes)]);
+  return [
+    "", "## Typed Input STREAM Data", "",
+    `Format: \`${w.format}\`. Wire facts come from input domain \`input_stream\`; full control, state and failure rules are in \`specs/48-input-stream.md\`.`, "",
+    "Standard Frame/CRC16 surrounds STREAM16 and input data. Data is inputType:u8 followed by one complete Touch sample or one Mouse event; no input magic/version, custom header, count, repeated length, CRC32 or binding fields.", "",
+    `Max input data: ${w.maxDataBytes}B. Touch=${w.inputTypes.touch}; Mouse=${w.inputTypes.mouse}. All multi-byte fields are big-endian with no padding.`, "",
+    "### Touch complete sample", "",
+    `Touch data = type(1B) + record(${w.touch.recordBytes}B) × N. N=(dataLength-1)/7; every sample includes unchanged active contacts and current Up/Cancel records. All records share STREAM.cursor; the whole sample is validated before native submission.`, "",
+    ...table(["Field","Offset","Type","Bytes"],fieldRows(w.touch.fields)), "",
+    "### Mouse event variants", "",
+    ...table(["Kind","Value","Record bytes","Data bytes"],w.mouse.records.map(r=>[r.name,String(r.kind),String(r.bytes),String(r.bytes+1)])), "",
+    ...w.mouse.records.flatMap(r=>[`#### Mouse ${r.name}`,"",...table(["Field","Offset","Type","Bytes"],fieldRows(r.fields)),""]),
+    "Buttons encode the complete after-state. Move/Wheel cannot change buttons. Mouse Cancel does not cancel Touch. Modifiers require reliable owned release; otherwise modifierMask=0. Wheel units are detent120 and regionQ16_16, with right/down positive and explicit continuous phases/anchor.", "",
+    "Open binds authenticated session, source, target, format, types and limits once. A session never reuses an input streamId; source/geometry changes fence and close the old context. CleanupPending never acknowledges closed. AXTP-TYPED-INPUT-V1 requires stream.getState/stateChanged only, without implicitly requiring all flow-control methods.", ""
+  ];
 }

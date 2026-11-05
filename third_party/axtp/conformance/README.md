@@ -214,6 +214,15 @@ runtime runner 应读取 canonical conformance 路径：
 $AXTP_SPEC_PATH/conformance
 ```
 
+## Typed Input v1
+
+可选 `typed-input` level / `AXTP-TYPED-INPUT-V1` 对应
+`specs/48-input-stream.md`。`input.*` cases 调用 `reference/input-stream.mjs`
+执行模型；正式字节来自生成的 `contract/test-vectors/input_stream.json`，与独立
+评审字节交叉核对，覆盖多指完整采样、Mouse、混合类型、gate、fresh stream ID、
+cleanupPending、队列和晚 prepare。`node --test conformance/reference/input-stream.test.mjs`
+还验证分片重组与 CRC。模型的 native owner 是替身，不能视为应用收到系统输入。
+
 ## 失败分类
 
 | 分类 | 判断方式 | 处理 |

@@ -4,21 +4,18 @@ protocol:
   specVersion: 1
   registryVersion: 1.0.0
   status: rc1
-
 wire:
   byteOrder: big-endian
   byteOrderAlias: network
   integerEncoding: unsigned and signed multi-byte integers use Big-Endian / network byte order
   crcByteOrder: big-endian
   scope: Standard Framed Binary, CONTROL, RPC JSON_BINARY, TLV, STREAM header, and CRC footer
-
 overview:
   title: AXTP Protocol
   summary: >
-    AXTP is a transport-independent device communication protocol for
-    CONTROL, RPC and STREAM payloads across Standard Framed transports, plus
-    a formal WebSocket Unframed JSON RPC profile. Phase 1 requires the STREAM
-    data plane for audio/video media flow profiles.
+    AXTP is a transport-independent device communication protocol for CONTROL, RPC and STREAM payloads across Standard
+    Framed transports, plus a formal WebSocket Unframed JSON RPC profile. Phase 1 requires the STREAM data plane for
+    audio/video media flow profiles.
   goals:
     - Provide one unified protocol model for control, request/response RPC and audio/video stream transfer.
     - Make Standard Frame the AXTP v1 Core binary path for USB HID High Speed and TCP.
@@ -29,7 +26,6 @@ overview:
     - Compact/HID-64/BLE/UART low-bandwidth framing is not required by AXTP v1 Core.
     - STREAM is not carried over WebSocket Unframed JSON.
     - Header profile negotiation is not performed dynamically in v1.
-
 architecture:
   layers:
     - name: Transport Profile
@@ -71,7 +67,6 @@ architecture:
     - step: READY
       status: optional
       description: Reserved for transports that need an explicit client acknowledgement after ACCEPT; not required by AXTP v1 Core.
-
 guide:
   quickStart:
     - title: Minimal Client Startup
@@ -90,28 +85,31 @@ guide:
         - Send Identify using the JSON sid/op/d envelope.
         - Wait for Identified.
         - Load generated protocol registry for the current product build.
-        - Start JSON RPC requests and receive JSON events; event payload data does not repeat sid, but every event message still carries sid in the JSON sid/op/d envelope.
+        - Start JSON RPC requests and receive JSON events; event payload data does not repeat sid, but every event
+          message still carries sid in the JSON sid/op/d envelope.
     - title: Cloud Reverse Connection
       steps:
         - Device opens the WebSocket connection to the cloud endpoint.
         - No CONTROL OPEN or Standard Frame is used in this profile.
         - Device remains the Logical Server and sends Hello after the WebSocket is established.
         - Cloud identifies as the Logical Client and then issues JSON RPC requests.
-
 frameProfiles:
   - name: STANDARD_FRAME
     magic: AX
     l1: STANDARD_L1
     l2: STANDARD_L2
     supportsMixing: false
-
 transports:
   - name: AXTP-USB-HID
     family: usb-hid
     mode: standard-framed
     frameProfile: STANDARD_FRAME
     production: true
-    rpcEncodings: [JSON, CBOR, MSGPACK, JSON_BINARY]
+    rpcEncodings:
+      - JSON
+      - CBOR
+      - MSGPACK
+      - JSON_BINARY
     supportsControl: true
     supportsStream: true
     physicalClient: Host / App
@@ -125,7 +123,11 @@ transports:
     mode: standard-framed
     frameProfile: STANDARD_FRAME
     production: true
-    rpcEncodings: [JSON, CBOR, MSGPACK, JSON_BINARY]
+    rpcEncodings:
+      - JSON
+      - CBOR
+      - MSGPACK
+      - JSON_BINARY
     supportsControl: true
     supportsStream: true
     physicalClient: App / PC
@@ -139,7 +141,8 @@ transports:
     mode: unframed-json
     frameProfile: none
     production: true
-    rpcEncodings: [JSON]
+    rpcEncodings:
+      - JSON
     supportsControl: false
     supportsStream: false
     physicalClient: App / Cloud
@@ -153,7 +156,8 @@ transports:
     mode: unframed-json-cloud-reverse
     frameProfile: none
     production: true
-    rpcEncodings: [JSON]
+    rpcEncodings:
+      - JSON
     supportsControl: false
     supportsStream: false
     physicalClient: Device
@@ -162,24 +166,51 @@ transports:
     logicalServer: Device
     helloSender: Device
     notes: Device initiates the WebSocket connection but remains the Logical Server.
-
+  - name: AXTP-WEBRTC-DC
+    family: webrtc-datachannel
+    mode: standard-framed
+    frameProfile: STANDARD_FRAME
+    production: false
+    rpcEncodings:
+      - JSON
+      - CBOR
+      - MSGPACK
+      - JSON_BINARY
+    supportsControl: true
+    supportsStream: true
+    physicalClient: DataChannel initiator
+    physicalServer: DataChannel peer
+    logicalClient: Input producer
+    logicalServer: Input consumer
+    helloSender: Input consumer
+    usage: Typed input over an ordered reliable binary DataChannel bound to the existing authenticated media peer.
+    notes: Full Standard Frame only. CONTROL then RPC APP_READY; product text demultiplexing is outside AXTP. No per-input
+      ACK.
 payloadTypes:
   - name: CONTROL
-    id: 0x01
+    id: 1
     headerBytes: 5
     description: Logical session control payload.
   - name: RPC
-    id: 0x02
+    id: 2
     headerBytes: 1
     description: RPC payload starts with rpcEncoding; JSON_BINARY then carries the fixed binary envelope.
   - name: STREAM
-    id: 0x03
+    id: 3
     headerBytes: 16
     description: Chunk-oriented data plane payload.
-
 control:
-  requiredOpcodes: [OPEN, ACCEPT, HEARTBEAT, HEARTBEAT_ACK, CLOSE, CLOSE_ACK]
-  optionalOpcodes: [READY, ACK, NACK]
+  requiredOpcodes:
+    - OPEN
+    - ACCEPT
+    - HEARTBEAT
+    - HEARTBEAT_ACK
+    - CLOSE
+    - CLOSE_ACK
+  optionalOpcodes:
+    - READY
+    - ACK
+    - NACK
   reservedOpcodes: []
   rules:
     - Standard Framed transports require OPEN and ACCEPT before RPC or STREAM payloads.
@@ -188,21 +219,22 @@ control:
     - READY is not required by v1 Core and must not be assumed by peers.
     - ACK/NACK opcodes and fields are reserved for future reliable-transfer profiles and are not Phase 1 requirements.
     - Dynamic header negotiation is not performed in v1.
-
 stream:
   header:
     name: AxtpStreamHeader
     size: 16
     fields:
-      - { name: streamId, type: uint32 }
-      - { name: seqId, type: uint32 }
-      - { name: cursor, type: uint64 }
+      - name: streamId
+        type: uint32
+      - name: seqId
+        type: uint32
+      - name: cursor
+        type: uint64
   rules:
     - STREAM uses the unified 16-byte header in Standard Framed transports.
     - WebSocket Unframed JSON must not carry STREAM data.
     - The historical 8-byte stream header is not part of AXTP v1 Core.
     - Phase 1 Standard Framed runtimes must implement STREAM data packets for adopted audio/video media stream profiles.
-
 compatibility:
   legacySources:
     - workspace/legacy-migration/planning/AXTP-Legacy-Compatibility-Reference.md

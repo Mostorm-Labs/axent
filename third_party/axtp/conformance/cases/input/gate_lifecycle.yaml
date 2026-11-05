@@ -1,0 +1,35 @@
+id: input.gate_lifecycle
+title: Unified product gate and readiness are independent of accepted input types
+since: spec/v0.18.0
+level: typed-input
+profiles: [typed-input]
+given: {device_profile: typed_input}
+steps:
+  - direction: runtime_local
+    input_model: {action: gate, input: {receiverOptIn: false}, expect: {lifecycleState: closed}}
+  - direction: runtime_local
+    input_model: {action: open, input: {}, expect: {errorContains: gate, lifecycleState: closed}}
+  - direction: runtime_local
+    input_model: {action: gate, input: {receiverOptIn: true, controllerRequested: false}, expect: {lifecycleState: closed}}
+  - direction: runtime_local
+    input_model: {action: open, input: {}, expect: {errorContains: gate}}
+  - direction: runtime_local
+    input_model: {action: gate, input: {controllerRequested: true}, expect: {lifecycleState: closed}}
+  - direction: runtime_local
+    input_model: {action: open, input: {}, expect: {streamId: 1, acceptedInputTypes: [touch, mouse], lifecycleState: streaming}}
+  - direction: runtime_local
+    input_model:
+      action: data
+      input: {streamId: 1, seqId: 1, cursor: 1000, inputType: touch, records: [{contactId: 7, phase: 0, x: 10000, y: 20000}]}
+      expect: {activeContacts: 1, submitted: 1}
+  - direction: runtime_local
+    input_model: {action: gate, input: {receiverOptIn: false}, expect: {lifecycleState: closed, activeContacts: 0}}
+  - direction: runtime_local
+    input_model: {action: readiness, input: {nativeReady: false}, expect: {lifecycleState: closed}}
+  - direction: runtime_local
+    input_model: {action: gate, input: {receiverOptIn: true}, expect: {lifecycleState: closed}}
+  - direction: runtime_local
+    input_model: {action: open, input: {commandId: open-2}, expect: {errorContains: readiness}}
+assertions:
+  - Neither gate alone authorizes injection, and disable releases owned state.
+  - Readiness failure is visible rather than an implicit type conversion.

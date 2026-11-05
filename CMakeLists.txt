@@ -23,6 +23,19 @@ target_link_libraries(axent_control_contract PUBLIC nlohmann_json::nlohmann_json
 target_link_libraries(axent_control_contract PRIVATE axtp::core)
 axent_enable_warnings(axent_control_contract)
 
+add_library(axent_input_contract STATIC src/input/axtp_input_codec.cpp)
+add_library(axent::input_contract ALIAS axent_input_contract)
+target_include_directories(axent_input_contract PUBLIC include)
+target_compile_features(axent_input_contract PUBLIC cxx_std_17)
+target_link_libraries(axent_input_contract PRIVATE axtp::core)
+axent_enable_warnings(axent_input_contract)
+
+if(AXENT_BUILD_TESTING)
+    add_executable(input_stream_test tests/input_stream_test.cpp)
+    target_link_libraries(input_stream_test PRIVATE axent::input_contract)
+    add_test(NAME input_stream_test COMMAND input_stream_test)
+endif()
+
 add_library(axent_media_contract INTERFACE)
 add_library(axent::media_contract ALIAS axent_media_contract)
 target_include_directories(axent_media_contract INTERFACE

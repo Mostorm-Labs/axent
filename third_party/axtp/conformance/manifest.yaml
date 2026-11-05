@@ -3,6 +3,13 @@ conformance:
   spec_min: spec/v0.0.2
 
 levels:
+  typed-input:
+    description: Explicit Touch/Mouse samples, framing, immutable stream identity, gates and cleanup with substitute native owners.
+    required_cases:
+      - input.wire_samples
+      - input.gate_lifecycle
+      - input.cleanup_and_identity
+      - input.queue_and_late_prepare
   core:
     description: Required minimum AXTP RPC and registry behavior for all runtimes.
     required_cases:

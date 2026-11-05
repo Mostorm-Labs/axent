@@ -17,7 +17,7 @@
 |---|---:|---|---:|---|---|
 | audio | 12 | ASK | 13 | 旁路高覆盖 / P0 stream | `audio.algorithm` 与 `audio.stream` 已进入 generated；后续按修订流程维护并补齐剩余 audio 草案确认。 |
 | auth | 3 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
-| cast | 12 | ASK / generated | 47 | P0/P1 多路控制已采纳 | `cast.presentation`、`cast.audioPolicy`、`cast.controlOperations`、`cast.presentationSettings` 已登记；P0 原子快照/提交组及 P1 单字段配置、保存/应用部分结果、独立设置流见 specs/45-cast-control.md 与 specs/46-cast-settings.md。实际产品接入仍需下游实现验收。 |
+| cast | 13 | ASK / generated | 51 | P0/P1 多路控制已采纳 | `cast.presentation`、`cast.audioPolicy`、`cast.controlOperations`、`cast.presentationSettings`、R2 `cast.touchback` 已登记；统一反控 gate 与输入类型分离，详见 specs/48-input-stream.md。实际产品接入仍需下游实现验收。 |
 | camera | 7 | ASK | 0 | P3/P4 | 补产品/设备/legacy 确认。 |
 | capability | 1 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
 | device | 6 | ASK | 5 | P1 | `device.info`、`device.enrollment` 已进入 generated；继续补 `device.childDevice` 等通用底座确认。 |
@@ -25,7 +25,7 @@
 | display | 6 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
 | file | 2 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
 | firmware | 3 | ASK | 6 | 旁路高覆盖 | `firmware.update` P0 已进入 generated；后续补 firmware info/policy 与 P1/P2 更新能力确认。 |
-| input | 5 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
+| input | 6 | ASK / generated | 2 | P0 Typed Input | R2 input.stream 已采纳；Touch 完整采样 7×N、Mouse 事件、标准 Frame 和按所有权释放见 specs/48-input-stream.md；真实采集/注入分别验收。 |
 | log | 3 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
 | network | 6 | ASK | 26 | 旁路高覆盖 | `network.interface`、`network.ip`、`network.wifi`、`network.ap` 已进入 generated；继续补蓝牙和服务端点草案确认。 |
 | output | 1 | ASK | 0 | P2b | 补产品/设备/legacy 确认。 |
