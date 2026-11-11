@@ -1,8 +1,10 @@
 #include "axent/adapters/axtp_adapter.hpp"
 #include "axent/adapters/axtp_endpoint_identity.hpp"
+#include "axent/control/control_contract.hpp"
 #include "axtp_adapter_test_seam.hpp"
 
 #include "axtp_adapter_internal.hpp"
+#include "core/protocol/wire/input_frame_codec.hpp"
 #include "../core/control_operation_internal.hpp"
 
 #include <algorithm>
@@ -13,6 +15,7 @@
 #include <limits>
 #include <memory>
 #include <optional>
+#include <set>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -701,6 +704,13 @@ struct AxtpAdapter::RuntimeState {
     bool suppress_paired_audio_auto_open = false;
     std::vector<std::uint32_t> video_frame_rates;
     bool video_supports_active_reconfigure = true;
+    std::unique_ptr<input::InputStreamRelay> input_relay;
+    input::StreamCapability input_capability;
+    axtp::input::InputFrameDecoder input_decoder;
+    std::string input_device_id;
+    std::uint64_t input_physical_generation = 0;
+    std::uint64_t next_input_generation = 1;
+    std::set<std::uint32_t> input_stream_ids;
     // Capabilities are static for a physical session.  Source-state changes
     // only invalidate the open operation, so an idle/waiting source does not
     // cause a large capabilities RPC on every retry tick.
@@ -1457,6 +1467,259 @@ ControlOperationPtr AxtpAdapter::call_async(
     request.method = method;
     request.params = params;
     return call_async(request, std::move(options));
+}
+
+input::StreamOpenResult AxtpAdapter::open_input_stream(
+    const std::string& device_id,
+    const input::StreamOpenRequest& request)
+{
+    if (!device_context_) {
+        const auto context = device_context_for(device_id);
+        if (!context || !context->adapter) {
+            return {input::StreamResult::Unavailable, {}, {}, 0, "device_unavailable"};
+        }
+        DeviceContextOperation operation(context);
+        if (!operation) return {input::StreamResult::Unavailable, {}, {}, 0, "device_retiring"};
+        return context->adapter->open_input_stream(device_id, request);
+    }
+    std::lock_guard<std::mutex> session_lock(session_mutex_);
+    std::lock_guard<std::mutex> client_lock(client_mutex_);
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (!diagnostics_.open || active_device_id_ != device_id || !runtime_->client) {
+            return {input::StreamResult::Unavailable, {}, {}, 0, "axtp_session_unavailable"};
+        }
+    }
+    if (request.authenticated_session.empty() || request.source_binding_id.empty()) {
+        return {input::StreamResult::Rejected, {}, {}, 0, "authenticated_input_binding_required"};
+    }
+    if (runtime_->input_stream_ids.size() >= 4096)
+        return {input::StreamResult::Busy, {}, {}, 0, "session_stream_budget_exhausted"};
+    {
+        if (!runtime_->input_capability.route_ready ||
+            runtime_->input_capability.authenticated_session != request.authenticated_session ||
+            runtime_->input_capability.source_binding_id != request.source_binding_id ||
+            runtime_->input_physical_generation != runtime_->physical_session_generation) {
+            return {input::StreamResult::Unavailable, {}, {}, 0,
+                    "trusted_input_source_unavailable"};
+        }
+    }
+    if (!runtime_->input_relay) {
+        const auto transport_frame_budget = runtime_->active_transport == nullptr
+            ? std::size_t{0} : runtime_->active_transport->profile().preferredFrameSize;
+        if (transport_frame_budget < 64) {
+            return {input::StreamResult::Unavailable, {}, {}, 0,
+                    "transport_frame_budget_unavailable"};
+        }
+        const auto input_frame_budget = std::min(
+            runtime_->input_capability.max_frame_bytes, transport_frame_budget);
+        runtime_->input_decoder = axtp::input::InputFrameDecoder(
+            input_frame_budget);
+        runtime_->input_device_id = device_id;
+        auto capability = runtime_->input_capability;
+        capability.max_frame_bytes = input_frame_budget;
+        runtime_->input_relay = std::make_unique<input::InputStreamRelay>(
+            std::move(capability),
+            [this, device_id, input_frame_budget](const input::StreamOpenRequest& value) {
+                nlohmann::json target = {
+                    {"sessionId", value.target.session_id},
+                    {"sessionGeneration", std::to_string(value.target.session_generation)},
+                    {"slotId", std::to_string(value.target.slot_id)},
+                    {"bindingGeneration", std::to_string(value.target.binding_generation)},
+                    {"lifecycleGeneration", std::to_string(value.target.lifecycle_generation)},
+                };
+                nlohmann::json input_types=nlohmann::json::array();
+                const auto requested=value.input_types.empty()?std::vector<input::Type>{value.input_type}:value.input_types;
+                for(auto type:requested)input_types.push_back(type==input::Type::Touch?"touch":"mouse");
+                nlohmann::json params = {
+                    {"controlVersion", 1}, {"runtimeInstanceId", value.target.runtime_instance_id},
+                    {"target", target}, {"sourceBindingId", value.source_binding_id},
+                    {"streamKind", "touchback"}, {"format", value.format},
+                    {"inputTypes", input_types},
+                    {"maxDataBytes", value.limits.max_data_bytes},
+                    {"commandId", value.command_id},
+                };
+                if (std::find(requested.begin(),requested.end(),input::Type::Touch)!=requested.end()) {
+                    params["touch"] = {{"maxContacts", value.limits.max_contacts}};
+                }
+                if(std::find(requested.begin(),requested.end(),input::Type::Mouse)!=requested.end()){
+                    nlohmann::json units=nlohmann::json::array();
+                    if(value.limits.allow_detent_wheel)units.push_back("detent120");
+                    if(value.limits.allow_continuous_wheel)units.push_back("regionQ16_16");
+                    params["mouse"]={{"buttonsMask",value.limits.buttons_mask},{"modifierMask",value.limits.modifier_mask},{"allowChords",value.limits.allow_chords},{"wheelUnits",units},{"continuousScroll",value.limits.allow_continuous_wheel}};
+                }
+                input::StreamOpenResult result;
+                if (!control::validate_payload("input.openStream", control::PayloadRole::Request, params)) {
+                    result.reason = "invalid_input_open_request";
+                    return result;
+                }
+                axtp::sdk::CallOptions options;
+                options.timeout = std::chrono::milliseconds(1000);
+                options.progress = [this, &device_id] { publish_runtime_progress(device_id); };
+                const auto body = runtime_->client->callJson(
+                    "input.openStream", params.dump(), options);
+                const auto error = runtime_->client->lastError();
+                if (!error.ok()) {
+                    result.result = input::StreamResult::Unavailable;
+                    result.reason = error.message.empty() ? "input_open_failed" : error.message;
+                    // Allocation may have happened even if its response was
+                    // lost. Do not permit a second owner after uncertainty.
+                    result.cleanup_pending = true;
+                    return result;
+                }
+                const auto parsed = parse_json_object(body);
+                if (!parsed || !control::validate_payload("input.openStream", control::PayloadRole::Response, *parsed)) {
+                    result.result = input::StreamResult::Rejected;
+                    result.reason = "invalid_input_open_response";
+                    result.cleanup_pending = true;
+                    return result;
+                }
+                result.handle = {value.authenticated_session, value.source_binding_id,
+                                 parsed->at("streamId").get<std::uint32_t>(),
+                                 runtime_->next_input_generation++, value.input_type, value.target};
+                // Source descriptor changes may replace a closed relay, but
+                // IDs remain retired for the entire physical AXTP session.
+                if (!runtime_->input_stream_ids.insert(result.handle.stream_id).second) {
+                    result.reason = "input_stream_id_reused";
+                    result.cleanup_pending = true;
+                    return result;
+                }
+                const auto accepted_types = parsed->value("acceptedInputTypes", nlohmann::json::array());
+                bool validTypes=accepted_types.is_array()&&!accepted_types.empty();
+                for(const auto& type:accepted_types){
+                    if(std::find(input_types.begin(),input_types.end(),type)==input_types.end()){validTypes=false;break;}
+                    result.handle.input_types.push_back(type=="touch"?input::Type::Touch:input::Type::Mouse);
+                }
+                if (!parsed->value("accepted", false) || !validTypes) {
+                    result.result = input::StreamResult::Rejected;
+                    result.reason = "input_type_not_accepted";
+                    result.cleanup_pending = true;
+                    return result;
+                }
+                result.handle.input_type=result.handle.input_types.front();
+                result.result = input::StreamResult::Accepted;
+                result.format = parsed->value("format", std::string{});
+                if (result.format != value.format || !parsed->contains("revision")) {
+                    result.result = input::StreamResult::Rejected;
+                    result.reason = "input_open_contract_mismatch";
+                    result.cleanup_pending = true;
+                    return result;
+                }
+                result.max_frame_bytes = input_frame_budget;
+                result.limits = value.limits;
+                result.limits.max_data_bytes = parsed->at("maxDataBytes").get<std::size_t>();
+                result.limits.allow_touch=std::find(accepted_types.begin(),accepted_types.end(),"touch")!=accepted_types.end();
+                result.limits.allow_mouse=std::find(accepted_types.begin(),accepted_types.end(),"mouse")!=accepted_types.end();
+                if (result.limits.allow_touch) {
+                    result.limits.max_contacts = parsed->contains("touch")
+                        ? parsed->at("touch").value("maxContacts", std::size_t{0}) : 0;
+                }
+                if(result.limits.allow_mouse){
+                    const auto& mouse=parsed->at("mouse");
+                    result.limits.buttons_mask=mouse.at("buttonsMask").get<std::uint32_t>();
+                    result.limits.modifier_mask=mouse.at("modifierMask").get<std::uint16_t>();
+                    result.limits.allow_chords=mouse.at("allowChords").get<bool>();
+                    const auto& units=mouse.at("wheelUnits");
+                    result.limits.allow_detent_wheel=std::find(units.begin(),units.end(),"detent120")!=units.end();
+                    result.limits.allow_continuous_wheel=mouse.at("continuousScroll").get<bool>()&&std::find(units.begin(),units.end(),"regionQ16_16")!=units.end();
+                }
+                return result;
+            },
+            [this](const input::StreamFrame& frame) {
+                std::optional<axtp::StreamPayload> payload;
+                std::string error;
+                if (!runtime_->input_decoder.consume(frame.bytes, payload, &error)) {
+                    return false;
+                }
+                if (!payload) return true;
+                if (payload->streamId != frame.handle.stream_id) return false;
+                runtime_->client->sendStream(std::move(*payload));
+                return runtime_->client->lastError().ok();
+            },
+            [this](const input::StreamHandle& handle, std::string& reason) {
+                nlohmann::json params = {
+                    {"controlVersion", 1}, {"runtimeInstanceId", handle.target.runtime_instance_id},
+                    {"target", {
+                        {"sessionId", handle.target.session_id},
+                        {"sessionGeneration", std::to_string(handle.target.session_generation)},
+                        {"slotId", std::to_string(handle.target.slot_id)},
+                        {"bindingGeneration", std::to_string(handle.target.binding_generation)},
+                        {"lifecycleGeneration", std::to_string(handle.target.lifecycle_generation)},
+                    }},
+                    {"streamKind", "touchback"}, {"streamId", handle.stream_id},
+                    {"reason", "requested"},
+                    {"commandId", "axent-input-close-" + std::to_string(handle.generation)},
+                };
+                if (!handle.stream_id || !control::validate_payload(
+                        "input.closeStream", control::PayloadRole::Request, params)) {
+                    reason = "input_open_ownership_unresolved";
+                    return false;
+                }
+                axtp::sdk::CallOptions options;
+                options.timeout = std::chrono::milliseconds(1000);
+                options.progress = [this] { publish_runtime_progress(runtime_->input_device_id); };
+                const auto body = runtime_->client->callJson("input.closeStream", params.dump(), options);
+                const auto error = runtime_->client->lastError();
+                if (!error.ok()) {
+                    reason = error.message.empty() ? "input_close_failed" : error.message;
+                    return false;
+                }
+                const auto parsed = parse_json_object(body);
+                if (!parsed || !control::validate_payload("input.closeStream", control::PayloadRole::Response, *parsed) ||
+                    parsed->value("streamId", 0U) != handle.stream_id || !parsed->value("closed", false)) {
+                    reason = "native_cleanup_pending";
+                    return false;
+                }
+                runtime_->input_decoder.reset();
+                return true;
+            });
+    }
+    auto result = runtime_->input_relay->open(request);
+    if (!result.accepted() && result.result == input::StreamResult::Unavailable &&
+        runtime_->input_relay->snapshot().state == input::StreamState::Blocked) {
+        result.cleanup_pending = true;
+    }
+    return result;
+}
+
+input::StreamResult AxtpAdapter::send_input_frame(
+    const std::string& device_id,
+    const input::StreamFrame& frame,
+    std::string* reason)
+{
+    if (!device_context_) {
+        const auto context = device_context_for(device_id);
+        if (!context || !context->adapter) return input::StreamResult::Unavailable;
+        DeviceContextOperation operation(context);
+        if (!operation) return input::StreamResult::Unavailable;
+        return context->adapter->send_input_frame(device_id, frame, reason);
+    }
+    std::lock_guard<std::mutex> session_lock(session_mutex_);
+    std::lock_guard<std::mutex> client_lock(client_mutex_);
+    if (!runtime_->input_relay || runtime_->input_device_id != device_id ||
+        runtime_->input_physical_generation != runtime_->physical_session_generation ||
+        !runtime_->client) return input::StreamResult::Stale;
+    return runtime_->input_relay->forward(frame, reason);
+}
+
+input::StreamResult AxtpAdapter::close_input_stream(
+    const std::string& device_id,
+    const input::StreamHandle& handle,
+    std::string reason)
+{
+    if (!device_context_) {
+        const auto context = device_context_for(device_id);
+        if (!context || !context->adapter) return input::StreamResult::Unavailable;
+        DeviceContextOperation operation(context);
+        if (!operation) return input::StreamResult::Unavailable;
+        return context->adapter->close_input_stream(device_id, handle, std::move(reason));
+    }
+    std::lock_guard<std::mutex> session_lock(session_mutex_);
+    std::lock_guard<std::mutex> client_lock(client_mutex_);
+    if (!runtime_->input_relay || runtime_->input_device_id != device_id ||
+        runtime_->input_physical_generation != runtime_->physical_session_generation ||
+        !runtime_->client) return input::StreamResult::Stale;
+    return runtime_->input_relay->close(handle, std::move(reason));
 }
 
 ControlOperationPtr AxtpAdapter::call_async(
@@ -3341,6 +3604,12 @@ void AxtpAdapter::reset_session_for_device(const std::string& device_id)
             diagnostics_.audio_retry.next_retry_in_ms = 0;
             diagnostics_.audio_retry.terminal = false;
         }
+        runtime_->input_relay.reset();
+        runtime_->input_capability = {};
+        runtime_->input_stream_ids.clear();
+        runtime_->input_device_id.clear();
+        runtime_->input_physical_generation = 0;
+        runtime_->input_decoder.reset();
     }
     // A call can snapshot the recovery generation after the first queue drain
     // but before the session is marked closed above.  Drain once more after
@@ -3356,6 +3625,115 @@ void AxtpAdapter::reset_session_for_device(const std::string& device_id)
 bool AxtpAdapter::open_session(const std::string& device_id, std::string& error)
 {
     return open_session_status(device_id, error) == ControlStatus::Ok;
+}
+
+bool AxtpAdapter::set_input_source(
+    const std::string& device_id,
+    input::SourceDescriptor source,
+    std::string* reason)
+{
+    if (!device_context_) {
+        const auto context = device_context_for(device_id);
+        if (!context || !context->adapter) {
+            if (reason) *reason = "device_unavailable";
+            return false;
+        }
+        DeviceContextOperation operation(context);
+        if (!operation) {
+            if (reason) *reason = "device_retiring";
+            return false;
+        }
+        return context->adapter->set_input_source(device_id, std::move(source), reason);
+    }
+    std::lock_guard<std::mutex> session_lock(session_mutex_);
+    std::lock_guard<std::mutex> client_lock(client_mutex_);
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (!diagnostics_.open || active_device_id_ != device_id || !runtime_->client) {
+            if (reason) *reason = "axtp_session_unavailable";
+            return false;
+        }
+    }
+    auto fail = [&](const char* value) {
+        if (reason) *reason = value;
+        return false;
+    };
+    // An authenticated integration may withdraw readiness without losing the
+    // close identity. Fence first; retain the relay until cleanup is confirmed.
+    if (!source.capability.route_ready) {
+        if (!source.physical_generation || source.physical_generation != runtime_->physical_session_generation ||
+            source.capability.authenticated_session != runtime_->input_capability.authenticated_session ||
+            source.capability.source_binding_id != runtime_->input_capability.source_binding_id)
+            return fail("invalid_input_source_withdrawal");
+        runtime_->input_capability.route_ready = false;
+        if (runtime_->input_relay) runtime_->input_relay->fence("input_source_withdrawn");
+        if (reason) reason->clear();
+        return true;
+    }
+    if (
+        source.capability.authenticated_session.empty() ||
+        source.capability.source_binding_id.empty() ||
+        source.capability.format != input::format() ||
+        source.capability.input_types.empty() ||
+        source.capability.max_frame_bytes < 64 ||
+        source.capability.max_frame_bytes > 65549 ||
+        !source.physical_generation ||
+        source.physical_generation != runtime_->physical_session_generation) {
+        return fail("invalid_trusted_input_source");
+    }
+    if (runtime_->input_relay) {
+        const auto state = runtime_->input_relay->snapshot().state;
+        if (state == input::StreamState::Active || state == input::StreamState::Closing ||
+            state == input::StreamState::Blocked) {
+            return fail("input_source_busy");
+        }
+        runtime_->input_relay.reset();
+    }
+    runtime_->input_capability = std::move(source.capability);
+    runtime_->input_physical_generation = source.physical_generation;
+    runtime_->input_device_id = device_id;
+    if (reason) reason->clear();
+    return true;
+}
+
+std::uint64_t AxtpAdapter::input_session_generation(const std::string& device_id) const
+{
+    if (!device_context_) {
+        const auto context = find_device_context(device_id);
+        if (!context || !context->adapter) return 0;
+        DeviceContextOperation operation(context);
+        return operation ? context->adapter->input_session_generation(device_id) : 0;
+    }
+    std::lock_guard<std::mutex> lock(mutex_);
+    return diagnostics_.open && active_device_id_ == device_id
+        ? runtime_->physical_session_generation : 0;
+}
+
+std::optional<input::SourceDescriptor> AxtpAdapter::input_source(const std::string& device_id) const
+{
+    if (!device_context_) {
+        const auto context = find_device_context(device_id);
+        if (!context || !context->adapter) return {};
+        DeviceContextOperation operation(context);
+        return operation ? context->adapter->input_source(device_id) : std::nullopt;
+    }
+    std::lock_guard<std::mutex> lock(client_mutex_);
+    if (!runtime_->client || !runtime_->input_capability.route_ready ||
+        runtime_->input_device_id != device_id ||
+        runtime_->input_physical_generation != runtime_->physical_session_generation) return {};
+    return input::SourceDescriptor{runtime_->input_capability, runtime_->input_physical_generation};
+}
+
+input::StreamRouteSnapshot AxtpAdapter::input_stream_snapshot(const std::string& device_id) const
+{
+    if (!device_context_) {
+        const auto context = find_device_context(device_id);
+        if (!context || !context->adapter) return {};
+        DeviceContextOperation operation(context);
+        return operation ? context->adapter->input_stream_snapshot(device_id) : input::StreamRouteSnapshot{};
+    }
+    std::lock_guard<std::mutex> lock(client_mutex_);
+    return runtime_->input_relay ? runtime_->input_relay->snapshot() : input::StreamRouteSnapshot{};
 }
 
 ControlStatus AxtpAdapter::open_session_status(const std::string& device_id,
@@ -4016,6 +4394,29 @@ bool AxtpAdapter::ensure_session_locked(const std::string& device_id,
         axtp::EventId::AudioStreamSourceStateChanged,
         MediaKind::Audio,
         "audio.streamSourceStateChanged");
+    // Registration precedes open. The SDK dispatches events under client_mutex_;
+    // never call the client recursively from an event callback.
+    client->registerEventHandler(
+        static_cast<std::uint32_t>(axtp::EventId::StreamStateChanged),
+        [this](const axtp::RpcPayload& payload) {
+            if (!runtime_->input_relay) return;
+            const auto body = parse_json_object(
+                std::string(payload.body.begin(), payload.body.end()));
+            if (!body || !control::validate_payload(
+                    "stream.stateChanged", control::PayloadRole::Event, *body)) {
+                runtime_->input_relay->fence("invalid_stream_state_event");
+                return;
+            }
+            const auto& state = body->at("state");
+            const auto id = body->value("streamId", state.value("streamId", 0U));
+            const auto current = runtime_->input_relay->snapshot();
+            if (!id || id != current.handle.stream_id) return;
+            if ((state.contains("streamId") && state.at("streamId") != id) ||
+                state.value("state", std::string{}) != "streaming" ||
+                state.value("paused", false)) {
+                runtime_->input_relay->fence("remote_input_not_streaming");
+            }
+        });
     client->setStreamHandler(
         [this, device_id](const axtp::BrokerContext&, const axtp::StreamPayload& stream) {
             handle_stream_payload(
@@ -4144,6 +4545,12 @@ bool AxtpAdapter::ensure_session_locked(const std::string& device_id,
     {
         std::lock_guard<std::mutex> lock(mutex_);
         ++runtime_->physical_session_generation;
+        runtime_->input_relay.reset();
+        runtime_->input_capability = {};
+        runtime_->input_stream_ids.clear();
+        runtime_->input_device_id.clear();
+        runtime_->input_physical_generation = 0;
+        runtime_->input_decoder.reset();
         active_device_id_ = device_id;
         diagnostics_.open = true;
         if (diagnostics_.active_media_streams == 0 &&
@@ -5832,6 +6239,18 @@ void testing::AxtpAdapterTestSeam::stop_session_pump(AxtpAdapter& adapter)
     if (pump.joinable()) {
         pump.join();
     }
+}
+
+void testing::AxtpAdapterTestSeam::poll_session(AxtpAdapter& adapter)
+{
+    if (!adapter.device_context_) {
+        for (const auto& context : adapter.device_contexts()) {
+            if (context && context->adapter) poll_session(*context->adapter);
+        }
+        return;
+    }
+    std::lock_guard<std::mutex> lock(adapter.client_mutex_);
+    if (adapter.runtime_->client) adapter.runtime_->client->poll();
 }
 
 void testing::AxtpAdapterTestSeam::enqueue_stream_payload(

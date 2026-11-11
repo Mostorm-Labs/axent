@@ -20,7 +20,8 @@ public:
         const transport::HidTransportOptions&)>;
 
     static std::unique_ptr<AxtpAdapter> make(AxtpAdapterConfig config,
-                                             TransportFactory transport_factory);
+                                             TransportFactory transport_factory,
+                                             std::vector<transport::HidDeviceInfo> discovery = {});
     static transport::HidTransportOptions hid_options_from_selector(
         const TransportSelector& selector);
     static TransportDescriptor descriptor_from_hid_device(
@@ -41,6 +42,7 @@ public:
     static void release_session(AxtpAdapter& adapter,
                                 const std::string& device_id);
     static void stop_session_pump(AxtpAdapter& adapter);
+    static void poll_session(AxtpAdapter& adapter);
     static void enqueue_stream_payload(AxtpAdapter& adapter,
                                        const std::string& device_id,
                                        std::uint32_t stream_id,

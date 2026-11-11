@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "axent/core/adapter.hpp"
+#include "axent/input/input_route.hpp"
 #include "axent/media/media_frame.hpp"
 #include "axent/media/media_stream.hpp"
 #include "axent/media/video_stream_params.hpp"
@@ -113,6 +114,16 @@ public:
                                       std::string& error,
                                       bool configure_media = true);
     bool open_session(const std::string& device_id, std::string& error);
+    // Install the capability/source binding received from the authenticated
+    // media/device integration.  A producer request cannot create it.
+    // Withdraw with route_ready=false and the same binding/generation. This
+    // fences input immediately while retaining close ownership for cleanup.
+    bool set_input_source(const std::string& device_id,
+                          input::SourceDescriptor source,
+                          std::string* reason = nullptr);
+    std::uint64_t input_session_generation(const std::string& device_id) const;
+    std::optional<input::SourceDescriptor> input_source(const std::string& device_id) const;
+    input::StreamRouteSnapshot input_stream_snapshot(const std::string& device_id) const;
     VideoStreamParamsResult set_video_stream_params(
         const std::string& device_id,
         const VideoStreamParamsRequest& request);
@@ -120,6 +131,20 @@ public:
     VideoStreamParamsSubscriptionPtr subscribe_video_stream_params(
         const std::string& device_id,
         VideoStreamParamsObserver observer);
+
+    // Typed input uses the already-open physical AXTP session.  These methods
+    // do not create a second transport or tunnel data through JSON-RPC.
+    input::StreamOpenResult open_input_stream(
+        const std::string& device_id,
+        const input::StreamOpenRequest& request);
+    input::StreamResult send_input_frame(
+        const std::string& device_id,
+        const input::StreamFrame& frame,
+        std::string* reason = nullptr);
+    input::StreamResult close_input_stream(
+        const std::string& device_id,
+        const input::StreamHandle& handle,
+        std::string reason = {});
 
 private:
     friend class AxentHost;

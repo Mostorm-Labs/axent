@@ -2406,6 +2406,149 @@ ControlOperationPtr AxentHost::call_endpoint(
     return operation;
 }
 
+input::StreamOpenResult AxentHost::open_input_stream(
+    const std::string& session_id,
+    const input::StreamOpenRequest& request)
+{
+    std::lock_guard<std::mutex> dispatch_lock(impl_->dispatch_mutex);
+    std::string device_id;
+    {
+        std::lock_guard<std::mutex> lock(impl_->mutex);
+        const auto lease = impl_->lease_for_session_locked(session_id);
+        if (!lease.has_value() || !lease->media) {
+            return {input::StreamResult::InvalidState, {}, {}, 0, "media_session_required"};
+        }
+        if (!request.authenticated_session.empty() && request.authenticated_session != session_id) {
+            return {input::StreamResult::Rejected, {}, {}, 0, "authenticated_session_mismatch"};
+        }
+        device_id = lease->device_id;
+    }
+    auto* adapter = dynamic_cast<AxtpAdapter*>(impl_->axtp_adapter.get());
+    if (!adapter) return {input::StreamResult::Unavailable, {}, {}, 0, "axtp_adapter_unavailable"};
+    auto bound = request;
+    if (bound.authenticated_session.empty()) bound.authenticated_session = session_id;
+    return adapter->open_input_stream(device_id, bound);
+}
+
+bool AxentHost::set_input_source(
+    const std::string& session_id,
+    input::SourceDescriptor source,
+    std::string* reason)
+{
+    std::lock_guard<std::mutex> dispatch_lock(impl_->dispatch_mutex);
+    std::string device_id;
+    {
+        std::lock_guard<std::mutex> lock(impl_->mutex);
+        const auto lease = impl_->lease_for_session_locked(session_id);
+        if (!lease.has_value() || !lease->media) {
+            if (reason) *reason = "media_session_required";
+            return false;
+        }
+        if (!source.capability.authenticated_session.empty() &&
+            source.capability.authenticated_session != session_id) {
+            if (reason) *reason = "authenticated_session_mismatch";
+            return false;
+        }
+        source.capability.authenticated_session = session_id;
+        device_id = lease->device_id;
+    }
+    auto* adapter = dynamic_cast<AxtpAdapter*>(impl_->axtp_adapter.get());
+    if (!adapter) {
+        if (reason) *reason = "axtp_adapter_unavailable";
+        return false;
+    }
+    return adapter->set_input_source(device_id, std::move(source), reason);
+}
+
+std::uint64_t AxentHost::input_session_generation(const std::string& session_id) const
+{
+    std::lock_guard<std::mutex> dispatch_lock(impl_->dispatch_mutex);
+    std::string device_id;
+    {
+        std::lock_guard<std::mutex> lock(impl_->mutex);
+        const auto lease = impl_->lease_for_session_locked(session_id);
+        if (!lease || !lease->media) return 0;
+        device_id = lease->device_id;
+    }
+    auto* adapter = dynamic_cast<AxtpAdapter*>(impl_->axtp_adapter.get());
+    return adapter ? adapter->input_session_generation(device_id) : 0;
+}
+
+std::optional<input::SourceDescriptor> AxentHost::input_source(const std::string& session_id) const
+{
+    std::lock_guard<std::mutex> dispatch_lock(impl_->dispatch_mutex);
+    std::string device_id;
+    {
+        std::lock_guard<std::mutex> lock(impl_->mutex);
+        const auto lease = impl_->lease_for_session_locked(session_id);
+        if (!lease || !lease->media) return {};
+        device_id = lease->device_id;
+    }
+    auto* adapter = dynamic_cast<AxtpAdapter*>(impl_->axtp_adapter.get());
+    return adapter ? adapter->input_source(device_id) : std::nullopt;
+}
+
+input::StreamRouteSnapshot AxentHost::input_stream_snapshot(const std::string& session_id) const
+{
+    std::lock_guard<std::mutex> dispatch_lock(impl_->dispatch_mutex);
+    std::string device_id;
+    {
+        std::lock_guard<std::mutex> lock(impl_->mutex);
+        const auto lease = impl_->lease_for_session_locked(session_id);
+        if (!lease || !lease->media) return {};
+        device_id = lease->device_id;
+    }
+    auto* adapter = dynamic_cast<AxtpAdapter*>(impl_->axtp_adapter.get());
+    return adapter ? adapter->input_stream_snapshot(device_id) : input::StreamRouteSnapshot{};
+}
+
+input::StreamResult AxentHost::send_input_frame(
+    const std::string& session_id,
+    const input::StreamFrame& frame,
+    std::string* reason)
+{
+    if (frame.handle.authenticated_session != session_id) {
+        if (reason) *reason = "authenticated_session_mismatch";
+        return input::StreamResult::Rejected;
+    }
+    std::lock_guard<std::mutex> dispatch_lock(impl_->dispatch_mutex);
+    std::string device_id;
+    {
+        std::lock_guard<std::mutex> lock(impl_->mutex);
+        const auto lease = impl_->lease_for_session_locked(session_id);
+        if (!lease.has_value() || !lease->media) {
+            if (reason) *reason = "media_session_required";
+            return input::StreamResult::InvalidState;
+        }
+        device_id = lease->device_id;
+    }
+    auto* adapter = dynamic_cast<AxtpAdapter*>(impl_->axtp_adapter.get());
+    if (!adapter) {
+        if (reason) *reason = "axtp_adapter_unavailable";
+        return input::StreamResult::Unavailable;
+    }
+    return adapter->send_input_frame(device_id, frame, reason);
+}
+
+input::StreamResult AxentHost::close_input_stream(
+    const std::string& session_id,
+    const input::StreamHandle& handle,
+    std::string reason)
+{
+    if (handle.authenticated_session != session_id) return input::StreamResult::Rejected;
+    std::lock_guard<std::mutex> dispatch_lock(impl_->dispatch_mutex);
+    std::string device_id;
+    {
+        std::lock_guard<std::mutex> lock(impl_->mutex);
+        const auto lease = impl_->lease_for_session_locked(session_id);
+        if (!lease.has_value() || !lease->media) return input::StreamResult::InvalidState;
+        device_id = lease->device_id;
+    }
+    auto* adapter = dynamic_cast<AxtpAdapter*>(impl_->axtp_adapter.get());
+    if (!adapter) return input::StreamResult::Unavailable;
+    return adapter->close_input_stream(device_id, handle, std::move(reason));
+}
+
 Broker& AxentHost::broker()
 {
     std::lock_guard<std::mutex> lock(impl_->mutex);

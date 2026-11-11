@@ -11,6 +11,7 @@
 #include "axent/adapters/axtp_adapter.hpp"
 #include "axent/core/types.hpp"
 #include "axent/firmware/firmware_update_service.hpp"
+#include "axent/input/input_route.hpp"
 #include "axent/media/media_frame.hpp"
 #include "axent/media/media_relay.hpp"
 #include "axent/media/media_subscription.hpp"
@@ -129,6 +130,27 @@ public:
     ControlOperationPtr call_endpoint(
         EndpointControlRequest request,
         ControlCallOptions options = {});
+
+    input::StreamOpenResult open_input_stream(
+        const std::string& session_id,
+        const input::StreamOpenRequest& request);
+    // Authenticated media integration only. Withdraw with route_ready=false
+    // using the same binding and physical generation; input producers cannot
+    // mint source identities. A ready replacement requires confirmed cleanup.
+    bool set_input_source(const std::string& session_id,
+                          input::SourceDescriptor source,
+                          std::string* reason = nullptr);
+    std::uint64_t input_session_generation(const std::string& session_id) const;
+    std::optional<input::SourceDescriptor> input_source(const std::string& session_id) const;
+    input::StreamRouteSnapshot input_stream_snapshot(const std::string& session_id) const;
+    input::StreamResult send_input_frame(
+        const std::string& session_id,
+        const input::StreamFrame& frame,
+        std::string* reason = nullptr);
+    input::StreamResult close_input_stream(
+        const std::string& session_id,
+        const input::StreamHandle& handle,
+        std::string reason = {});
 
     // AxentHost serializes its own lifecycle/session/media state. The returned
     // reference is valid only until stop() or the next start(), and those calls
