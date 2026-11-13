@@ -1562,6 +1562,8 @@ input::StreamOpenResult AxtpAdapter::open_input_stream(
                 if (!error.ok()) {
                     result.result = input::StreamResult::Unavailable;
                     result.reason = error.message.empty() ? "input_open_failed" : error.message;
+                    result.reason += ":" + error_name(error.code) + ":code=" +
+                        std::to_string(static_cast<std::uint32_t>(error.code));
                     // Allocation may have happened even if its response was
                     // lost. Do not permit a second owner after uncertainty.
                     result.cleanup_pending = true;

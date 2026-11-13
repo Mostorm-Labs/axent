@@ -111,6 +111,7 @@ public:
             response.requestId = rpc.requestId;
             response.methodOrEventId = rpc.methodOrEventId;
             response.statusCode = axtp::ErrorCode::Success;
+            if(rpc.methodOrEventId==static_cast<std::uint32_t>(axtp::MethodId::InputOpenStream)&&open_status!=axtp::ErrorCode::Success){response.statusCode=open_status;result=nlohmann::json::object();}
             if (rpc.methodOrEventId == static_cast<std::uint32_t>(axtp::MethodId::InputCloseStream) && !release_ok) {
                 response.statusCode = axtp::ErrorCode::Unavailable;
                 result = {{"cleanupPending", true}};
@@ -127,6 +128,7 @@ public:
     unsigned control_opens = 0, opens = 0, closes = 0;
     std::uint32_t next_stream = 40;
     bool accepted = true, release_ok = true;
+    axtp::ErrorCode open_status=axtp::ErrorCode::Success;
     nlohmann::json last_open;
     std::vector<axtp::StreamPayload> delivered;
 private:
@@ -250,7 +252,22 @@ void run() {
     require(factories == 1, "send/close implicitly reopened physical transport");
 }
 } // namespace
+void rejected_open_diagnostic(){
+    auto config=axent::AxtpAdapter::na20_defaults();config.enable_media=false;config.enable_session_health_probe=false;
+    Endpoint* endpoint=nullptr;
+    auto adapter=axent::testing::AxtpAdapterTestSeam::make(config,[&](const auto&){auto value=std::make_unique<Endpoint>();endpoint=value.get();return value;});
+    const std::string device="hid:0581:2582:REJECTED-INPUT";std::string error;
+    require(adapter->open_session(device,error),"diagnostic session failed");axent::testing::AxtpAdapterTestSeam::stop_session_pump(*adapter);
+    SourceDescriptor source;source.physical_generation=adapter->input_session_generation(device);
+    source.capability={"input-sample-v1",{Type::Touch},{},64,"logical-media-session","diagnostic-source",true};source.capability.limits.allow_mouse=false;
+    require(adapter->set_input_source(device,source),"diagnostic source failed");
+    StreamOpenRequest request;request.authenticated_session="logical-media-session";request.source_binding_id="diagnostic-source";request.target={"runtime-1","media-1",1,0,1,1};request.command_id="rejected-open";
+    endpoint->open_status=axtp::ErrorCode::NotSupported;
+    const auto result=adapter->open_input_stream(device,request);
+    require(!result.accepted()&&result.cleanup_pending&&result.reason.find("code=3")!=std::string::npos,"input error lost canonical RPC status or bypassed cleanup");
+    axent::testing::AxtpAdapterTestSeam::release_session(*adapter,device);
+}
 int main() {
-    try { run(); std::cout << "AXTP input adapter: one session, R2 control, fragmented STREAM, cleanup and fencing passed\n"; }
+    try { run(); rejected_open_diagnostic(); std::cout << "AXTP input adapter: one session, R2 control, fragmented STREAM, cleanup, error status and fencing passed\n"; }
     catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }
 }
