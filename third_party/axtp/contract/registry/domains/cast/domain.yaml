@@ -439,6 +439,64 @@ methods:
     events: [cast.touchbackChanged]
     errors: [SUCCESS, INVALID_ARGUMENT, INVALID_STATE, NOT_FOUND, UNAVAILABLE]
 
+  - id: 0x1620
+    name: cast.getInputMode
+    domain: cast
+    status: draft
+    bitOffset: 31
+    since: 1.0.0
+    description: Query receiver input interpretation, gesture settings and authenticated source metadata.
+    rpc_op: request_response
+    request_schema: CastTouchbackTargetRequest
+    response_schema: CastInputModeState
+    recommended_encoding: [json]
+    capabilities: [cast.touchback]
+    errors: [SUCCESS, INVALID_ARGUMENT, INVALID_STATE, BUSY, NOT_SUPPORTED, UNAVAILABLE]
+
+  - id: 0x1621
+    name: cast.setInputMode
+    domain: cast
+    status: draft
+    bitOffset: 32
+    since: 1.0.0
+    description: Set receiver input interpretation or gesture settings; never changes the typed input wire format.
+    rpc_op: request_response
+    request_schema: CastSetInputModeRequest
+    response_schema: CastInputModeState
+    recommended_encoding: [json]
+    capabilities: [cast.touchback]
+    events: [cast.touchbackChanged]
+    errors: [SUCCESS, INVALID_ARGUMENT, INVALID_STATE, BUSY, NOT_SUPPORTED, UNAVAILABLE]
+
+  - id: 0x1622
+    name: cast.getTouchbackMaster
+    domain: cast
+    status: draft
+    bitOffset: 33
+    since: 1.0.0
+    description: Query the receiver-wide input gate; enabled does not grant per-target consent.
+    rpc_op: request_response
+    request_schema: CastTouchbackMasterQuery
+    response_schema: CastTouchbackMasterState
+    recommended_encoding: [json]
+    capabilities: [cast.touchback]
+    errors: [SUCCESS, INVALID_ARGUMENT, INVALID_STATE, BUSY, NOT_SUPPORTED, UNAVAILABLE]
+
+  - id: 0x1623
+    name: cast.setTouchbackMaster
+    domain: cast
+    status: draft
+    bitOffset: 34
+    since: 1.0.0
+    description: Set the receiver-wide input gate; disabling releases all input owners and enabling never replays input.
+    rpc_op: request_response
+    request_schema: CastSetTouchbackMasterRequest
+    response_schema: CastTouchbackMasterState
+    recommended_encoding: [json]
+    capabilities: [cast.touchback]
+    events: [cast.touchbackMasterChanged]
+    errors: [SUCCESS, INVALID_ARGUMENT, INVALID_STATE, BUSY, NOT_SUPPORTED, UNAVAILABLE]
+
 events:
   - id: 0x1601
     name: cast.sessionIncoming
@@ -689,7 +747,19 @@ events:
     description: Per-target gate, input lifecycle, accepted types, source quality or geometry changed.
     event_schema: CastTouchbackChangedEvent
     severity: info
-    trigger: [cast.setTouchbackEnabled, cast.setTouchbackResolutionPreference, stream open, stream close, disconnect]
+    trigger: [cast.setTouchbackEnabled, cast.setTouchbackResolutionPreference, cast.setInputMode, stream open, stream close, disconnect]
+    capabilities: [cast.touchback]
+
+  - id: 0x1616
+    name: cast.touchbackMasterChanged
+    domain: cast
+    status: draft
+    bitOffset: 21
+    since: 1.0.0
+    description: Receiver-wide input gate changed; clients replace the full state and resnapshot target gates.
+    event_schema: CastTouchbackMasterChangedEvent
+    severity: info
+    trigger: [cast.setTouchbackMaster, receiver local gate changed]
     capabilities: [cast.touchback]
 
 types:
@@ -3760,6 +3830,78 @@ types:
         type: bool
         required: true
         description: Whether the owner lane accepted the triggering request.
+
+  CastGestureSettings:
+    kind: object
+    description: Receiver touch-to-mouse interpretation; physical wheel input never uses scrollSpeed. Omitted scrollSpeed means 1x.
+    fields:
+      - { id: 1, name: rightClick, type: enum, enum: [two-finger-tap, long-press, both], required: true, description: Enabled right-click gesture. }
+      - { id: 2, name: rightHoldMs, type: uint32, min: 600, max: 2000, required: true, description: Stationary hold threshold in milliseconds. }
+      - { id: 3, name: scrollDirection, type: enum, enum: [follow-finger, reverse], required: true, description: Receiver gesture direction mapping. }
+      - { id: 4, name: feedback, type: bool, required: true, description: Show local gesture feedback. }
+      - { id: 5, name: scrollSpeed, type: number, min: 0.5, max: 4, required: false, description: Finite gesture scroll multiplier; defaults to 1. }
+
+  CastInputSourceInfo:
+    kind: object
+    description: Authenticated integration metadata; never substitutes for consent or openStream acceptance.
+    fields:
+      - { id: 1, name: platform, type: string, max_length: 64, required: true, description: Actual source platform or unknown. }
+      - { id: 2, name: clientKind, type: string, max_length: 64, required: true, description: Actual integration kind or unknown. }
+      - { id: 3, name: product, type: string, max_length: 128, required: true, description: Actual integration product or unknown. }
+      - { id: 4, name: displaySurface, type: string, max_length: 64, required: true, description: Actual selected display surface or unknown. }
+      - { id: 5, name: displayRole, type: string, max_length: 64, required: false, description: Observed display role when available. }
+
+  CastInputModeState:
+    kind: object
+    description: Receiver interpretation policy and observed lifecycle for an exact target; native never means a different wire packet mode.
+    fields:
+      - { id: 1, name: target, type: CastTouchbackTarget, required: true, description: Exact generation-fenced target. }
+      - { id: 2, name: inputMode, type: enum, enum: [native, touch-to-mouse], required: true, description: Receiver input interpretation policy. }
+      - { id: 3, name: gestureSettings, type: CastGestureSettings, required: true, description: Effective receiver gesture settings. }
+      - { id: 4, name: switching, type: bool, required: true, description: Owner switch is pending; acceptance is not activation proof. }
+      - { id: 5, name: supported, type: bool, required: true, description: Source can offer the receiver input path. }
+      - { id: 6, name: source, type: CastInputSourceInfo, required: true, description: Authenticated source metadata. }
+      - { id: 7, name: gestureControlSupported, type: bool, required: true, description: Source supports receiver touch-to-mouse interpretation. }
+      - { id: 8, name: state, type: CastTouchbackState, required: true, description: Current per-target gates and input lifecycle. }
+
+  CastSetInputModeRequest:
+    kind: object
+    description: Set at least one of inputMode and gestureSettings atomically for the exact target. Unknown optional fields are ignored. Command identity is scoped to the current runtime with bounded dedup.
+    fields:
+      - { id: 1, name: target, type: CastTouchbackTarget, required: true, description: Exact generation-fenced target. }
+      - { id: 2, name: commandId, type: string, max_length: 128, required: true, description: Nonempty idempotency key; reuse with different method or content conflicts. }
+      - { id: 3, name: inputMode, type: enum, enum: [native, touch-to-mouse], required: false, description: Receiver interpretation policy. }
+      - { id: 4, name: gestureSettings, type: CastGestureSettings, required: false, description: Full receiver gesture settings. }
+      - { id: 5, name: controlVersion, type: uint32, required: true, description: Must be 1. }
+      - { id: 6, name: runtimeInstanceId, type: string, max_length: 36, required: true, description: Current receiver runtime UUID from capabilities. }
+
+  CastTouchbackMasterQuery:
+    kind: object
+    description: Empty query for the receiver-wide input gate.
+    fields: []
+
+  CastTouchbackMasterState:
+    kind: object
+    description: Runtime-scoped receiver gate and monotonic canonical decimal revision. Turning on grants no target consent; turning off begins owner cleanup.
+    fields:
+      - { id: 1, name: enabled, type: bool, required: true, description: Receiver-wide input gate intent. }
+      - { id: 2, name: revision, type: string, max_length: 20, required: true, description: Canonical uint64 decimal gate revision. }
+      - { id: 3, name: runtimeInstanceId, type: string, max_length: 36, required: true, description: Receiver runtime UUID; revisions only compare within this instance. }
+
+  CastSetTouchbackMasterRequest:
+    kind: object
+    description: Runtime-fenced receiver-wide gate request with bounded dedup. Cleanup is observed through each target lifecycle, not implied by success.
+    fields:
+      - { id: 1, name: enabled, type: bool, required: true, description: Requested receiver input gate. }
+      - { id: 2, name: commandId, type: string, max_length: 128, required: true, description: Nonempty idempotency key; reuse with different method or content conflicts. }
+      - { id: 3, name: controlVersion, type: uint32, required: true, description: Must be 1. }
+      - { id: 4, name: runtimeInstanceId, type: string, max_length: 36, required: true, description: Current receiver runtime UUID from capabilities. }
+
+  CastTouchbackMasterChangedEvent:
+    kind: object
+    description: Replace receiver-wide gate state; gaps or reconnect require a fresh query.
+    fields:
+      - { id: 1, name: state, type: CastTouchbackMasterState, required: true, description: Current complete receiver-wide gate state. }
 
   CastTouchbackCapability:
     kind: object

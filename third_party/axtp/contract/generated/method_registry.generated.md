@@ -89,6 +89,10 @@
 | `0x161C` | `cast.getTouchbackState` | cast | draft | CastTouchbackTargetRequest | CastTouchbackState | - |
 | `0x161D` | `cast.setTouchbackEnabled` | cast | draft | CastTouchbackEnabledRequest | CastTouchbackState | - |
 | `0x161F` | `cast.setTouchbackResolutionPreference` | cast | draft | CastTouchbackResolutionRequest | CastTouchbackState | - |
+| `0x1620` | `cast.getInputMode` | cast | draft | CastTouchbackTargetRequest | CastInputModeState | - |
+| `0x1621` | `cast.setInputMode` | cast | draft | CastSetInputModeRequest | CastInputModeState | - |
+| `0x1622` | `cast.getTouchbackMaster` | cast | draft | CastTouchbackMasterQuery | CastTouchbackMasterState | - |
+| `0x1623` | `cast.setTouchbackMaster` | cast | draft | CastSetTouchbackMasterRequest | CastTouchbackMasterState | - |
 | `0x1701` | `software.getConfig` | software | draft | SoftwareGetConfigParams | SoftwareConfig | - |
 | `0x1702` | `software.setConfig` | software | draft | SoftwareSetConfigParams | SoftwareSetConfigResult | - |
 | `0x1703` | `software.resetConfig` | software | draft | SoftwareResetConfigParams | SoftwareConfig | - |

@@ -46,6 +46,7 @@
 | `0x1613` | `cast.webcastBackendChanged` | cast | draft | CastWebCastBackendSnapshot |
 | `0x1614` | `cast.airplayChanged` | cast | draft | CastAirPlayChangedEvent |
 | `0x1615` | `cast.touchbackChanged` | cast | draft | CastTouchbackChangedEvent |
+| `0x1616` | `cast.touchbackMasterChanged` | cast | draft | CastTouchbackMasterChangedEvent |
 | `0x1701` | `software.configChanged` | software | draft | SoftwareConfigChangedEvent |
 | `0x1702` | `software.updatePolicyChanged` | software | draft | SoftwareUpdatePolicyChangedEvent |
 | `0x1801` | `sport.eventDetectionStateChanged` | sport | draft | SportEventDetectionStateChangedEvent |

@@ -925,6 +925,7 @@
       "trigger": [
         "cast.setTouchbackEnabled",
         "cast.setTouchbackResolutionPreference",
+        "cast.setInputMode",
         "stream open",
         "stream close",
         "disconnect"
@@ -933,6 +934,26 @@
         "cast.touchback"
       ],
       "idHex": "0x1615"
+    },
+    {
+      "id": 5654,
+      "bitOffset": 21,
+      "name": "cast.touchbackMasterChanged",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Receiver-wide input gate changed; clients replace the full state and resnapshot target gates.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "eventSchema": "CastTouchbackMasterChangedEvent",
+      "severity": "info",
+      "trigger": [
+        "cast.setTouchbackMaster",
+        "receiver local gate changed"
+      ],
+      "capabilities": [
+        "cast.touchback"
+      ],
+      "idHex": "0x1616"
     },
     {
       "id": 5889,
