@@ -7849,6 +7849,47 @@
           "min": 1,
           "max": 16384,
           "description": "Adaptive canvas maximum height in pixels."
+        },
+        {
+          "id": 19,
+          "name": "topBarTrigger",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "none",
+            "top-click",
+            "canvas-click"
+          ],
+          "description": "Local click or tap region that reveals the receiver top bar."
+        },
+        {
+          "id": 20,
+          "name": "topBarShowCastCode",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Whether the regular Cast Code appears in the visible receiver top bar."
+        },
+        {
+          "id": 21,
+          "name": "topBarShowDebug",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Whether the visible receiver top bar offers the local debugging entry."
+        },
+        {
+          "id": 22,
+          "name": "startupWindowMode",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "fullscreen",
+            "windowed"
+          ],
+          "description": "Restart-only initial local receiver window mode."
         }
       ]
     },
@@ -8041,6 +8082,47 @@
           "min": 1,
           "max": 16384,
           "description": "Adaptive canvas maximum height in pixels."
+        },
+        {
+          "id": 19,
+          "name": "topBarTrigger",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "none",
+            "top-click",
+            "canvas-click"
+          ],
+          "description": "Local click or tap region that reveals the receiver top bar."
+        },
+        {
+          "id": 20,
+          "name": "topBarShowCastCode",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Whether the regular Cast Code appears in the visible receiver top bar."
+        },
+        {
+          "id": 21,
+          "name": "topBarShowDebug",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Whether the visible receiver top bar offers the local debugging entry."
+        },
+        {
+          "id": 22,
+          "name": "startupWindowMode",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "fullscreen",
+            "windowed"
+          ],
+          "description": "Restart-only initial local receiver window mode."
         }
       ]
     },
@@ -8233,6 +8315,47 @@
           "min": 1,
           "max": 16384,
           "description": "Adaptive canvas maximum height in pixels."
+        },
+        {
+          "id": 19,
+          "name": "topBarTrigger",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "none",
+            "top-click",
+            "canvas-click"
+          ],
+          "description": "Local click or tap region that reveals the receiver top bar."
+        },
+        {
+          "id": 20,
+          "name": "topBarShowCastCode",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Whether the regular Cast Code appears in the visible receiver top bar."
+        },
+        {
+          "id": 21,
+          "name": "topBarShowDebug",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Whether the visible receiver top bar offers the local debugging entry."
+        },
+        {
+          "id": 22,
+          "name": "startupWindowMode",
+          "type": "enum",
+          "required": false,
+          "deprecated": false,
+          "enum": [
+            "fullscreen",
+            "windowed"
+          ],
+          "description": "Restart-only initial local receiver window mode."
         }
       ]
     },
@@ -8461,7 +8584,7 @@
           "array": {
             "itemType": "string"
           },
-          "description": "Unique supported settings keys; meeting extension adds four separately advertised keys."
+          "description": "Unique supported settings keys including independently advertised extensions."
         },
         {
           "id": 2,

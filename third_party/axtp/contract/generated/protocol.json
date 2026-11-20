@@ -7698,6 +7698,43 @@
           "min": 1,
           "max": 16384,
           "description": "Adaptive canvas maximum height in pixels."
+        },
+        {
+          "fieldId": 19,
+          "name": "topBarTrigger",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "none",
+            "top-click",
+            "canvas-click"
+          ],
+          "description": "Local click or tap region that reveals the receiver top bar."
+        },
+        {
+          "fieldId": 20,
+          "name": "topBarShowCastCode",
+          "type": "bool",
+          "required": false,
+          "description": "Whether the regular Cast Code appears in the visible receiver top bar."
+        },
+        {
+          "fieldId": 21,
+          "name": "topBarShowDebug",
+          "type": "bool",
+          "required": false,
+          "description": "Whether the visible receiver top bar offers the local debugging entry."
+        },
+        {
+          "fieldId": 22,
+          "name": "startupWindowMode",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "fullscreen",
+            "windowed"
+          ],
+          "description": "Restart-only initial local receiver window mode."
         }
       ]
     },
@@ -7872,6 +7909,43 @@
           "min": 1,
           "max": 16384,
           "description": "Adaptive canvas maximum height in pixels."
+        },
+        {
+          "fieldId": 19,
+          "name": "topBarTrigger",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "none",
+            "top-click",
+            "canvas-click"
+          ],
+          "description": "Local click or tap region that reveals the receiver top bar."
+        },
+        {
+          "fieldId": 20,
+          "name": "topBarShowCastCode",
+          "type": "bool",
+          "required": false,
+          "description": "Whether the regular Cast Code appears in the visible receiver top bar."
+        },
+        {
+          "fieldId": 21,
+          "name": "topBarShowDebug",
+          "type": "bool",
+          "required": false,
+          "description": "Whether the visible receiver top bar offers the local debugging entry."
+        },
+        {
+          "fieldId": 22,
+          "name": "startupWindowMode",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "fullscreen",
+            "windowed"
+          ],
+          "description": "Restart-only initial local receiver window mode."
         }
       ]
     },
@@ -8046,6 +8120,43 @@
           "min": 1,
           "max": 16384,
           "description": "Adaptive canvas maximum height in pixels."
+        },
+        {
+          "fieldId": 19,
+          "name": "topBarTrigger",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "none",
+            "top-click",
+            "canvas-click"
+          ],
+          "description": "Local click or tap region that reveals the receiver top bar."
+        },
+        {
+          "fieldId": 20,
+          "name": "topBarShowCastCode",
+          "type": "bool",
+          "required": false,
+          "description": "Whether the regular Cast Code appears in the visible receiver top bar."
+        },
+        {
+          "fieldId": 21,
+          "name": "topBarShowDebug",
+          "type": "bool",
+          "required": false,
+          "description": "Whether the visible receiver top bar offers the local debugging entry."
+        },
+        {
+          "fieldId": 22,
+          "name": "startupWindowMode",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "fullscreen",
+            "windowed"
+          ],
+          "description": "Restart-only initial local receiver window mode."
         }
       ]
     },
@@ -8253,7 +8364,7 @@
           "array": {
             "itemType": "string"
           },
-          "description": "Unique supported settings keys; meeting extension adds four separately advertised keys."
+          "description": "Unique supported settings keys including independently advertised extensions."
         },
         {
           "fieldId": 2,

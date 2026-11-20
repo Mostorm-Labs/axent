@@ -3,6 +3,15 @@
 Reviewed combined scope, 2026-10-20. [Normative settings contract](../../specs/46-cast-settings.md)
 and [adoption](../protocol/cast/cast.presentationSettings.md) own message semantics.
 
+## 接收窗口设置流程
+
+1. 启动器和控制台读取 `cast.getControlCapabilities`，仅为接收端声明的窗口字段提供编辑入口。
+2. 使用 `cast.getStatus` 返回的运行实例和设置版本提交单字段更新。
+3. 等待终态操作结果，或使用原 `commandId` 查询 `cast.getControlOperation`。收到版本冲突时刷新快照，由操作者重新提交。
+4. 顶栏触发区域、Cast Code 和调试入口由窗口即时采用。启动窗口模式更新下一次启动意图。调用方使用 `persist` 请求接收端保存。
+
+字段定义和接收端默认值见 [窗口设置合同](../../specs/46-cast-settings.md#receiver-window-preferences)。
+
 ## S1: Discovery and two-barrier synchronization
 
 Subscribe P0 participating events and presentationSettingsChanged. Discover the

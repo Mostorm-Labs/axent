@@ -3317,6 +3317,10 @@ types:
       - { id: 0x10, name: baseHeight, type: uint32, required: false, min: 1, max: 16384, description: Fixed or preferred canvas height in pixels. }
       - { id: 0x11, name: maxWidth, type: uint32, required: false, min: 1, max: 16384, description: Adaptive canvas maximum width in pixels. }
       - { id: 0x12, name: maxHeight, type: uint32, required: false, min: 1, max: 16384, description: Adaptive canvas maximum height in pixels. }
+      - { id: 0x13, name: topBarTrigger, type: enum, enum: [none, top-click, canvas-click], required: false, description: Local click or tap region that reveals the receiver top bar. }
+      - { id: 0x14, name: topBarShowCastCode, type: bool, required: false, description: Whether the regular Cast Code appears in the visible receiver top bar. }
+      - { id: 0x15, name: topBarShowDebug, type: bool, required: false, description: Whether the visible receiver top bar offers the local debugging entry. }
+      - { id: 0x16, name: startupWindowMode, type: enum, enum: [fullscreen, windowed], required: false, description: Restart-only initial local receiver window mode. }
 
   CastPresentationSettingsValues:
     kind: object
@@ -3341,6 +3345,10 @@ types:
       - { id: 0x10, name: baseHeight, type: uint32, required: false, min: 1, max: 16384, description: Fixed or preferred canvas height in pixels. }
       - { id: 0x11, name: maxWidth, type: uint32, required: false, min: 1, max: 16384, description: Adaptive canvas maximum width in pixels. }
       - { id: 0x12, name: maxHeight, type: uint32, required: false, min: 1, max: 16384, description: Adaptive canvas maximum height in pixels. }
+      - { id: 0x13, name: topBarTrigger, type: enum, enum: [none, top-click, canvas-click], required: false, description: Local click or tap region that reveals the receiver top bar. }
+      - { id: 0x14, name: topBarShowCastCode, type: bool, required: false, description: Whether the regular Cast Code appears in the visible receiver top bar. }
+      - { id: 0x15, name: topBarShowDebug, type: bool, required: false, description: Whether the visible receiver top bar offers the local debugging entry. }
+      - { id: 0x16, name: startupWindowMode, type: enum, enum: [fullscreen, windowed], required: false, description: Restart-only initial local receiver window mode. }
 
   CastPresentationStartupSettings:
     kind: object
@@ -3365,6 +3373,10 @@ types:
       - { id: 0x10, name: baseHeight, type: uint32, required: false, min: 1, max: 16384, description: Fixed or preferred canvas height in pixels. }
       - { id: 0x11, name: maxWidth, type: uint32, required: false, min: 1, max: 16384, description: Adaptive canvas maximum width in pixels. }
       - { id: 0x12, name: maxHeight, type: uint32, required: false, min: 1, max: 16384, description: Adaptive canvas maximum height in pixels. }
+      - { id: 0x13, name: topBarTrigger, type: enum, enum: [none, top-click, canvas-click], required: false, description: Local click or tap region that reveals the receiver top bar. }
+      - { id: 0x14, name: topBarShowCastCode, type: bool, required: false, description: Whether the regular Cast Code appears in the visible receiver top bar. }
+      - { id: 0x15, name: topBarShowDebug, type: bool, required: false, description: Whether the visible receiver top bar offers the local debugging entry. }
+      - { id: 0x16, name: startupWindowMode, type: enum, enum: [fullscreen, windowed], required: false, description: Restart-only initial local receiver window mode. }
 
   CastPresentationSettingsState:
     kind: object
@@ -3400,7 +3412,7 @@ types:
     kind: object
     description: Optional P1 field and effect partition; conditional choices/modes/minimum are required for corresponding supported keys, never inferred defaults.
     fields:
-      - { id: 0x01, name: fields, type: array, array: { item_type: string }, required: true, description: Unique supported settings keys; meeting extension adds four separately advertised keys. }
+      - { id: 0x01, name: fields, type: array, array: { item_type: string }, required: true, description: Unique supported settings keys including independently advertised extensions. }
       - { id: 0x02, name: liveFields, type: array, array: { item_type: string }, required: true, description: Live effect subset; disjoint from restartOnlyFields and together exactly fields. }
       - { id: 0x03, name: restartOnlyFields, type: array, array: { item_type: string }, required: true, description: Restart-only subset; updates never automatically restart current media. }
       - { id: 0x04, name: supportsPersistence, type: bool, required: true, description: Whether explicit field-only save requests are supported. }

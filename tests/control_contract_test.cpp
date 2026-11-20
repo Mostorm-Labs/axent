@@ -81,6 +81,18 @@ int main()
     if(!validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 17;
     params["patch"]={{"presentationFocusOnDoubleClick","false"}};
     if(validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 16;
+    const nlohmann::json windowPreferences={{"topBarTrigger","top-click"},{"topBarShowCastCode",false},
+        {"topBarShowDebug",true},{"startupWindowMode","fullscreen"}};
+    for(const auto& [field,value]:windowPreferences.items()){
+        params["patch"]={{field,value}};
+        if(!validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 18;
+    }
+    if(!validate_object("CastPresentationSettingsValues",windowPreferences)||
+        !validate_object("CastPresentationStartupSettings",{{"startupWindowMode","fullscreen"}}))return 19;
+    params["patch"]={{"topBarTrigger","hover"}};
+    if(validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 20;
+    params["patch"]={{"topBarShowDebug","true"}};
+    if(validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 21;
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-field-initializers"

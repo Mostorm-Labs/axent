@@ -14,6 +14,14 @@ after event loss, timeout or reconnection without affecting a replacement slot.
 The host owns state capture, mutation, media cleanup, admission and audio policy.
 AXTP owns the observable contract, identities, limits, synchronization and errors.
 
+## 接收端窗口设置
+
+设备管理员可以在控制台或 Launcher 设置投屏窗口的顶栏触发方式、顶栏 Cast Code、
+本机调试入口和下次启动的全屏状态。新安装的 NearCast 首次接收时以全屏呈现，
+顶栏默认隐藏。开启顶栏时默认显示 Cast Code，调试入口需手动开启。
+连接认证使用独立的顶部验证码弹窗。Launcher 通过控制面读写配置，配置由接收端保存。
+协议流程见 [窗口设置流程](../flows/cast-presentation-settings.md#接收窗口设置流程)。
+
 P0 includes four methods, five events, three optional capabilities, additive
 getStatus/windowChanged fields, F1–F6, generated metadata and C01–C11 conformance.
 The follow-up user request explicitly extends this work to full P1 settings and

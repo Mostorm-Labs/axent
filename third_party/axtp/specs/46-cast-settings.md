@@ -27,7 +27,7 @@ wrong-type patches return INVALID_ARGUMENT. persist is a required boolean.
 No request implicitly saves another field's temporary modification. Global
 settings operations have no presentation target.
 
-Capability fields is a unique subset of these keys. liveFields and
+Capability fields is a unique subset of the base and adopted extension keys. liveFields and
 restartOnlyFields MUST be disjoint, unique and together equal fields. The
 partition declares behavior; AXTP does not make NearCast's first policy global.
 StartupSettings permits all supported optional keys, but activeStartup MUST contain
@@ -53,6 +53,32 @@ locks are reported through lockedFields and field issues and rechecked at
 execution. A locked write returns INVALID_STATE / SETTINGS_LOCKED. AXTP does not
 declare historical CLI arguments permanently locked or prescribe startup priority.
 No product capacity list, filesystem path or default profile is a global limit.
+
+### Receiver window preferences
+
+Hosts with a local receiving window MAY advertise the following independent
+keys in `presentationSettings.fields`. Advertising an enum key includes all
+of its listed values. Clients discover each key before writing it and use the
+advertised `liveFields` and `restartOnlyFields` partition.
+
+| Key | Values | Effect when supported |
+|---|---|---|
+| `topBarTrigger` | `none`, `top-click`, `canvas-click` | Live. `none` suppresses the top bar. `top-click` reveals it on a local click or tap in the top strip of the receiver canvas. `canvas-click` reveals it on a local click or tap anywhere in the canvas. Pointer motion alone does not reveal a hidden bar. |
+| `topBarShowCastCode` | Boolean | Live. Controls the regular Cast Code in the visible bar. Independent authentication and standalone code popups retain their display leases. |
+| `topBarShowDebug` | Boolean | Live. Controls the local debug entry in the visible bar. It grants no additional protocol privileges. |
+| `startupWindowMode` | `fullscreen`, `windowed` | Restart-only. Selects the initial native size and mode of the next receiver window. Settings writes do not show an idle window, resize the current window or interrupt its media. |
+
+Each write uses the single-field patch and settings revision rules below.
+A live write reports `applied` after the window owner adopts the policy.
+A saved restart-only value appears in `persistedValues`, while
+`activeStartup` retains the previous startup intent until a new runtime starts.
+Changing fullscreen interactively updates the regular `window` observation.
+The startup preference remains independent of interactive fullscreen, layout,
+media dimensions, receiver admission and input permission.
+
+NearCast's defaults are `none`, `true`, `false`, and `fullscreen`, respectively.
+With no session or sharing request, the receiver can listen with a hidden window.
+Clients without the extension can continue using the existing launch and control API.
 
 ## Settings facts and revisions
 

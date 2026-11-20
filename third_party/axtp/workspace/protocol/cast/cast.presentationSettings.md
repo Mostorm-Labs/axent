@@ -41,6 +41,16 @@ prove the protocol guarantees using substitute owners.
 
 ## 3. Methods
 
+### 窗口设置扩展
+
+本扩展沿用上述方法、事件和能力 ID。调用方先通过
+`cast.getControlCapabilities` 检查 `presentationSettings.fields`，再通过
+`cast.getStatus` 读取设置快照。每次带当前 `expectedSettingsRevision`
+提交一个字段，并使用新 `commandId`。四个可选字段及其效果见
+[窗口设置合同](../../../specs/46-cast-settings.md#receiver-window-preferences)。
+`startupWindowMode` 保存后应显示为下次启动生效。Launcher 通过同一控制面
+读写设置，由接收端存储。既有启动命令继续可用。
+
 ### 3.0 方法速览
 
 | Method | Request | Response |

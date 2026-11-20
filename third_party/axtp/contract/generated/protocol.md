@@ -6579,6 +6579,10 @@ All fields optional structurally but exactly one key required semantically; unkn
 | ?baseHeight | UInt32 | 0x10 | Fixed or preferred canvas height in pixels. | min=1, max=16384 | Omit if not used. |
 | ?maxWidth | UInt32 | 0x11 | Adaptive canvas maximum width in pixels. | min=1, max=16384 | Omit if not used. |
 | ?maxHeight | UInt32 | 0x12 | Adaptive canvas maximum height in pixels. | min=1, max=16384 | Omit if not used. |
+| ?topBarTrigger | Enum | 0x13 | Local click or tap region that reveals the receiver top bar. | enum=none/top-click/canvas-click | Omit if not used. |
+| ?topBarShowCastCode | Boolean | 0x14 | Whether the regular Cast Code appears in the visible receiver top bar. | None | Omit if not used. |
+| ?topBarShowDebug | Boolean | 0x15 | Whether the visible receiver top bar offers the local debugging entry. | None | Omit if not used. |
+| ?startupWindowMode | Enum | 0x16 | Restart-only initial local receiver window mode. | enum=fullscreen/windowed | Omit if not used. |
 
 ---
 
@@ -6631,6 +6635,10 @@ Supported setting values only; configured/known persisted projections are comple
 | ?baseHeight | UInt32 | 0x10 | Fixed or preferred canvas height in pixels. | min=1, max=16384 | Omit if not used. |
 | ?maxWidth | UInt32 | 0x11 | Adaptive canvas maximum width in pixels. | min=1, max=16384 | Omit if not used. |
 | ?maxHeight | UInt32 | 0x12 | Adaptive canvas maximum height in pixels. | min=1, max=16384 | Omit if not used. |
+| ?topBarTrigger | Enum | 0x13 | Local click or tap region that reveals the receiver top bar. | enum=none/top-click/canvas-click | Omit if not used. |
+| ?topBarShowCastCode | Boolean | 0x14 | Whether the regular Cast Code appears in the visible receiver top bar. | None | Omit if not used. |
+| ?topBarShowDebug | Boolean | 0x15 | Whether the visible receiver top bar offers the local debugging entry. | None | Omit if not used. |
+| ?startupWindowMode | Enum | 0x16 | Restart-only initial local receiver window mode. | enum=fullscreen/windowed | Omit if not used. |
 
 ---
 
@@ -6671,6 +6679,10 @@ Exactly the capability-declared restart-only intent accepted at this host startu
 | ?baseHeight | UInt32 | 0x10 | Fixed or preferred canvas height in pixels. | min=1, max=16384 | Omit if not used. |
 | ?maxWidth | UInt32 | 0x11 | Adaptive canvas maximum width in pixels. | min=1, max=16384 | Omit if not used. |
 | ?maxHeight | UInt32 | 0x12 | Adaptive canvas maximum height in pixels. | min=1, max=16384 | Omit if not used. |
+| ?topBarTrigger | Enum | 0x13 | Local click or tap region that reveals the receiver top bar. | enum=none/top-click/canvas-click | Omit if not used. |
+| ?topBarShowCastCode | Boolean | 0x14 | Whether the regular Cast Code appears in the visible receiver top bar. | None | Omit if not used. |
+| ?topBarShowDebug | Boolean | 0x15 | Whether the visible receiver top bar offers the local debugging entry. | None | Omit if not used. |
+| ?startupWindowMode | Enum | 0x16 | Restart-only initial local receiver window mode. | enum=fullscreen/windowed | Omit if not used. |
 
 ---
 
