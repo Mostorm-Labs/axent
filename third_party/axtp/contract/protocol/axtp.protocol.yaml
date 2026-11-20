@@ -5548,7 +5548,8 @@ schemas:
           - none
           - top-click
           - canvas-click
-        description: Local click or tap region that reveals the receiver top bar.
+          - always
+        description: Timing for appearance of the enabled receiver controls and background.
       - fieldId: 20
         name: topBarShowCastCode
         type: bool
@@ -5567,6 +5568,26 @@ schemas:
           - fullscreen
           - windowed
         description: Restart-only initial local receiver window mode.
+      - fieldId: 23
+        name: topBarShowLayout
+        type: bool
+        required: false
+        description: Whether to show the layout selector at the left of the receiver chrome.
+      - fieldId: 24
+        name: topBarShowMinimize
+        type: bool
+        required: false
+        description: Whether to show the window minimize button.
+      - fieldId: 25
+        name: topBarShowMaximize
+        type: bool
+        required: false
+        description: Whether to show the window maximize button.
+      - fieldId: 26
+        name: topBarShowBackground
+        type: bool
+        required: false
+        description: Whether to show the full-width top bar background independently of its elements.
   CastPresentationSettingsValues:
     kind: object
     description: Supported setting values only; configured/known persisted projections are complete, while unconfirmed
@@ -5704,7 +5725,8 @@ schemas:
           - none
           - top-click
           - canvas-click
-        description: Local click or tap region that reveals the receiver top bar.
+          - always
+        description: Timing for appearance of the enabled receiver controls and background.
       - fieldId: 20
         name: topBarShowCastCode
         type: bool
@@ -5723,6 +5745,26 @@ schemas:
           - fullscreen
           - windowed
         description: Restart-only initial local receiver window mode.
+      - fieldId: 23
+        name: topBarShowLayout
+        type: bool
+        required: false
+        description: Whether to show the layout selector at the left of the receiver chrome.
+      - fieldId: 24
+        name: topBarShowMinimize
+        type: bool
+        required: false
+        description: Whether to show the window minimize button.
+      - fieldId: 25
+        name: topBarShowMaximize
+        type: bool
+        required: false
+        description: Whether to show the window maximize button.
+      - fieldId: 26
+        name: topBarShowBackground
+        type: bool
+        required: false
+        description: Whether to show the full-width top bar background independently of its elements.
   CastPresentationStartupSettings:
     kind: object
     description: Exactly the capability-declared restart-only intent accepted at this host startup; distinct from
@@ -5860,7 +5902,8 @@ schemas:
           - none
           - top-click
           - canvas-click
-        description: Local click or tap region that reveals the receiver top bar.
+          - always
+        description: Timing for appearance of the enabled receiver controls and background.
       - fieldId: 20
         name: topBarShowCastCode
         type: bool
@@ -5879,6 +5922,26 @@ schemas:
           - fullscreen
           - windowed
         description: Restart-only initial local receiver window mode.
+      - fieldId: 23
+        name: topBarShowLayout
+        type: bool
+        required: false
+        description: Whether to show the layout selector at the left of the receiver chrome.
+      - fieldId: 24
+        name: topBarShowMinimize
+        type: bool
+        required: false
+        description: Whether to show the window minimize button.
+      - fieldId: 25
+        name: topBarShowMaximize
+        type: bool
+        required: false
+        description: Whether to show the window maximize button.
+      - fieldId: 26
+        name: topBarShowBackground
+        type: bool
+        required: false
+        description: Whether to show the full-width top bar background independently of its elements.
   CastPresentationSettingsState:
     kind: object
     description: Full bounded settings state; desired/adopted/startup/stored facts and two independent event barriers must

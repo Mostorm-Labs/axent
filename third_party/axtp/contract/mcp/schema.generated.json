@@ -7859,9 +7859,10 @@
           "enum": [
             "none",
             "top-click",
-            "canvas-click"
+            "canvas-click",
+            "always"
           ],
-          "description": "Local click or tap region that reveals the receiver top bar."
+          "description": "Timing for appearance of the enabled receiver controls and background."
         },
         {
           "id": 20,
@@ -7890,6 +7891,38 @@
             "windowed"
           ],
           "description": "Restart-only initial local receiver window mode."
+        },
+        {
+          "id": 23,
+          "name": "topBarShowLayout",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Whether to show the layout selector at the left of the receiver chrome."
+        },
+        {
+          "id": 24,
+          "name": "topBarShowMinimize",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Whether to show the window minimize button."
+        },
+        {
+          "id": 25,
+          "name": "topBarShowMaximize",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Whether to show the window maximize button."
+        },
+        {
+          "id": 26,
+          "name": "topBarShowBackground",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Whether to show the full-width top bar background independently of its elements."
         }
       ]
     },
@@ -8092,9 +8125,10 @@
           "enum": [
             "none",
             "top-click",
-            "canvas-click"
+            "canvas-click",
+            "always"
           ],
-          "description": "Local click or tap region that reveals the receiver top bar."
+          "description": "Timing for appearance of the enabled receiver controls and background."
         },
         {
           "id": 20,
@@ -8123,6 +8157,38 @@
             "windowed"
           ],
           "description": "Restart-only initial local receiver window mode."
+        },
+        {
+          "id": 23,
+          "name": "topBarShowLayout",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Whether to show the layout selector at the left of the receiver chrome."
+        },
+        {
+          "id": 24,
+          "name": "topBarShowMinimize",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Whether to show the window minimize button."
+        },
+        {
+          "id": 25,
+          "name": "topBarShowMaximize",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Whether to show the window maximize button."
+        },
+        {
+          "id": 26,
+          "name": "topBarShowBackground",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Whether to show the full-width top bar background independently of its elements."
         }
       ]
     },
@@ -8325,9 +8391,10 @@
           "enum": [
             "none",
             "top-click",
-            "canvas-click"
+            "canvas-click",
+            "always"
           ],
-          "description": "Local click or tap region that reveals the receiver top bar."
+          "description": "Timing for appearance of the enabled receiver controls and background."
         },
         {
           "id": 20,
@@ -8356,6 +8423,38 @@
             "windowed"
           ],
           "description": "Restart-only initial local receiver window mode."
+        },
+        {
+          "id": 23,
+          "name": "topBarShowLayout",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Whether to show the layout selector at the left of the receiver chrome."
+        },
+        {
+          "id": 24,
+          "name": "topBarShowMinimize",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Whether to show the window minimize button."
+        },
+        {
+          "id": 25,
+          "name": "topBarShowMaximize",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Whether to show the window maximize button."
+        },
+        {
+          "id": 26,
+          "name": "topBarShowBackground",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Whether to show the full-width top bar background independently of its elements."
         }
       ]
     },

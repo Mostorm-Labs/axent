@@ -6579,10 +6579,14 @@ All fields optional structurally but exactly one key required semantically; unkn
 | ?baseHeight | UInt32 | 0x10 | Fixed or preferred canvas height in pixels. | min=1, max=16384 | Omit if not used. |
 | ?maxWidth | UInt32 | 0x11 | Adaptive canvas maximum width in pixels. | min=1, max=16384 | Omit if not used. |
 | ?maxHeight | UInt32 | 0x12 | Adaptive canvas maximum height in pixels. | min=1, max=16384 | Omit if not used. |
-| ?topBarTrigger | Enum | 0x13 | Local click or tap region that reveals the receiver top bar. | enum=none/top-click/canvas-click | Omit if not used. |
+| ?topBarTrigger | Enum | 0x13 | Timing for appearance of the enabled receiver controls and background. | enum=none/top-click/canvas-click/always | Omit if not used. |
 | ?topBarShowCastCode | Boolean | 0x14 | Whether the regular Cast Code appears in the visible receiver top bar. | None | Omit if not used. |
 | ?topBarShowDebug | Boolean | 0x15 | Whether the visible receiver top bar offers the local debugging entry. | None | Omit if not used. |
 | ?startupWindowMode | Enum | 0x16 | Restart-only initial local receiver window mode. | enum=fullscreen/windowed | Omit if not used. |
+| ?topBarShowLayout | Boolean | 0x17 | Whether to show the layout selector at the left of the receiver chrome. | None | Omit if not used. |
+| ?topBarShowMinimize | Boolean | 0x18 | Whether to show the window minimize button. | None | Omit if not used. |
+| ?topBarShowMaximize | Boolean | 0x19 | Whether to show the window maximize button. | None | Omit if not used. |
+| ?topBarShowBackground | Boolean | 0x1A | Whether to show the full-width top bar background independently of its elements. | None | Omit if not used. |
 
 ---
 
@@ -6635,10 +6639,14 @@ Supported setting values only; configured/known persisted projections are comple
 | ?baseHeight | UInt32 | 0x10 | Fixed or preferred canvas height in pixels. | min=1, max=16384 | Omit if not used. |
 | ?maxWidth | UInt32 | 0x11 | Adaptive canvas maximum width in pixels. | min=1, max=16384 | Omit if not used. |
 | ?maxHeight | UInt32 | 0x12 | Adaptive canvas maximum height in pixels. | min=1, max=16384 | Omit if not used. |
-| ?topBarTrigger | Enum | 0x13 | Local click or tap region that reveals the receiver top bar. | enum=none/top-click/canvas-click | Omit if not used. |
+| ?topBarTrigger | Enum | 0x13 | Timing for appearance of the enabled receiver controls and background. | enum=none/top-click/canvas-click/always | Omit if not used. |
 | ?topBarShowCastCode | Boolean | 0x14 | Whether the regular Cast Code appears in the visible receiver top bar. | None | Omit if not used. |
 | ?topBarShowDebug | Boolean | 0x15 | Whether the visible receiver top bar offers the local debugging entry. | None | Omit if not used. |
 | ?startupWindowMode | Enum | 0x16 | Restart-only initial local receiver window mode. | enum=fullscreen/windowed | Omit if not used. |
+| ?topBarShowLayout | Boolean | 0x17 | Whether to show the layout selector at the left of the receiver chrome. | None | Omit if not used. |
+| ?topBarShowMinimize | Boolean | 0x18 | Whether to show the window minimize button. | None | Omit if not used. |
+| ?topBarShowMaximize | Boolean | 0x19 | Whether to show the window maximize button. | None | Omit if not used. |
+| ?topBarShowBackground | Boolean | 0x1A | Whether to show the full-width top bar background independently of its elements. | None | Omit if not used. |
 
 ---
 
@@ -6679,10 +6687,14 @@ Exactly the capability-declared restart-only intent accepted at this host startu
 | ?baseHeight | UInt32 | 0x10 | Fixed or preferred canvas height in pixels. | min=1, max=16384 | Omit if not used. |
 | ?maxWidth | UInt32 | 0x11 | Adaptive canvas maximum width in pixels. | min=1, max=16384 | Omit if not used. |
 | ?maxHeight | UInt32 | 0x12 | Adaptive canvas maximum height in pixels. | min=1, max=16384 | Omit if not used. |
-| ?topBarTrigger | Enum | 0x13 | Local click or tap region that reveals the receiver top bar. | enum=none/top-click/canvas-click | Omit if not used. |
+| ?topBarTrigger | Enum | 0x13 | Timing for appearance of the enabled receiver controls and background. | enum=none/top-click/canvas-click/always | Omit if not used. |
 | ?topBarShowCastCode | Boolean | 0x14 | Whether the regular Cast Code appears in the visible receiver top bar. | None | Omit if not used. |
 | ?topBarShowDebug | Boolean | 0x15 | Whether the visible receiver top bar offers the local debugging entry. | None | Omit if not used. |
 | ?startupWindowMode | Enum | 0x16 | Restart-only initial local receiver window mode. | enum=fullscreen/windowed | Omit if not used. |
+| ?topBarShowLayout | Boolean | 0x17 | Whether to show the layout selector at the left of the receiver chrome. | None | Omit if not used. |
+| ?topBarShowMinimize | Boolean | 0x18 | Whether to show the window minimize button. | None | Omit if not used. |
+| ?topBarShowMaximize | Boolean | 0x19 | Whether to show the window maximize button. | None | Omit if not used. |
+| ?topBarShowBackground | Boolean | 0x1A | Whether to show the full-width top bar background independently of its elements. | None | Omit if not used. |
 
 ---
 

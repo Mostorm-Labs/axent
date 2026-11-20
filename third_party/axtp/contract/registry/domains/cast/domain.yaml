@@ -3317,10 +3317,14 @@ types:
       - { id: 0x10, name: baseHeight, type: uint32, required: false, min: 1, max: 16384, description: Fixed or preferred canvas height in pixels. }
       - { id: 0x11, name: maxWidth, type: uint32, required: false, min: 1, max: 16384, description: Adaptive canvas maximum width in pixels. }
       - { id: 0x12, name: maxHeight, type: uint32, required: false, min: 1, max: 16384, description: Adaptive canvas maximum height in pixels. }
-      - { id: 0x13, name: topBarTrigger, type: enum, enum: [none, top-click, canvas-click], required: false, description: Local click or tap region that reveals the receiver top bar. }
+      - { id: 0x13, name: topBarTrigger, type: enum, enum: [none, top-click, canvas-click, always], required: false, description: Timing for appearance of the enabled receiver controls and background. }
       - { id: 0x14, name: topBarShowCastCode, type: bool, required: false, description: Whether the regular Cast Code appears in the visible receiver top bar. }
       - { id: 0x15, name: topBarShowDebug, type: bool, required: false, description: Whether the visible receiver top bar offers the local debugging entry. }
       - { id: 0x16, name: startupWindowMode, type: enum, enum: [fullscreen, windowed], required: false, description: Restart-only initial local receiver window mode. }
+      - { id: 0x17, name: topBarShowLayout, type: bool, required: false, description: Whether to show the layout selector at the left of the receiver chrome. }
+      - { id: 0x18, name: topBarShowMinimize, type: bool, required: false, description: Whether to show the window minimize button. }
+      - { id: 0x19, name: topBarShowMaximize, type: bool, required: false, description: Whether to show the window maximize button. }
+      - { id: 0x1A, name: topBarShowBackground, type: bool, required: false, description: Whether to show the full-width top bar background independently of its elements. }
 
   CastPresentationSettingsValues:
     kind: object
@@ -3345,10 +3349,14 @@ types:
       - { id: 0x10, name: baseHeight, type: uint32, required: false, min: 1, max: 16384, description: Fixed or preferred canvas height in pixels. }
       - { id: 0x11, name: maxWidth, type: uint32, required: false, min: 1, max: 16384, description: Adaptive canvas maximum width in pixels. }
       - { id: 0x12, name: maxHeight, type: uint32, required: false, min: 1, max: 16384, description: Adaptive canvas maximum height in pixels. }
-      - { id: 0x13, name: topBarTrigger, type: enum, enum: [none, top-click, canvas-click], required: false, description: Local click or tap region that reveals the receiver top bar. }
+      - { id: 0x13, name: topBarTrigger, type: enum, enum: [none, top-click, canvas-click, always], required: false, description: Timing for appearance of the enabled receiver controls and background. }
       - { id: 0x14, name: topBarShowCastCode, type: bool, required: false, description: Whether the regular Cast Code appears in the visible receiver top bar. }
       - { id: 0x15, name: topBarShowDebug, type: bool, required: false, description: Whether the visible receiver top bar offers the local debugging entry. }
       - { id: 0x16, name: startupWindowMode, type: enum, enum: [fullscreen, windowed], required: false, description: Restart-only initial local receiver window mode. }
+      - { id: 0x17, name: topBarShowLayout, type: bool, required: false, description: Whether to show the layout selector at the left of the receiver chrome. }
+      - { id: 0x18, name: topBarShowMinimize, type: bool, required: false, description: Whether to show the window minimize button. }
+      - { id: 0x19, name: topBarShowMaximize, type: bool, required: false, description: Whether to show the window maximize button. }
+      - { id: 0x1A, name: topBarShowBackground, type: bool, required: false, description: Whether to show the full-width top bar background independently of its elements. }
 
   CastPresentationStartupSettings:
     kind: object
@@ -3373,10 +3381,14 @@ types:
       - { id: 0x10, name: baseHeight, type: uint32, required: false, min: 1, max: 16384, description: Fixed or preferred canvas height in pixels. }
       - { id: 0x11, name: maxWidth, type: uint32, required: false, min: 1, max: 16384, description: Adaptive canvas maximum width in pixels. }
       - { id: 0x12, name: maxHeight, type: uint32, required: false, min: 1, max: 16384, description: Adaptive canvas maximum height in pixels. }
-      - { id: 0x13, name: topBarTrigger, type: enum, enum: [none, top-click, canvas-click], required: false, description: Local click or tap region that reveals the receiver top bar. }
+      - { id: 0x13, name: topBarTrigger, type: enum, enum: [none, top-click, canvas-click, always], required: false, description: Timing for appearance of the enabled receiver controls and background. }
       - { id: 0x14, name: topBarShowCastCode, type: bool, required: false, description: Whether the regular Cast Code appears in the visible receiver top bar. }
       - { id: 0x15, name: topBarShowDebug, type: bool, required: false, description: Whether the visible receiver top bar offers the local debugging entry. }
       - { id: 0x16, name: startupWindowMode, type: enum, enum: [fullscreen, windowed], required: false, description: Restart-only initial local receiver window mode. }
+      - { id: 0x17, name: topBarShowLayout, type: bool, required: false, description: Whether to show the layout selector at the left of the receiver chrome. }
+      - { id: 0x18, name: topBarShowMinimize, type: bool, required: false, description: Whether to show the window minimize button. }
+      - { id: 0x19, name: topBarShowMaximize, type: bool, required: false, description: Whether to show the window maximize button. }
+      - { id: 0x1A, name: topBarShowBackground, type: bool, required: false, description: Whether to show the full-width top bar background independently of its elements. }
 
   CastPresentationSettingsState:
     kind: object

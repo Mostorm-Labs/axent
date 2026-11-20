@@ -56,16 +56,22 @@ No product capacity list, filesystem path or default profile is a global limit.
 
 ### Receiver window preferences
 
-Hosts with a local receiving window MAY advertise the following independent
-keys in `presentationSettings.fields`. Advertising an enum key includes all
-of its listed values. Clients discover each key before writing it and use the
-advertised `liveFields` and `restartOnlyFields` partition.
+Hosts with a local receiving window MAY advertise the following keys in
+`presentationSettings.fields`. Clients discover each key before writing it
+and use the advertised `liveFields` and `restartOnlyFields` partition.
+For compatibility, `always` is available when both `topBarTrigger` and
+`topBarShowBackground` are advertised. Earlier hosts support the three
+original trigger values.
 
 | Key | Values | Effect when supported |
 |---|---|---|
-| `topBarTrigger` | `none`, `top-click`, `canvas-click` | Live. `none` suppresses the top bar. `top-click` reveals it on a local click or tap in the top strip of the receiver canvas. `canvas-click` reveals it on a local click or tap anywhere in the canvas. Pointer motion alone does not reveal a hidden bar. |
-| `topBarShowCastCode` | Boolean | Live. Controls the regular Cast Code in the visible bar. Independent authentication and standalone code popups retain their display leases. |
-| `topBarShowDebug` | Boolean | Live. Controls the local debug entry in the visible bar. It grants no additional protocol privileges. |
+| `topBarTrigger` | `always`, `none`, `top-click`, `canvas-click` | Live. `always` shows the selected elements and background when the receiver window is visible. `none` suppresses them. `top-click` reveals them on a local click or tap in the top strip. `canvas-click` accepts a local click or tap anywhere in the canvas. Pointer motion alone cannot reveal them. |
+| `topBarShowLayout` | Boolean | Live. Shows the layout selector when the receiver supports layout selection. |
+| `topBarShowDebug` | Boolean | Live. Shows the debug settings button. Its visibility grants no additional protocol privileges. |
+| `topBarShowMinimize` | Boolean | Live. Shows the minimize button at the right edge if the maximize button is hidden. |
+| `topBarShowMaximize` | Boolean | Live. Shows the rightmost window size button. |
+| `topBarShowCastCode` | Boolean | Live. Shows the Cast Code in the receiver window. Standalone pairing and authentication popups keep their display leases. |
+| `topBarShowBackground` | Boolean | Live. Shows the full-width backing strip independently of the other controls. An element may appear over the picture without the strip. |
 | `startupWindowMode` | `fullscreen`, `windowed` | Restart-only. Selects the initial native size and mode of the next receiver window. Settings writes do not show an idle window, resize the current window or interrupt its media. |
 
 Each write uses the single-field patch and settings revision rules below.
@@ -76,7 +82,9 @@ Changing fullscreen interactively updates the regular `window` observation.
 The startup preference remains independent of interactive fullscreen, layout,
 media dimensions, receiver admission and input permission.
 
-NearCast's defaults are `none`, `true`, `false`, and `fullscreen`, respectively.
+NearCast defaults to `topBarTrigger=always` with only the layout selector
+enabled. The five other visibility switches default to false. The default
+startup window mode is `fullscreen`.
 With no session or sharing request, the receiver can listen with a hidden window.
 Clients without the extension can continue using the existing launch and control API.
 

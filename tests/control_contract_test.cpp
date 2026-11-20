@@ -81,8 +81,9 @@ int main()
     if(!validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 17;
     params["patch"]={{"presentationFocusOnDoubleClick","false"}};
     if(validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 16;
-    const nlohmann::json windowPreferences={{"topBarTrigger","top-click"},{"topBarShowCastCode",false},
-        {"topBarShowDebug",true},{"startupWindowMode","fullscreen"}};
+    const nlohmann::json windowPreferences={{"topBarTrigger","always"},{"topBarShowLayout",true},
+        {"topBarShowDebug",false},{"topBarShowMinimize",true},{"topBarShowMaximize",false},
+        {"topBarShowCastCode",false},{"topBarShowBackground",false},{"startupWindowMode","fullscreen"}};
     for(const auto& [field,value]:windowPreferences.items()){
         params["patch"]={{field,value}};
         if(!validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 18;
