@@ -42,7 +42,7 @@
 | Domain | Methods | Events |
 | ---- | ---- | ---- |
 | audio | 9 | 4 |
-| cast | 34 | 22 |
+| cast | 37 | 22 |
 | device | 4 | 1 |
 | firmware | 4 | 2 |
 | input | 2 | 0 |
@@ -226,6 +226,7 @@ Generated capabilities are the feature-level switches that runtimes and devices 
 | 0x160D | cast.meetingPresentation | cast | draft | object | CastMeetingPresentationCapability | Optional fixed main-plus-preview view with exact focus control and independently remembered audio-follow preference. |
 | 0x160E | cast.airplayControl | cast | draft | object | CastAirPlayControlCapability | Secret-free AirPlay authentication and discovery observation with live rename. |
 | 0x160F | cast.touchback | cast | draft | object | CastTouchbackCapability | Per-target input gate and presentation policy; event semantics are explicit and AirPlay is excluded. |
+| 0x1610 | cast.receiverSettings | cast | draft | bool | - | Optional receiver preference methods discovered by name. The state declares supported restart-only fields and current save availability. |
 | 0x1701 | software.config | software | draft | object | SoftwareConfigCapability | Device supports reading, setting, and resetting the runtime configuration of software objects (such as the Launcher) and emitting configuration change notifications. |
 | 0x1702 | software.updatePolicy | software | draft | object | SoftwareUpdatePolicyCapability | Device supports reading, setting, and resetting the automatic update policy of software objects (such as the Launcher) and emitting update policy change notifications. |
 | 0x1801 | sport.eventDetection | sport | draft | object | SportEventDetectionCapabilities | Device supports cross-sport event detection capability discovery, per-sport toggle control, runtime state events, and unified sport event delivery. |
@@ -318,7 +319,7 @@ The generated registry groups methods by domain. Each method keeps a stable `bit
 | Domain | Methods |
 | ---- | ---- |
 | audio | 1: audio.getAlgorithmConfig<br>2: audio.setAlgorithmConfig<br>0: audio.getAlgorithmCapabilities<br>3: audio.resetAlgorithmConfig<br>4: audio.getStreamCapabilities<br>5: audio.openStream<br>6: audio.closeStream<br>7: audio.getStreamState<br>8: audio.getStreamSourceState |
-| cast | 0: cast.getSession<br>1: cast.stopSession<br>2: cast.getAirPlayName<br>3: cast.setAirPlayName<br>4: cast.getAudio<br>5: cast.setAudio<br>6: cast.setMuted<br>7: cast.getPinCodeConfig<br>8: cast.setPinCodeConfig<br>9: cast.setPinCode<br>10: cast.getWindowState<br>11: cast.setWindowState<br>12: cast.getBackendStatus<br>13: cast.restartBackend<br>14: cast.getFlowControlState<br>15: cast.setRenderFps<br>16: cast.setFlowPolicy<br>17: cast.getStatus<br>18: cast.setAudioDelay<br>19: cast.setVideoStreamParams<br>20: cast.getControlCapabilities<br>21: cast.stopPresentation<br>22: cast.setSessionAudioEnabled<br>23: cast.getControlOperation<br>24: cast.setPresentationSettings<br>25: cast.getWebCastBackendState<br>26: cast.setPresentationFocus<br>27: cast.getTouchbackState<br>28: cast.setTouchbackEnabled<br>30: cast.setTouchbackResolutionPreference<br>31: cast.getInputMode<br>32: cast.setInputMode<br>33: cast.getTouchbackMaster<br>34: cast.setTouchbackMaster |
+| cast | 0: cast.getSession<br>1: cast.stopSession<br>2: cast.getAirPlayName<br>3: cast.setAirPlayName<br>4: cast.getAudio<br>5: cast.setAudio<br>6: cast.setMuted<br>7: cast.getPinCodeConfig<br>8: cast.setPinCodeConfig<br>9: cast.setPinCode<br>10: cast.getWindowState<br>11: cast.setWindowState<br>12: cast.getBackendStatus<br>13: cast.restartBackend<br>14: cast.getFlowControlState<br>15: cast.setRenderFps<br>16: cast.setFlowPolicy<br>17: cast.getStatus<br>18: cast.setAudioDelay<br>19: cast.setVideoStreamParams<br>20: cast.getControlCapabilities<br>21: cast.stopPresentation<br>22: cast.setSessionAudioEnabled<br>23: cast.getControlOperation<br>24: cast.setPresentationSettings<br>25: cast.getWebCastBackendState<br>26: cast.setPresentationFocus<br>27: cast.getTouchbackState<br>28: cast.setTouchbackEnabled<br>30: cast.setTouchbackResolutionPreference<br>31: cast.getInputMode<br>32: cast.setInputMode<br>33: cast.getTouchbackMaster<br>34: cast.setTouchbackMaster<br>35: cast.getReceiverSettings<br>36: cast.setReceiverSettings<br>37: cast.restoreReceiverSettings |
 | device | 0: device.getInfo<br>1: device.getPairingCode<br>2: device.getEnrollmentState<br>3: device.setEnrollmentState |
 | firmware | 0: firmware.getUpdateCapabilities<br>1: firmware.beginUpdate<br>3: firmware.getUpdateState<br>2: firmware.finishUpdate |
 | input | 0: input.openStream<br>1: input.closeStream |
@@ -759,6 +760,9 @@ Type: `AudioStreamSourceState`
 - [cast.setInputMode](#castsetinputmode)
 - [cast.getTouchbackMaster](#castgettouchbackmaster)
 - [cast.setTouchbackMaster](#castsettouchbackmaster)
+- [cast.getReceiverSettings](#castgetreceiversettings)
+- [cast.setReceiverSettings](#castsetreceiversettings)
+- [cast.restoreReceiverSettings](#castrestorereceiversettings)
 
 ---
 
@@ -2262,6 +2266,121 @@ Type: `CastTouchbackMasterState`
 | enabled | Boolean | 0x01 | Receiver-wide input gate intent. | None | N/A |
 | revision | String | 0x02 | Canonical uint64 decimal gate revision. | maxLength=20 | N/A |
 | runtimeInstanceId | String | 0x03 | Receiver runtime UUID; revisions only compare within this instance. | maxLength=36 | N/A |
+
+---
+
+### cast.getReceiverSettings
+
+Read configured and applied receiver startup preferences and the persisted override revision.
+
+- Method ID: `0x1624`
+- Domain: `cast`
+- bitOffset: `35`
+- Status: `draft`
+- Added in v1.0.0
+- Encodings: `json`
+- Required Capabilities: `cast.receiverSettings`
+- Possible Events: `None`
+- Possible Errors: `SUCCESS`, `INVALID_ARGUMENT`, `UNAVAILABLE`
+
+#### Request Fields
+
+Type: `Empty`
+
+No fields.
+
+#### Response Fields
+
+Type: `CastReceiverSettingsState`
+
+| Name | Type | Field ID | Description | Value Restrictions | ?Default Behavior |
+| ---- | :---: | :---: | ---- | :---: | ---- |
+| runtimeInstanceId | String | 0x01 | Canonical UUID for this receiver process lifetime. | maxLength=36 | N/A |
+| storeRevision | String | 0x02 | Canonical decimal uint64 store revision or zero when absent. | maxLength=20 | N/A |
+| storageState | Enum | 0x03 | Observed condition of the saved settings. | enum=absent/loaded/saved/invalid/unavailable | N/A |
+| backupAvailable | Boolean | 0x04 | A valid settings backup is available. | None | N/A |
+| recoveredFromBackup | Boolean | 0x05 | The settings were read from a backup. | None | N/A |
+| supportsPersistence | Boolean | 0x06 | The store and current listener policy permit an explicit save. | None | N/A |
+| restartOnlyFields | Array<String> | 0x07 | Supported fields applied at restart. Includes both WS keys when supported. | array.itemType=string | N/A |
+| configured | CastReceiverPreferenceValues | 0x08 | Configured preferences. For the WS endpoint this is next-start intent including defaults. | None | N/A |
+| applied | CastReceiverPreferenceValues | 0x09 | Observed AirPlay state and currently listening WebSocket endpoint values. | None | N/A |
+| airplayEnabled | Boolean | 0x0A | AirPlay is enabled in this receiver instance. | None | N/A |
+| publishState | Enum | 0x0B | Observed AirPlay discovery state. | enum=published/republishing/pending/failed/unpublished | N/A |
+| pendingRestart | Array<String> | 0x0C | Restart-only fields with a configured value different from its applied value. | array.itemType=string | N/A |
+| persistedOverrides | CastReceiverPersistedOverrides | 0x0D | Explicit settings store values without defaults. | None | N/A |
+
+---
+
+### cast.setReceiverSettings
+
+Update one receiver preference with runtime and store revision checks. Saving an endpoint change takes effect at next startup.
+
+- Method ID: `0x1625`
+- Domain: `cast`
+- bitOffset: `36`
+- Status: `draft`
+- Added in v1.0.0
+- Encodings: `json`
+- Required Capabilities: `cast.receiverSettings`
+- Possible Events: `None`
+- Possible Errors: `SUCCESS`, `INVALID_ARGUMENT`, `INVALID_STATE`, `BUSY`, `UNAVAILABLE`, `INTERNAL_ERROR`
+
+#### Request Fields
+
+Type: `CastSetReceiverSettingsParams`
+
+| Name | Type | Field ID | Description | Value Restrictions | ?Default Behavior |
+| ---- | :---: | :---: | ---- | :---: | ---- |
+| runtimeInstanceId | String | 0x01 | Instance UUID from the last settings read. | maxLength=36 | N/A |
+| expectedStoreRevision | String | 0x02 | Exact last read store revision as canonical decimal uint64. | maxLength=20 | N/A |
+| persist | Boolean | 0x03 | Explicit save request. True is mandatory for either WebSocket endpoint field. | None | N/A |
+| patch | CastReceiverPreferenceValues | 0x04 | Exactly one supported field. Unknown and multiple keys are invalid. | None | N/A |
+
+#### Response Fields
+
+Type: `CastReceiverSettingsWriteResult`
+
+| Name | Type | Field ID | Description | Value Restrictions | ?Default Behavior |
+| ---- | :---: | :---: | ---- | :---: | ---- |
+| persistenceStatus | Enum | 0x01 | Save outcome. Stored confirms the write completed. | enum=notRequested/unchanged/stored | N/A |
+| applicationStatus | Enum | 0x02 | Runtime application state. Pending restart confirms no listener restart yet. | enum=unchanged/applied/pending/pendingRestart/failed | N/A |
+| settings | CastReceiverSettingsState | 0x03 | Post-operation settings observation and new revision when saved. | None | N/A |
+
+---
+
+### cast.restoreReceiverSettings
+
+Restore receiver settings defaults or an available backup after the runtime and store revision checks.
+
+- Method ID: `0x1626`
+- Domain: `cast`
+- bitOffset: `37`
+- Status: `draft`
+- Added in v1.0.0
+- Encodings: `json`
+- Required Capabilities: `cast.receiverSettings`
+- Possible Events: `None`
+- Possible Errors: `SUCCESS`, `INVALID_ARGUMENT`, `INVALID_STATE`, `BUSY`, `UNAVAILABLE`, `INTERNAL_ERROR`
+
+#### Request Fields
+
+Type: `CastRestoreReceiverSettingsParams`
+
+| Name | Type | Field ID | Description | Value Restrictions | ?Default Behavior |
+| ---- | :---: | :---: | ---- | :---: | ---- |
+| runtimeInstanceId | String | 0x01 | Instance UUID from the last settings read. | maxLength=36 | N/A |
+| expectedStoreRevision | String | 0x02 | Exact last read store revision as canonical decimal uint64. | maxLength=20 | N/A |
+| source | Enum | 0x03 | Reset saved overrides or restore the available backup. | enum=defaults/backup | N/A |
+
+#### Response Fields
+
+Type: `CastReceiverSettingsWriteResult`
+
+| Name | Type | Field ID | Description | Value Restrictions | ?Default Behavior |
+| ---- | :---: | :---: | ---- | :---: | ---- |
+| persistenceStatus | Enum | 0x01 | Save outcome. Stored confirms the write completed. | enum=notRequested/unchanged/stored | N/A |
+| applicationStatus | Enum | 0x02 | Runtime application state. Pending restart confirms no listener restart yet. | enum=unchanged/applied/pending/pendingRestart/failed | N/A |
+| settings | CastReceiverSettingsState | 0x03 | Post-operation settings observation and new revision when saved. | None | N/A |
 
 ---
 
@@ -6716,6 +6835,58 @@ Atomically captured presentation lifecycle, capacity and slots; zero effective/a
 | slots | Array<CastPresentationSlotState> | 0x0A | Full bounded current slot set with no removed-session ghost binding. | array.itemType=CastPresentationSlotState | N/A |
 | ?meeting | CastMeetingPresentationState | 0x0B | Present only when meeting capability is advertised; part of the existing P0 presentation commit. | None | Omit if not used. |
 | contentAdaptation | Enum | 0x0C | Independent content adaptation; never changes the selected layout. | enum=fixed/auto-fit | N/A |
+
+---
+
+## CastReceiverPersistedOverrides
+
+Explicit receiver store overrides spanning presentation and receiver preferences. Omitted fields use defaults at next launch.
+
+| Name | Type | Field ID | Description | Value Restrictions | ?Default Behavior |
+| ---- | :---: | :---: | ---- | :---: | ---- |
+| ?layoutMode | Enum | 0x01 | Selected product layout; complete source withdrawal returns to grid. | enum=grid/presentation | Omit if not used. |
+| ?audioControlMode | Enum | 0x02 | Adopted or desired control policy; not proof of sound. | enum=automatic/manual | Omit if not used. |
+| ?audioMixMode | Enum | 0x03 | Adopted or desired audio mixing policy. | enum=exclusive/mix | Omit if not used. |
+| ?capacity | UInt32 | 0x04 | Desired capacity or actually adopted capacity according to containing projection; applied may be limited. | min=1 | Omit if not used. |
+| ?enabledProtocols | Array<String> | 0x05 | Adopted or desired enable policy; not receiver readiness. | array.itemType=string | Omit if not used. |
+| ?profileHint | String | 0x06 | Declared product combination profile identifier. | maxLength=64 | Omit if not used. |
+| ?contentAdaptation | Enum | 0x07 | Content aspect adaptation independent of Layout. | enum=fixed/auto-fit | Omit if not used. |
+| ?presentationMode | Enum | 0x08 | Meeting visual entry policy; not global audio policy. | enum=manual/automatic | Omit if not used. |
+| ?presentationSidebar | Enum | 0x09 | Meeting rail position independent of base layoutMode. | enum=left/right | Omit if not used. |
+| ?presentationAudioFollow | Boolean | 0x0A | Remembered follow preference independent of activity and global audio control mode. | None | Omit if not used. |
+| ?presentationFocusOnDoubleClick | Boolean | 0x0B | Remembered main-body double-click Focus entry preference; default true. Disabling restores Sidebar from Focus. | None | Omit if not used. |
+| ?presentationGridOnDoubleClick | Boolean | 0x0C | Remembered inclusion of Grid in main-body double-click cycle; default false. Independent of Focus entry. | None | Omit if not used. |
+| ?presentationAutoEnter | Boolean | 0x0D | Automatic Grid to Sidebar entry at two presented sources; independent of primary selection. Explicit Grid suppresses entry until full withdrawal. | None | Omit if not used. |
+| ?canvasMode | Enum | 0x0E | Canvas sizing policy for normalized input geometry. | enum=adaptive/fixed | Omit if not used. |
+| ?baseWidth | UInt32 | 0x0F | Fixed or preferred canvas width in pixels. | min=1, max=16384 | Omit if not used. |
+| ?baseHeight | UInt32 | 0x10 | Fixed or preferred canvas height in pixels. | min=1, max=16384 | Omit if not used. |
+| ?maxWidth | UInt32 | 0x11 | Adaptive canvas maximum width in pixels. | min=1, max=16384 | Omit if not used. |
+| ?maxHeight | UInt32 | 0x12 | Adaptive canvas maximum height in pixels. | min=1, max=16384 | Omit if not used. |
+| ?topBarTrigger | Enum | 0x13 | Timing for appearance of the enabled receiver controls and background. | enum=none/top-click/canvas-click/always | Omit if not used. |
+| ?topBarShowCastCode | Boolean | 0x14 | Whether the regular Cast Code appears in the visible receiver top bar. | None | Omit if not used. |
+| ?topBarShowDebug | Boolean | 0x15 | Whether the visible receiver top bar offers the local debugging entry. | None | Omit if not used. |
+| ?startupWindowMode | Enum | 0x16 | Restart-only initial local receiver window mode. | enum=fullscreen/windowed | Omit if not used. |
+| ?topBarShowLayout | Boolean | 0x17 | Whether to show the layout selector at the left of the receiver chrome. | None | Omit if not used. |
+| ?topBarShowMinimize | Boolean | 0x18 | Whether to show the window minimize button. | None | Omit if not used. |
+| ?topBarShowMaximize | Boolean | 0x19 | Whether to show the window maximize button. | None | Omit if not used. |
+| ?topBarShowBackground | Boolean | 0x1A | Whether to show the full-width top bar background independently of its elements. | None | Omit if not used. |
+| ?airplayName | String | 0x1B | AirPlay name preference. An empty configured name requests automatic naming. | maxLength=63 | Omit if not used. |
+| ?airplayRandomPassword | Boolean | 0x1C | AirPlay random-password policy. Contains no current password. | None | Omit if not used. |
+| ?controlPort | UInt32 | 0x1D | WebSocket control port. Default is 7020. Changes apply on the next start. | min=1, max=65535 | Omit if not used. |
+| ?controlListenOnLan | Boolean | 0x1E | Local-network WebSocket listener. Default is false for loopback only. Changes apply on the next start. | None | Omit if not used. |
+
+---
+
+## CastReceiverPreferenceValues
+
+Receiver preference values. A mutation patch contains exactly one declared field.
+
+| Name | Type | Field ID | Description | Value Restrictions | ?Default Behavior |
+| ---- | :---: | :---: | ---- | :---: | ---- |
+| ?airplayName | String | 0x01 | AirPlay name preference. An empty configured name requests automatic naming. | maxLength=63 | Omit if not used. |
+| ?airplayRandomPassword | Boolean | 0x02 | AirPlay random-password policy. Contains no current password. | None | Omit if not used. |
+| ?controlPort | UInt32 | 0x03 | WebSocket control port. Default is 7020. Changes apply on the next start. | min=1, max=65535 | Omit if not used. |
+| ?controlListenOnLan | Boolean | 0x04 | Local-network WebSocket listener. Default is false for loopback only. Changes apply on the next start. | None | Omit if not used. |
 
 ---
 

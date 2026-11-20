@@ -18,7 +18,7 @@ AXTP owns the observable contract, identities, limits, synchronization and error
 
 设备管理员可以在控制台或 Launcher 单独设置布局选择、调试设置、最小化、最大化、
 Cast Code 和顶栏底板，并设置出现方式和下次启动的窗口模式。新安装的 NearCast
-首次接收时以全屏呈现，画面顶部默认只常显布局选择。其他元素与底板默认隐藏。
+首次接收时以全屏呈现，点击画面后显示布局选择，空闲 4 秒后隐藏。其他元素与底板默认隐藏。
 只开启最小化时，最小化按钮使用最右侧位置。
 连接认证使用独立的顶部验证码弹窗。Launcher 通过控制面读写配置，配置由接收端保存。
 协议流程见 [窗口设置流程](../flows/cast-presentation-settings.md#接收窗口设置流程)。
@@ -39,6 +39,10 @@ proposals, [P0 contract](../../specs/45-cast-control.md) and
 [P1 contract](../../specs/46-cast-settings.md). New entries
 remain registry `draft`; adoption into source is distinct from release maturity.
 No legacy numeric mapping is invented. No new MVP requirement is introduced.
+
+## 接收端控制面启动配置
+
+部署人员可从调试器或启动器保存 WS 端口和监听范围，供接收端重启后使用。控制台分别显示正在使用的值和下次启动的配置。端口默认 7020，局域网监听默认关闭。保存成功后可继续当前调试和投屏，重启由操作者发起。控制台通过能力查询识别支持版本，保存和恢复由接收端完成。操作过程见 [接收端启动配置协议](../protocol/cast/cast.receiverSettings.md)。
 
 ## Execution closure
 

@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "sourceMode": "local-development-snapshot",
   "repository": "https://github.com/Mostorm-Labs/axtp",
-  "baselineCommit": "f020e03798c9ed9bb47874499aabd2baa7bc92f1",
-  "snapshotSha256": "02723aa67474ae446cd893fd538a4ddbb6a4391449afd3d86090281770704732",
-  "version": "0.18.0-dev.02723aa67474",
+  "baselineCommit": "2bfc928fbaf0e2007d8c94b201d43d29df4fe92c",
+  "snapshotSha256": "85af87891f297ff957e989a979330d15144dc0d2d7a51700dda950ff78e8258b",
+  "version": "0.18.0-dev.85af87891f29",
   "published": false,
   "files": [
     {
@@ -534,8 +534,8 @@
     },
     {
       "path": "contract/generated/capability_registry.generated.md",
-      "sha256": "c86daba8aeb0cf4c4e14f62f7af261985750300aaadec75db22797443e36ebec",
-      "size": 3159
+      "sha256": "f86ab355bb1124bbe73f7fd52141059b64e6463fb0216e9e8a77926f89109a6d",
+      "size": 3224
     },
     {
       "path": "contract/generated/error_code.generated.md",
@@ -554,23 +554,23 @@
     },
     {
       "path": "contract/generated/method_registry.generated.md",
-      "sha256": "eef105097948b5862f8b35788e8c3e95050e23f787e42f72d213f91f1ade8528",
-      "size": 11660
+      "sha256": "79ef00d3e888841a23240cd9adebf727a5040d45818bb91707c0b5eed834dcf7",
+      "size": 12019
     },
     {
       "path": "contract/generated/protocol.json",
-      "sha256": "32257340ea19736383a1caebc8218bebebced66d0add205b93ea1c2e8c687586",
-      "size": 659154
+      "sha256": "79f90966bf7a99cbee7c942e156d89557c5087ab218a37feb97113d2b7a87ec3",
+      "size": 678397
     },
     {
       "path": "contract/generated/protocol.md",
-      "sha256": "87b86a8a299d87a5bdd243fbecd6bf3c24ae8ce3be7a8f304726d0fa9849a848",
-      "size": 394977
+      "sha256": "160958208a1a738b04b92bebce22a81a1f02b4b81302ab7d3b3b45cac7089be3",
+      "size": 406475
     },
     {
       "path": "contract/mcp/capability_registry.generated.json",
-      "sha256": "835f72f14c4019bb558e2b97ccc7317f73b077d9193335de5663aefb89c2dc6d",
-      "size": 13276
+      "sha256": "26eef27fd192a52800cd9844cb27582b0ed054d35956a39fce6acf12b278fd30",
+      "size": 13653
     },
     {
       "path": "contract/mcp/error_code.generated.json",
@@ -589,18 +589,18 @@
     },
     {
       "path": "contract/mcp/method_registry.generated.json",
-      "sha256": "f2eeb98d6843a19e63f25dae5765b0d2ceabb1bf0127c520f1761cedc9206722",
-      "size": 82919
+      "sha256": "0c1694fb5f1a0a17bc33493dd5ea2978cba849153d0e62abff3dae5cf06991e9",
+      "size": 85245
     },
     {
       "path": "contract/mcp/schema.generated.json",
-      "sha256": "e0c160c7de546edb0d6bc524d2b840269535adb409e828a2445ca8afd0ba5838",
-      "size": 531123
+      "sha256": "fb0e1734a637ece611cee9ca54228711c8f7db87d9afd157b9b44aee5bc3e9c9",
+      "size": 549256
     },
     {
       "path": "contract/protocol/axtp.protocol.yaml",
-      "sha256": "e492b2e4c2b5b5ac81577ca18413f85ba731fb9e4ce299b5174b859f83d9f35e",
-      "size": 502505
+      "sha256": "786d9f9747f312ce3a867d79419c3858cf08ffc45e0e29ae0f7d882403139a68",
+      "size": 517428
     },
     {
       "path": "contract/registry/capability/capability_registry.yaml",
@@ -654,8 +654,8 @@
     },
     {
       "path": "contract/registry/domains/cast/domain.yaml",
-      "sha256": "fe0c8ff8779dd420c4e3e3b3633801df063d44ca901fa4745393544bac82ccad",
-      "size": 180943
+      "sha256": "cc669981c892e9d2bd0756c84e7d983f3d87c0108a8e10bf0c6a9ac3fd688796",
+      "size": 193439
     },
     {
       "path": "contract/registry/domains/device/domain.yaml",
@@ -1009,8 +1009,8 @@
     },
     {
       "path": "docs/product/domain-status.md",
-      "sha256": "910233bb13b4cb7fe0277ef5371f9c44a6aee3adfeba39db4cea8e077a42ef41",
-      "size": 9309
+      "sha256": "9264ceab3a09d58eb3c346e9e9eefee667432e8496f55708c895d8a9a6ccd80a",
+      "size": 9307
     },
     {
       "path": "docs/product/protocol-draft-health.md",
@@ -1124,8 +1124,8 @@
     },
     {
       "path": "specs/46-cast-settings.md",
-      "sha256": "c38ac959db949d44cbf3f94f81afb27f6f1207678c1abdc274ad950437d07c9e",
-      "size": 19500
+      "sha256": "61775df996a7fa6823ef6f88ba2120189cc5c0d698e6857eee0033582ff8d82c",
+      "size": 21668
     },
     {
       "path": "specs/47-cast-webcast-backend.md",
@@ -1209,13 +1209,13 @@
     },
     {
       "path": "tooling/generators/src/__snapshots__/protocol.generated.json",
-      "sha256": "9e24fdeb3efb2b5c542e3f0b8b8da2b1d2478e96dd2d42d4b085044ee14b805e",
-      "size": 652987
+      "sha256": "79f90966bf7a99cbee7c942e156d89557c5087ab218a37feb97113d2b7a87ec3",
+      "size": 678397
     },
     {
       "path": "tooling/generators/src/__snapshots__/protocol.generated.md",
-      "sha256": "d33adddf7c531d65da7b2ba5f25e9447fd1922de4b0b0a525adf6eeaf1c241cb",
-      "size": 391668
+      "sha256": "160958208a1a738b04b92bebce22a81a1f02b4b81302ab7d3b3b45cac7089be3",
+      "size": 406475
     },
     {
       "path": "tooling/generators/src/castControl.test.ts",
@@ -1224,8 +1224,8 @@
     },
     {
       "path": "tooling/generators/src/castSettings.test.ts",
-      "sha256": "8178717e5de3e7ccd12478c8c0524f74bf3d163167dbd4def5806403d1d18517",
-      "size": 6995
+      "sha256": "346da650d82914645a5ffc32b7fb907c30bc6429e3716d912f10dc387718923c",
+      "size": 8117
     },
     {
       "path": "tooling/generators/src/castWebCastBackend.test.ts",
@@ -1639,8 +1639,8 @@
     },
     {
       "path": "workspace/business/cast-unified-control-r1.md",
-      "sha256": "63ec351555e89ef797fe46f3c916614053f2bbc294edb32c3261d21471a5dbc8",
-      "size": 6471
+      "sha256": "1fee346865af1a8f0e196e34fed20fb83307b6ae6b22346b27da28c171f6539f",
+      "size": 6995
     },
     {
       "path": "workspace/business/device-firmware-update.md",
@@ -1694,8 +1694,8 @@
     },
     {
       "path": "workspace/flows/cast-presentation-settings.md",
-      "sha256": "a7709e1d996262c4437e2b5693bfcaaf3e53235cbd7aa2af9fa3018fb7ed4df5",
-      "size": 4161
+      "sha256": "5d44988a49de20290d0fc846a111e64d0e926c490142d2b2d70df94735f0764a",
+      "size": 4692
     },
     {
       "path": "workspace/flows/cast-receiver-uxplay.md",
@@ -1883,42 +1883,42 @@
       "size": 24469
     },
     {
-      "path": "workspace/legacy-migration/evidence/AXDP源码协议扫描清单.md",
+      "path": "workspace/legacy-migration/evidence/AXDP\u6e90\u7801\u534f\u8bae\u626b\u63cf\u6e05\u5355.md",
       "sha256": "f0bfde710fd9bc0e50ca107b59877a0dce6b707ef53fa097a21df89f46f53616",
       "size": 47295
     },
     {
-      "path": "workspace/legacy-migration/evidence/AXDP设备能力协议集.xlsx",
+      "path": "workspace/legacy-migration/evidence/AXDP\u8bbe\u5907\u80fd\u529b\u534f\u8bae\u96c6.xlsx",
       "sha256": "e734e07a09f86aa04df7ffcca2e0453a6754a50757e09fb44a27b0eebe18b9e8",
       "size": 56933
     },
     {
-      "path": "workspace/legacy-migration/evidence/NearHub-Launcher数字标牌设备管理通用管理命令.md",
+      "path": "workspace/legacy-migration/evidence/NearHub-Launcher\u6570\u5b57\u6807\u724c\u8bbe\u5907\u7ba1\u7406\u901a\u7528\u7ba1\u7406\u547d\u4ee4.md",
       "sha256": "532a1dacc0c518b214fcd330b0201cce643c43edffc3db853b7f6f84df6a8baf",
       "size": 29464
     },
     {
-      "path": "workspace/legacy-migration/evidence/NearHub-Launcher设备管理命令.md",
+      "path": "workspace/legacy-migration/evidence/NearHub-Launcher\u8bbe\u5907\u7ba1\u7406\u547d\u4ee4.md",
       "sha256": "4434f229930b44caa2c293e8e754f4c79a11310b0416690af46a3731214545ab",
       "size": 9969
     },
     {
-      "path": "workspace/legacy-migration/evidence/Rooms协议文档.md",
+      "path": "workspace/legacy-migration/evidence/Rooms\u534f\u8bae\u6587\u6863.md",
       "sha256": "4332a9803e4699020bc960410a732940a78aeeabcbf7822013683574eb31f7a1",
       "size": 112891
     },
     {
-      "path": "workspace/legacy-migration/evidence/Rooms协议文档.pdf",
+      "path": "workspace/legacy-migration/evidence/Rooms\u534f\u8bae\u6587\u6863.pdf",
       "sha256": "932b87c869467a77a4f1f18a6ffd07cd05688ca1b137e6f347fa012b4d9fd451",
       "size": 1563816
     },
     {
-      "path": "workspace/legacy-migration/evidence/VM33协议文档.md",
+      "path": "workspace/legacy-migration/evidence/VM33\u534f\u8bae\u6587\u6863.md",
       "sha256": "b8626c62ab2f069322563134ca4a753d736e3709c0a6d54e576d1e0eb4b6b74e",
       "size": 133842
     },
     {
-      "path": "workspace/legacy-migration/evidence/VM33协议文档.pdf",
+      "path": "workspace/legacy-migration/evidence/VM33\u534f\u8bae\u6587\u6863.pdf",
       "sha256": "6af7d0074755633ff56e4e441cb77fcaaa889244cc1a41762f23c51be615aaae",
       "size": 2357949
     },
@@ -2156,6 +2156,11 @@
       "path": "workspace/protocol/cast/cast.presentationSettings.md",
       "sha256": "8fad998205723bd465c48432cb324814848387cdbf21ca4e9d799e9eeff20df1",
       "size": 4097
+    },
+    {
+      "path": "workspace/protocol/cast/cast.receiverSettings.md",
+      "sha256": "95dcf6c0edcc96d26861d80fa47edba2b0ad0d0dc98f6cbdc4119702feeda980",
+      "size": 4840
     },
     {
       "path": "workspace/protocol/cast/cast.session.md",

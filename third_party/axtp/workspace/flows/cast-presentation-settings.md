@@ -8,9 +8,13 @@ and [adoption](../protocol/cast/cast.presentationSettings.md) own message semant
 1. 启动器和控制台读取 `cast.getControlCapabilities`，仅为接收端声明的窗口字段提供编辑入口。
 2. 使用 `cast.getStatus` 返回的运行实例和设置版本提交单字段更新。
 3. 等待终态操作结果，或使用原 `commandId` 查询 `cast.getControlOperation`。收到版本冲突时刷新快照，由操作者重新提交。
-4. 顶栏触发方式和六项独立显隐开关由窗口即时采用。常显模式下，开启的元素可直接浮在画面上。启动窗口模式更新下一次启动意图。调用方使用 `persist` 请求接收端保存。
+4. 顶栏触发方式和六项独立显隐开关由窗口即时采用。点击模式下，开启的元素在点击指定区域后显示，NearCast 在空闲 4 秒后隐藏。常显模式下，开启的元素可直接浮在画面上。启动窗口模式更新下一次启动意图。调用方使用 `persist` 请求接收端保存。
 
 字段定义和接收端默认值见 [窗口设置合同](../../specs/46-cast-settings.md#receiver-window-preferences)。
+
+## 接收端 WS 启动配置
+
+启动器和调试器可以读取正在监听的端口、本次启动是否监听局域网，以及下次启动的已保存意图。保存单字段用本机接收端的存储版本校验。操作者确认重启后，启动器按接收端返回的就绪地址和端口重新连接。完整的读、写、重启和异常恢复见 [接收端设置流程](../protocol/cast/cast.receiverSettings.md)。
 
 ## S1: Discovery and two-barrier synchronization
 

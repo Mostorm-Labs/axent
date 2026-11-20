@@ -377,6 +377,17 @@
       "idHex": "0x160F"
     },
     {
+      "id": 5648,
+      "name": "cast.receiverSettings",
+      "domain": "cast",
+      "status": "draft",
+      "description": "Optional receiver preference methods discovered by name. The state declares supported restart-only fields and current save availability.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "type": "bool",
+      "idHex": "0x1610"
+    },
+    {
       "id": 5889,
       "name": "software.config",
       "domain": "software",

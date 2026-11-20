@@ -34,6 +34,7 @@
 | `0x160D` | `cast.meetingPresentation` | cast | draft | object | CastMeetingPresentationCapability |
 | `0x160E` | `cast.airplayControl` | cast | draft | object | CastAirPlayControlCapability |
 | `0x160F` | `cast.touchback` | cast | draft | object | CastTouchbackCapability |
+| `0x1610` | `cast.receiverSettings` | cast | draft | bool | - |
 | `0x1701` | `software.config` | software | draft | object | SoftwareConfigCapability |
 | `0x1702` | `software.updatePolicy` | software | draft | object | SoftwareUpdatePolicyCapability |
 | `0x1801` | `sport.eventDetection` | sport | draft | object | SportEventDetectionCapabilities |

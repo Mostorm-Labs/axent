@@ -17,7 +17,7 @@
 |---|---:|---|---:|---|---|
 | audio | 12 | ASK | 13 | 旁路高覆盖 / P0 stream | `audio.algorithm` 与 `audio.stream` 已进入 generated；后续按修订流程维护并补齐剩余 audio 草案确认。 |
 | auth | 3 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
-| cast | 13 | ASK / generated | 51 | P0/P1 多路控制已采纳 | `cast.presentation`、`cast.audioPolicy`、`cast.controlOperations`、`cast.presentationSettings`、R2 `cast.touchback` 已登记；统一反控 gate 与输入类型分离，详见 specs/48-input-stream.md。实际产品接入仍需下游实现验收。 |
+| cast | 14 | ASK / generated | 59 | P0/P1 多路控制已采纳 | `cast.presentation`、`cast.audioPolicy`、`cast.controlOperations`、`cast.presentationSettings`、`cast.receiverSettings`、R2 `cast.touchback` 已登记。接收端启动配置见 specs/46-cast-settings.md，输入流见 specs/48-input-stream.md。 |
 | camera | 7 | ASK | 0 | P3/P4 | 补产品/设备/legacy 确认。 |
 | capability | 1 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
 | device | 6 | ASK | 5 | P1 | `device.info`、`device.enrollment` 已进入 generated；继续补 `device.childDevice` 等通用底座确认。 |

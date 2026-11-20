@@ -82,11 +82,47 @@ Changing fullscreen interactively updates the regular `window` observation.
 The startup preference remains independent of interactive fullscreen, layout,
 media dimensions, receiver admission and input permission.
 
-NearCast defaults to `topBarTrigger=always` with only the layout selector
+In NearCast, both click modes hide the top bar after four seconds of inactivity.
+NearCast defaults to `topBarTrigger=canvas-click` with only the layout selector
 enabled. The five other visibility switches default to false. The default
 startup window mode is `fullscreen`.
 With no session or sharing request, the receiver can listen with a hidden window.
 Clients without the extension can continue using the existing launch and control API.
+
+## Receiver startup preferences
+
+The optional `cast.receiverSettings` feature registers three JSON RPCs:
+`cast.getReceiverSettings` (`0x1624`), `cast.setReceiverSettings` (`0x1625`),
+and `cast.restoreReceiverSettings` (`0x1626`). Discover the methods through
+`cast.getControlCapabilities.methods`. The registry owns the request and
+response types. This feature uses the process epoch and store revision for
+synchronous writes, independently of the P1 operation journal and its
+`expectedSettingsRevision`.
+
+`controlPort` is a JSON integer between 1 and 65535 inclusive, with default
+7020. `controlListenOnLan` is Boolean with default false. False selects
+loopback-only listening. True enables listening on the local network. Both
+fields MUST be declared in `restartOnlyFields` when supported, MUST be saved
+with `persist: true`, and take effect at the next start. The server accepts
+exactly one patch key. Saving MUST NOT rebind the listener, disconnect the
+active control session or initiate a restart.
+
+`configured` gives next-launch endpoint values, including defaults. `applied`
+gives the current listener values. `persistedOverrides` contains explicit
+stored overrides and may omit even supported fields. `pendingRestart` lists
+the restart-only fields whose configured values differ from the applied
+values. After an explicit restart, a startup override may make the applied
+value differ from the stored value. A successful write reports persistence
+and application separately and includes the observed settings.
+
+Clients MUST use the last read runtime instance and canonical decimal
+`storeRevision` as `expectedStoreRevision` for each write or restore. Stale
+versions or instances are rejected. Failed storage writes leave configured
+and applied values intact. Clients re-read the state after a conflict or
+an unknown outcome and never automatically replay a write with a fresh
+revision. An authorized local startup manager may restart and reconnect
+using the verified effective endpoint. See the
+[receiver startup flow](../workspace/protocol/cast/cast.receiverSettings.md).
 
 ## Settings facts and revisions
 

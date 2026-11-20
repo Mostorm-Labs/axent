@@ -7698,6 +7698,72 @@
           "min": 1,
           "max": 16384,
           "description": "Adaptive canvas maximum height in pixels."
+        },
+        {
+          "fieldId": 19,
+          "name": "topBarTrigger",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "none",
+            "top-click",
+            "canvas-click",
+            "always"
+          ],
+          "description": "Timing for appearance of the enabled receiver controls and background."
+        },
+        {
+          "fieldId": 20,
+          "name": "topBarShowCastCode",
+          "type": "bool",
+          "required": false,
+          "description": "Whether the regular Cast Code appears in the visible receiver top bar."
+        },
+        {
+          "fieldId": 21,
+          "name": "topBarShowDebug",
+          "type": "bool",
+          "required": false,
+          "description": "Whether the visible receiver top bar offers the local debugging entry."
+        },
+        {
+          "fieldId": 22,
+          "name": "startupWindowMode",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "fullscreen",
+            "windowed"
+          ],
+          "description": "Restart-only initial local receiver window mode."
+        },
+        {
+          "fieldId": 23,
+          "name": "topBarShowLayout",
+          "type": "bool",
+          "required": false,
+          "description": "Whether to show the layout selector at the left of the receiver chrome."
+        },
+        {
+          "fieldId": 24,
+          "name": "topBarShowMinimize",
+          "type": "bool",
+          "required": false,
+          "description": "Whether to show the window minimize button."
+        },
+        {
+          "fieldId": 25,
+          "name": "topBarShowMaximize",
+          "type": "bool",
+          "required": false,
+          "description": "Whether to show the window maximize button."
+        },
+        {
+          "fieldId": 26,
+          "name": "topBarShowBackground",
+          "type": "bool",
+          "required": false,
+          "description": "Whether to show the full-width top bar background independently of its elements."
         }
       ]
     },
@@ -7872,6 +7938,612 @@
           "min": 1,
           "max": 16384,
           "description": "Adaptive canvas maximum height in pixels."
+        },
+        {
+          "fieldId": 19,
+          "name": "topBarTrigger",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "none",
+            "top-click",
+            "canvas-click",
+            "always"
+          ],
+          "description": "Timing for appearance of the enabled receiver controls and background."
+        },
+        {
+          "fieldId": 20,
+          "name": "topBarShowCastCode",
+          "type": "bool",
+          "required": false,
+          "description": "Whether the regular Cast Code appears in the visible receiver top bar."
+        },
+        {
+          "fieldId": 21,
+          "name": "topBarShowDebug",
+          "type": "bool",
+          "required": false,
+          "description": "Whether the visible receiver top bar offers the local debugging entry."
+        },
+        {
+          "fieldId": 22,
+          "name": "startupWindowMode",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "fullscreen",
+            "windowed"
+          ],
+          "description": "Restart-only initial local receiver window mode."
+        },
+        {
+          "fieldId": 23,
+          "name": "topBarShowLayout",
+          "type": "bool",
+          "required": false,
+          "description": "Whether to show the layout selector at the left of the receiver chrome."
+        },
+        {
+          "fieldId": 24,
+          "name": "topBarShowMinimize",
+          "type": "bool",
+          "required": false,
+          "description": "Whether to show the window minimize button."
+        },
+        {
+          "fieldId": 25,
+          "name": "topBarShowMaximize",
+          "type": "bool",
+          "required": false,
+          "description": "Whether to show the window maximize button."
+        },
+        {
+          "fieldId": 26,
+          "name": "topBarShowBackground",
+          "type": "bool",
+          "required": false,
+          "description": "Whether to show the full-width top bar background independently of its elements."
+        }
+      ]
+    },
+    {
+      "name": "CastReceiverPreferenceValues",
+      "kind": "object",
+      "description": "Receiver preference values. A mutation patch contains exactly one declared field.",
+      "fields": [
+        {
+          "fieldId": 1,
+          "name": "airplayName",
+          "type": "string",
+          "required": false,
+          "maxLength": 63,
+          "description": "AirPlay name preference. An empty configured name requests automatic naming."
+        },
+        {
+          "fieldId": 2,
+          "name": "airplayRandomPassword",
+          "type": "bool",
+          "required": false,
+          "description": "AirPlay random-password policy. Contains no current password."
+        },
+        {
+          "fieldId": 3,
+          "name": "controlPort",
+          "type": "uint32",
+          "required": false,
+          "min": 1,
+          "max": 65535,
+          "description": "WebSocket control port. Default is 7020. Changes apply on the next start."
+        },
+        {
+          "fieldId": 4,
+          "name": "controlListenOnLan",
+          "type": "bool",
+          "required": false,
+          "description": "Local-network WebSocket listener. Default is false for loopback only. Changes apply on the next start."
+        }
+      ]
+    },
+    {
+      "name": "CastReceiverPersistedOverrides",
+      "kind": "object",
+      "description": "Explicit receiver store overrides spanning presentation and receiver preferences. Omitted fields use defaults at next launch.",
+      "fields": [
+        {
+          "fieldId": 1,
+          "name": "layoutMode",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "grid",
+            "presentation"
+          ],
+          "description": "Selected product layout; complete source withdrawal returns to grid."
+        },
+        {
+          "fieldId": 2,
+          "name": "audioControlMode",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "automatic",
+            "manual"
+          ],
+          "description": "Adopted or desired control policy; not proof of sound."
+        },
+        {
+          "fieldId": 3,
+          "name": "audioMixMode",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "exclusive",
+            "mix"
+          ],
+          "description": "Adopted or desired audio mixing policy."
+        },
+        {
+          "fieldId": 4,
+          "name": "capacity",
+          "type": "uint32",
+          "required": false,
+          "min": 1,
+          "description": "Desired capacity or actually adopted capacity according to containing projection; applied may be limited."
+        },
+        {
+          "fieldId": 5,
+          "name": "enabledProtocols",
+          "type": "array",
+          "required": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Adopted or desired enable policy; not receiver readiness."
+        },
+        {
+          "fieldId": 6,
+          "name": "profileHint",
+          "type": "string",
+          "required": false,
+          "maxLength": 64,
+          "description": "Declared product combination profile identifier."
+        },
+        {
+          "fieldId": 7,
+          "name": "contentAdaptation",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "fixed",
+            "auto-fit"
+          ],
+          "description": "Content aspect adaptation independent of Layout."
+        },
+        {
+          "fieldId": 8,
+          "name": "presentationMode",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "manual",
+            "automatic"
+          ],
+          "description": "Meeting visual entry policy; not global audio policy."
+        },
+        {
+          "fieldId": 9,
+          "name": "presentationSidebar",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "left",
+            "right"
+          ],
+          "description": "Meeting rail position independent of base layoutMode."
+        },
+        {
+          "fieldId": 10,
+          "name": "presentationAudioFollow",
+          "type": "bool",
+          "required": false,
+          "description": "Remembered follow preference independent of activity and global audio control mode."
+        },
+        {
+          "fieldId": 11,
+          "name": "presentationFocusOnDoubleClick",
+          "type": "bool",
+          "required": false,
+          "description": "Remembered main-body double-click Focus entry preference; default true. Disabling restores Sidebar from Focus."
+        },
+        {
+          "fieldId": 12,
+          "name": "presentationGridOnDoubleClick",
+          "type": "bool",
+          "required": false,
+          "description": "Remembered inclusion of Grid in main-body double-click cycle; default false. Independent of Focus entry."
+        },
+        {
+          "fieldId": 13,
+          "name": "presentationAutoEnter",
+          "type": "bool",
+          "required": false,
+          "description": "Automatic Grid to Sidebar entry at two presented sources; independent of primary selection. Explicit Grid suppresses entry until full withdrawal."
+        },
+        {
+          "fieldId": 14,
+          "name": "canvasMode",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "adaptive",
+            "fixed"
+          ],
+          "description": "Canvas sizing policy for normalized input geometry."
+        },
+        {
+          "fieldId": 15,
+          "name": "baseWidth",
+          "type": "uint32",
+          "required": false,
+          "min": 1,
+          "max": 16384,
+          "description": "Fixed or preferred canvas width in pixels."
+        },
+        {
+          "fieldId": 16,
+          "name": "baseHeight",
+          "type": "uint32",
+          "required": false,
+          "min": 1,
+          "max": 16384,
+          "description": "Fixed or preferred canvas height in pixels."
+        },
+        {
+          "fieldId": 17,
+          "name": "maxWidth",
+          "type": "uint32",
+          "required": false,
+          "min": 1,
+          "max": 16384,
+          "description": "Adaptive canvas maximum width in pixels."
+        },
+        {
+          "fieldId": 18,
+          "name": "maxHeight",
+          "type": "uint32",
+          "required": false,
+          "min": 1,
+          "max": 16384,
+          "description": "Adaptive canvas maximum height in pixels."
+        },
+        {
+          "fieldId": 19,
+          "name": "topBarTrigger",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "none",
+            "top-click",
+            "canvas-click",
+            "always"
+          ],
+          "description": "Timing for appearance of the enabled receiver controls and background."
+        },
+        {
+          "fieldId": 20,
+          "name": "topBarShowCastCode",
+          "type": "bool",
+          "required": false,
+          "description": "Whether the regular Cast Code appears in the visible receiver top bar."
+        },
+        {
+          "fieldId": 21,
+          "name": "topBarShowDebug",
+          "type": "bool",
+          "required": false,
+          "description": "Whether the visible receiver top bar offers the local debugging entry."
+        },
+        {
+          "fieldId": 22,
+          "name": "startupWindowMode",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "fullscreen",
+            "windowed"
+          ],
+          "description": "Restart-only initial local receiver window mode."
+        },
+        {
+          "fieldId": 23,
+          "name": "topBarShowLayout",
+          "type": "bool",
+          "required": false,
+          "description": "Whether to show the layout selector at the left of the receiver chrome."
+        },
+        {
+          "fieldId": 24,
+          "name": "topBarShowMinimize",
+          "type": "bool",
+          "required": false,
+          "description": "Whether to show the window minimize button."
+        },
+        {
+          "fieldId": 25,
+          "name": "topBarShowMaximize",
+          "type": "bool",
+          "required": false,
+          "description": "Whether to show the window maximize button."
+        },
+        {
+          "fieldId": 26,
+          "name": "topBarShowBackground",
+          "type": "bool",
+          "required": false,
+          "description": "Whether to show the full-width top bar background independently of its elements."
+        },
+        {
+          "fieldId": 27,
+          "name": "airplayName",
+          "type": "string",
+          "required": false,
+          "maxLength": 63,
+          "description": "AirPlay name preference. An empty configured name requests automatic naming."
+        },
+        {
+          "fieldId": 28,
+          "name": "airplayRandomPassword",
+          "type": "bool",
+          "required": false,
+          "description": "AirPlay random-password policy. Contains no current password."
+        },
+        {
+          "fieldId": 29,
+          "name": "controlPort",
+          "type": "uint32",
+          "required": false,
+          "min": 1,
+          "max": 65535,
+          "description": "WebSocket control port. Default is 7020. Changes apply on the next start."
+        },
+        {
+          "fieldId": 30,
+          "name": "controlListenOnLan",
+          "type": "bool",
+          "required": false,
+          "description": "Local-network WebSocket listener. Default is false for loopback only. Changes apply on the next start."
+        }
+      ]
+    },
+    {
+      "name": "CastReceiverSettingsState",
+      "kind": "object",
+      "description": "Active and next-start receiver preferences plus a secret-free store observation.",
+      "fields": [
+        {
+          "fieldId": 1,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "maxLength": 36,
+          "description": "Canonical UUID for this receiver process lifetime."
+        },
+        {
+          "fieldId": 2,
+          "name": "storeRevision",
+          "type": "string",
+          "required": true,
+          "maxLength": 20,
+          "description": "Canonical decimal uint64 store revision or zero when absent."
+        },
+        {
+          "fieldId": 3,
+          "name": "storageState",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "absent",
+            "loaded",
+            "saved",
+            "invalid",
+            "unavailable"
+          ],
+          "description": "Observed condition of the saved settings."
+        },
+        {
+          "fieldId": 4,
+          "name": "backupAvailable",
+          "type": "bool",
+          "required": true,
+          "description": "A valid settings backup is available."
+        },
+        {
+          "fieldId": 5,
+          "name": "recoveredFromBackup",
+          "type": "bool",
+          "required": true,
+          "description": "The settings were read from a backup."
+        },
+        {
+          "fieldId": 6,
+          "name": "supportsPersistence",
+          "type": "bool",
+          "required": true,
+          "description": "The store and current listener policy permit an explicit save."
+        },
+        {
+          "fieldId": 7,
+          "name": "restartOnlyFields",
+          "type": "array",
+          "required": true,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Supported fields applied at restart. Includes both WS keys when supported."
+        },
+        {
+          "fieldId": 8,
+          "name": "configured",
+          "type": "CastReceiverPreferenceValues",
+          "required": true,
+          "description": "Configured preferences. For the WS endpoint this is next-start intent including defaults."
+        },
+        {
+          "fieldId": 9,
+          "name": "applied",
+          "type": "CastReceiverPreferenceValues",
+          "required": true,
+          "description": "Observed AirPlay state and currently listening WebSocket endpoint values."
+        },
+        {
+          "fieldId": 10,
+          "name": "airplayEnabled",
+          "type": "bool",
+          "required": true,
+          "description": "AirPlay is enabled in this receiver instance."
+        },
+        {
+          "fieldId": 11,
+          "name": "publishState",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "published",
+            "republishing",
+            "pending",
+            "failed",
+            "unpublished"
+          ],
+          "description": "Observed AirPlay discovery state."
+        },
+        {
+          "fieldId": 12,
+          "name": "pendingRestart",
+          "type": "array",
+          "required": true,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Restart-only fields with a configured value different from its applied value."
+        },
+        {
+          "fieldId": 13,
+          "name": "persistedOverrides",
+          "type": "CastReceiverPersistedOverrides",
+          "required": true,
+          "description": "Explicit settings store values without defaults."
+        }
+      ]
+    },
+    {
+      "name": "CastSetReceiverSettingsParams",
+      "kind": "object",
+      "description": "Exact single-field mutation with a store version precondition. WebSocket endpoint fields require persistence.",
+      "fields": [
+        {
+          "fieldId": 1,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "maxLength": 36,
+          "description": "Instance UUID from the last settings read."
+        },
+        {
+          "fieldId": 2,
+          "name": "expectedStoreRevision",
+          "type": "string",
+          "required": true,
+          "maxLength": 20,
+          "description": "Exact last read store revision as canonical decimal uint64."
+        },
+        {
+          "fieldId": 3,
+          "name": "persist",
+          "type": "bool",
+          "required": true,
+          "description": "Explicit save request. True is mandatory for either WebSocket endpoint field."
+        },
+        {
+          "fieldId": 4,
+          "name": "patch",
+          "type": "CastReceiverPreferenceValues",
+          "required": true,
+          "description": "Exactly one supported field. Unknown and multiple keys are invalid."
+        }
+      ]
+    },
+    {
+      "name": "CastRestoreReceiverSettingsParams",
+      "kind": "object",
+      "description": "Revision-checked restore request for the receiver settings store.",
+      "fields": [
+        {
+          "fieldId": 1,
+          "name": "runtimeInstanceId",
+          "type": "string",
+          "required": true,
+          "maxLength": 36,
+          "description": "Instance UUID from the last settings read."
+        },
+        {
+          "fieldId": 2,
+          "name": "expectedStoreRevision",
+          "type": "string",
+          "required": true,
+          "maxLength": 20,
+          "description": "Exact last read store revision as canonical decimal uint64."
+        },
+        {
+          "fieldId": 3,
+          "name": "source",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "defaults",
+            "backup"
+          ],
+          "description": "Reset saved overrides or restore the available backup."
+        }
+      ]
+    },
+    {
+      "name": "CastReceiverSettingsWriteResult",
+      "kind": "object",
+      "description": "A successful preference update or restore with separate storage and runtime results.",
+      "fields": [
+        {
+          "fieldId": 1,
+          "name": "persistenceStatus",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "notRequested",
+            "unchanged",
+            "stored"
+          ],
+          "description": "Save outcome. Stored confirms the write completed."
+        },
+        {
+          "fieldId": 2,
+          "name": "applicationStatus",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "unchanged",
+            "applied",
+            "pending",
+            "pendingRestart",
+            "failed"
+          ],
+          "description": "Runtime application state. Pending restart confirms no listener restart yet."
+        },
+        {
+          "fieldId": 3,
+          "name": "settings",
+          "type": "CastReceiverSettingsState",
+          "required": true,
+          "description": "Post-operation settings observation and new revision when saved."
         }
       ]
     },
@@ -8046,6 +8718,72 @@
           "min": 1,
           "max": 16384,
           "description": "Adaptive canvas maximum height in pixels."
+        },
+        {
+          "fieldId": 19,
+          "name": "topBarTrigger",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "none",
+            "top-click",
+            "canvas-click",
+            "always"
+          ],
+          "description": "Timing for appearance of the enabled receiver controls and background."
+        },
+        {
+          "fieldId": 20,
+          "name": "topBarShowCastCode",
+          "type": "bool",
+          "required": false,
+          "description": "Whether the regular Cast Code appears in the visible receiver top bar."
+        },
+        {
+          "fieldId": 21,
+          "name": "topBarShowDebug",
+          "type": "bool",
+          "required": false,
+          "description": "Whether the visible receiver top bar offers the local debugging entry."
+        },
+        {
+          "fieldId": 22,
+          "name": "startupWindowMode",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "fullscreen",
+            "windowed"
+          ],
+          "description": "Restart-only initial local receiver window mode."
+        },
+        {
+          "fieldId": 23,
+          "name": "topBarShowLayout",
+          "type": "bool",
+          "required": false,
+          "description": "Whether to show the layout selector at the left of the receiver chrome."
+        },
+        {
+          "fieldId": 24,
+          "name": "topBarShowMinimize",
+          "type": "bool",
+          "required": false,
+          "description": "Whether to show the window minimize button."
+        },
+        {
+          "fieldId": 25,
+          "name": "topBarShowMaximize",
+          "type": "bool",
+          "required": false,
+          "description": "Whether to show the window maximize button."
+        },
+        {
+          "fieldId": 26,
+          "name": "topBarShowBackground",
+          "type": "bool",
+          "required": false,
+          "description": "Whether to show the full-width top bar background independently of its elements."
         }
       ]
     },
@@ -8253,7 +8991,7 @@
           "array": {
             "itemType": "string"
           },
-          "description": "Unique supported settings keys; meeting extension adds four separately advertised keys."
+          "description": "Unique supported settings keys including independently advertised extensions."
         },
         {
           "fieldId": 2,
@@ -18066,6 +18804,93 @@
       ]
     },
     {
+      "name": "cast.getReceiverSettings",
+      "description": "Read configured and applied receiver startup preferences and the persisted override revision.",
+      "methodId": 5668,
+      "bitOffset": 35,
+      "domain": "cast",
+      "since": "1.0.0",
+      "status": "draft",
+      "request": {
+        "type": "Empty"
+      },
+      "response": {
+        "type": "CastReceiverSettingsState"
+      },
+      "encodings": [
+        "json"
+      ],
+      "capabilities": [
+        "cast.receiverSettings"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "UNAVAILABLE"
+      ]
+    },
+    {
+      "name": "cast.setReceiverSettings",
+      "description": "Update one receiver preference with runtime and store revision checks. Saving an endpoint change takes effect at next startup.",
+      "methodId": 5669,
+      "bitOffset": 36,
+      "domain": "cast",
+      "since": "1.0.0",
+      "status": "draft",
+      "request": {
+        "type": "CastSetReceiverSettingsParams"
+      },
+      "response": {
+        "type": "CastReceiverSettingsWriteResult"
+      },
+      "encodings": [
+        "json"
+      ],
+      "capabilities": [
+        "cast.receiverSettings"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "INVALID_STATE",
+        "BUSY",
+        "UNAVAILABLE",
+        "INTERNAL_ERROR"
+      ]
+    },
+    {
+      "name": "cast.restoreReceiverSettings",
+      "description": "Restore receiver settings defaults or an available backup after the runtime and store revision checks.",
+      "methodId": 5670,
+      "bitOffset": 37,
+      "domain": "cast",
+      "since": "1.0.0",
+      "status": "draft",
+      "request": {
+        "type": "CastRestoreReceiverSettingsParams"
+      },
+      "response": {
+        "type": "CastReceiverSettingsWriteResult"
+      },
+      "encodings": [
+        "json"
+      ],
+      "capabilities": [
+        "cast.receiverSettings"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "INVALID_STATE",
+        "BUSY",
+        "UNAVAILABLE",
+        "INTERNAL_ERROR"
+      ]
+    },
+    {
       "name": "device.getInfo",
       "description": "Return the current endpoint main device identity, product, hardware, OS, software, AXTP runtime, and optional capability summary.",
       "methodId": 257,
@@ -22779,6 +23604,15 @@
       "status": "draft",
       "type": "object",
       "schema": "CastTouchbackCapability"
+    },
+    {
+      "name": "cast.receiverSettings",
+      "description": "Optional receiver preference methods discovered by name. The state declares supported restart-only fields and current save availability.",
+      "capabilityId": 5648,
+      "domain": "cast",
+      "since": "1.0.0",
+      "status": "draft",
+      "type": "bool"
     },
     {
       "name": "device.info",

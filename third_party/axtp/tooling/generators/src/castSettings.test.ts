@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import YAML from "yaml";
 import { castSettingsEncodingVectors } from "./emitters/castControlVectors.js";
 import { loadProtocolSources } from "./sourceLoader.js";
-import { decodeScalarObject, runControlCase } from "../../../conformance/reference/cast-control.mjs";
+import { decodeScalarObject, runControlCase, validateValue } from "../../../conformance/reference/cast-control.mjs";
 import { CastSettingsModel } from "../../../conformance/reference/cast-settings.mjs";
 
 const root = path.resolve("../..");
@@ -15,6 +15,20 @@ const codes = Object.fromEntries(yaml("contract/registry/error/error_code.yaml")
 const c12 = yaml("conformance/cases/castcontrol/c12_settings.yaml");
 
 describe("P1 adoption and reference evidence", () => {
+  it("registers receiver preferences over JSON with the exact WS endpoint range and revision type", () => {
+    const receiverMethods = ["getReceiverSettings", "setReceiverSettings", "restoreReceiverSettings"];
+    for (const [index, method] of receiverMethods.entries()) {
+      expect(domain.methods.find((m: any) => m.name === `cast.${method}`)).toMatchObject({
+        id: 0x1624 + index, bitOffset: 35 + index, recommended_encoding: ["json"], capabilities: ["cast.receiverSettings"]
+      });
+    }
+    const update = { runtimeInstanceId: "00000000-0000-4000-8000-000000000001", expectedStoreRevision: "9007199254740993", persist: true };
+    const check = (patch: object) => validateValue(domain.types, "CastSetReceiverSettingsParams", { ...update, patch });
+    for (const controlPort of [1, 7020, 65535]) expect(() => check({ controlPort })).not.toThrow();
+    for (const controlPort of [0, 65536, "7020"]) expect(() => check({ controlPort })).toThrow();
+    expect(() => check({ controlListenOnLan: false })).not.toThrow();
+    expect(() => check({ controlListenOnLan: "false" })).toThrow();
+  });
   it("preserves P0 IDs and bindings except adopted unpublished layout replacement", () => {
     const old = JSON.parse(fs.readFileSync(path.join(root, "conformance/fixtures/cast-control/p0-baseline.json"), "utf8"));
     for (const group of ["methods", "events", "capabilities"]) for (const fact of old[group]) {

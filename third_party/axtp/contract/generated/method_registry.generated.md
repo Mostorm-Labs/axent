@@ -93,6 +93,9 @@
 | `0x1621` | `cast.setInputMode` | cast | draft | CastSetInputModeRequest | CastInputModeState | - |
 | `0x1622` | `cast.getTouchbackMaster` | cast | draft | CastTouchbackMasterQuery | CastTouchbackMasterState | - |
 | `0x1623` | `cast.setTouchbackMaster` | cast | draft | CastSetTouchbackMasterRequest | CastTouchbackMasterState | - |
+| `0x1624` | `cast.getReceiverSettings` | cast | draft | Empty | CastReceiverSettingsState | - |
+| `0x1625` | `cast.setReceiverSettings` | cast | draft | CastSetReceiverSettingsParams | CastReceiverSettingsWriteResult | - |
+| `0x1626` | `cast.restoreReceiverSettings` | cast | draft | CastRestoreReceiverSettingsParams | CastReceiverSettingsWriteResult | - |
 | `0x1701` | `software.getConfig` | software | draft | SoftwareGetConfigParams | SoftwareConfig | - |
 | `0x1702` | `software.setConfig` | software | draft | SoftwareSetConfigParams | SoftwareSetConfigResult | - |
 | `0x1703` | `software.resetConfig` | software | draft | SoftwareResetConfigParams | SoftwareConfig | - |

@@ -497,6 +497,48 @@ methods:
     events: [cast.touchbackMasterChanged]
     errors: [SUCCESS, INVALID_ARGUMENT, INVALID_STATE, BUSY, NOT_SUPPORTED, UNAVAILABLE]
 
+  - id: 0x1624
+    name: cast.getReceiverSettings
+    domain: cast
+    status: draft
+    bitOffset: 35
+    since: 1.0.0
+    description: Read configured and applied receiver startup preferences and the persisted override revision.
+    rpc_op: request_response
+    request_schema: Empty
+    response_schema: CastReceiverSettingsState
+    recommended_encoding: [json]
+    capabilities: [cast.receiverSettings]
+    errors: [SUCCESS, INVALID_ARGUMENT, UNAVAILABLE]
+
+  - id: 0x1625
+    name: cast.setReceiverSettings
+    domain: cast
+    status: draft
+    bitOffset: 36
+    since: 1.0.0
+    description: Update one receiver preference with runtime and store revision checks. Saving an endpoint change takes effect at next startup.
+    rpc_op: request_response
+    request_schema: CastSetReceiverSettingsParams
+    response_schema: CastReceiverSettingsWriteResult
+    recommended_encoding: [json]
+    capabilities: [cast.receiverSettings]
+    errors: [SUCCESS, INVALID_ARGUMENT, INVALID_STATE, BUSY, UNAVAILABLE, INTERNAL_ERROR]
+
+  - id: 0x1626
+    name: cast.restoreReceiverSettings
+    domain: cast
+    status: draft
+    bitOffset: 37
+    since: 1.0.0
+    description: Restore receiver settings defaults or an available backup after the runtime and store revision checks.
+    rpc_op: request_response
+    request_schema: CastRestoreReceiverSettingsParams
+    response_schema: CastReceiverSettingsWriteResult
+    recommended_encoding: [json]
+    capabilities: [cast.receiverSettings]
+    errors: [SUCCESS, INVALID_ARGUMENT, INVALID_STATE, BUSY, UNAVAILABLE, INTERNAL_ERROR]
+
 events:
   - id: 0x1601
     name: cast.sessionIncoming
@@ -3358,6 +3400,93 @@ types:
       - { id: 0x19, name: topBarShowMaximize, type: bool, required: false, description: Whether to show the window maximize button. }
       - { id: 0x1A, name: topBarShowBackground, type: bool, required: false, description: Whether to show the full-width top bar background independently of its elements. }
 
+  CastReceiverPreferenceValues:
+    kind: object
+    description: Receiver preference values. A mutation patch contains exactly one declared field.
+    fields:
+      - { id: 0x01, name: airplayName, type: string, required: false, max_length: 63, description: AirPlay name preference. An empty configured name requests automatic naming. }
+      - { id: 0x02, name: airplayRandomPassword, type: bool, required: false, description: AirPlay random-password policy. Contains no current password. }
+      - { id: 0x03, name: controlPort, type: uint32, required: false, min: 1, max: 65535, description: WebSocket control port. Default is 7020. Changes apply on the next start. }
+      - { id: 0x04, name: controlListenOnLan, type: bool, required: false, description: Local-network WebSocket listener. Default is false for loopback only. Changes apply on the next start. }
+
+  CastReceiverPersistedOverrides:
+    kind: object
+    description: Explicit receiver store overrides spanning presentation and receiver preferences. Omitted fields use defaults at next launch.
+    fields:
+      - { id: 0x01, name: layoutMode, type: enum, enum: [grid, presentation], required: false, description: Selected product layout; complete source withdrawal returns to grid. }
+      - { id: 0x02, name: audioControlMode, type: enum, enum: [automatic, manual], required: false, description: Adopted or desired control policy; not proof of sound. }
+      - { id: 0x03, name: audioMixMode, type: enum, enum: [exclusive, mix], required: false, description: Adopted or desired audio mixing policy. }
+      - { id: 0x04, name: capacity, type: uint32, required: false, min: 1, description: Desired capacity or actually adopted capacity according to containing projection; applied may be limited. }
+      - { id: 0x05, name: enabledProtocols, type: array, array: { item_type: string }, required: false, description: Adopted or desired enable policy; not receiver readiness. }
+      - { id: 0x06, name: profileHint, type: string, required: false, max_length: 64, description: Declared product combination profile identifier. }
+      - { id: 0x07, name: contentAdaptation, type: enum, enum: [fixed, auto-fit], required: false, description: Content aspect adaptation independent of Layout. }
+      - { id: 0x08, name: presentationMode, type: enum, enum: [manual, automatic], required: false, description: Meeting visual entry policy; not global audio policy. }
+      - { id: 0x09, name: presentationSidebar, type: enum, enum: [left, right], required: false, description: Meeting rail position independent of base layoutMode. }
+      - { id: 0x0A, name: presentationAudioFollow, type: bool, required: false, description: Remembered follow preference independent of activity and global audio control mode. }
+      - { id: 0x0B, name: presentationFocusOnDoubleClick, type: bool, required: false, description: Remembered main-body double-click Focus entry preference; default true. Disabling restores Sidebar from Focus. }
+      - { id: 0x0C, name: presentationGridOnDoubleClick, type: bool, required: false, description: Remembered inclusion of Grid in main-body double-click cycle; default false. Independent of Focus entry. }
+      - { id: 0x0D, name: presentationAutoEnter, type: bool, required: false, description: Automatic Grid to Sidebar entry at two presented sources; independent of primary selection. Explicit Grid suppresses entry until full withdrawal. }
+      - { id: 0x0E, name: canvasMode, type: enum, enum: [adaptive, fixed], required: false, description: Canvas sizing policy for normalized input geometry. }
+      - { id: 0x0F, name: baseWidth, type: uint32, required: false, min: 1, max: 16384, description: Fixed or preferred canvas width in pixels. }
+      - { id: 0x10, name: baseHeight, type: uint32, required: false, min: 1, max: 16384, description: Fixed or preferred canvas height in pixels. }
+      - { id: 0x11, name: maxWidth, type: uint32, required: false, min: 1, max: 16384, description: Adaptive canvas maximum width in pixels. }
+      - { id: 0x12, name: maxHeight, type: uint32, required: false, min: 1, max: 16384, description: Adaptive canvas maximum height in pixels. }
+      - { id: 0x13, name: topBarTrigger, type: enum, enum: [none, top-click, canvas-click, always], required: false, description: Timing for appearance of the enabled receiver controls and background. }
+      - { id: 0x14, name: topBarShowCastCode, type: bool, required: false, description: Whether the regular Cast Code appears in the visible receiver top bar. }
+      - { id: 0x15, name: topBarShowDebug, type: bool, required: false, description: Whether the visible receiver top bar offers the local debugging entry. }
+      - { id: 0x16, name: startupWindowMode, type: enum, enum: [fullscreen, windowed], required: false, description: Restart-only initial local receiver window mode. }
+      - { id: 0x17, name: topBarShowLayout, type: bool, required: false, description: Whether to show the layout selector at the left of the receiver chrome. }
+      - { id: 0x18, name: topBarShowMinimize, type: bool, required: false, description: Whether to show the window minimize button. }
+      - { id: 0x19, name: topBarShowMaximize, type: bool, required: false, description: Whether to show the window maximize button. }
+      - { id: 0x1A, name: topBarShowBackground, type: bool, required: false, description: Whether to show the full-width top bar background independently of its elements. }
+      - { id: 0x1B, name: airplayName, type: string, required: false, max_length: 63, description: AirPlay name preference. An empty configured name requests automatic naming. }
+      - { id: 0x1C, name: airplayRandomPassword, type: bool, required: false, description: AirPlay random-password policy. Contains no current password. }
+      - { id: 0x1D, name: controlPort, type: uint32, required: false, min: 1, max: 65535, description: WebSocket control port. Default is 7020. Changes apply on the next start. }
+      - { id: 0x1E, name: controlListenOnLan, type: bool, required: false, description: Local-network WebSocket listener. Default is false for loopback only. Changes apply on the next start. }
+
+  CastReceiverSettingsState:
+    kind: object
+    description: Active and next-start receiver preferences plus a secret-free store observation.
+    fields:
+      - { id: 0x01, name: runtimeInstanceId, type: string, required: true, max_length: 36, description: Canonical UUID for this receiver process lifetime. }
+      - { id: 0x02, name: storeRevision, type: string, required: true, max_length: 20, description: Canonical decimal uint64 store revision or zero when absent. }
+      - { id: 0x03, name: storageState, type: enum, enum: [absent, loaded, saved, invalid, unavailable], required: true, description: Observed condition of the saved settings. }
+      - { id: 0x04, name: backupAvailable, type: bool, required: true, description: A valid settings backup is available. }
+      - { id: 0x05, name: recoveredFromBackup, type: bool, required: true, description: The settings were read from a backup. }
+      - { id: 0x06, name: supportsPersistence, type: bool, required: true, description: The store and current listener policy permit an explicit save. }
+      - { id: 0x07, name: restartOnlyFields, type: array, array: { item_type: string }, required: true, description: Supported fields applied at restart. Includes both WS keys when supported. }
+      - { id: 0x08, name: configured, type: CastReceiverPreferenceValues, required: true, description: Configured preferences. For the WS endpoint this is next-start intent including defaults. }
+      - { id: 0x09, name: applied, type: CastReceiverPreferenceValues, required: true, description: Observed AirPlay state and currently listening WebSocket endpoint values. }
+      - { id: 0x0A, name: airplayEnabled, type: bool, required: true, description: AirPlay is enabled in this receiver instance. }
+      - { id: 0x0B, name: publishState, type: enum, enum: [published, republishing, pending, failed, unpublished], required: true, description: Observed AirPlay discovery state. }
+      - { id: 0x0C, name: pendingRestart, type: array, array: { item_type: string }, required: true, description: Restart-only fields with a configured value different from its applied value. }
+      - { id: 0x0D, name: persistedOverrides, type: CastReceiverPersistedOverrides, required: true, description: Explicit settings store values without defaults. }
+
+  CastSetReceiverSettingsParams:
+    kind: object
+    description: Exact single-field mutation with a store version precondition. WebSocket endpoint fields require persistence.
+    fields:
+      - { id: 0x01, name: runtimeInstanceId, type: string, required: true, max_length: 36, description: Instance UUID from the last settings read. }
+      - { id: 0x02, name: expectedStoreRevision, type: string, required: true, max_length: 20, description: Exact last read store revision as canonical decimal uint64. }
+      - { id: 0x03, name: persist, type: bool, required: true, description: Explicit save request. True is mandatory for either WebSocket endpoint field. }
+      - { id: 0x04, name: patch, type: CastReceiverPreferenceValues, required: true, description: Exactly one supported field. Unknown and multiple keys are invalid. }
+
+  CastRestoreReceiverSettingsParams:
+    kind: object
+    description: Revision-checked restore request for the receiver settings store.
+    fields:
+      - { id: 0x01, name: runtimeInstanceId, type: string, required: true, max_length: 36, description: Instance UUID from the last settings read. }
+      - { id: 0x02, name: expectedStoreRevision, type: string, required: true, max_length: 20, description: Exact last read store revision as canonical decimal uint64. }
+      - { id: 0x03, name: source, type: enum, enum: [defaults, backup], required: true, description: Reset saved overrides or restore the available backup. }
+
+  CastReceiverSettingsWriteResult:
+    kind: object
+    description: A successful preference update or restore with separate storage and runtime results.
+    fields:
+      - { id: 0x01, name: persistenceStatus, type: enum, enum: [notRequested, unchanged, stored], required: true, description: Save outcome. Stored confirms the write completed. }
+      - { id: 0x02, name: applicationStatus, type: enum, enum: [unchanged, applied, pending, pendingRestart, failed], required: true, description: Runtime application state. Pending restart confirms no listener restart yet. }
+      - { id: 0x03, name: settings, type: CastReceiverSettingsState, required: true, description: Post-operation settings observation and new revision when saved. }
+
   CastPresentationStartupSettings:
     kind: object
     description: Exactly the capability-declared restart-only intent accepted at this host startup; distinct from effective/applied limits and stored values.
@@ -4105,6 +4234,14 @@ capabilities:
     description: Per-target input gate and presentation policy; event semantics are explicit and AirPlay is excluded.
     type: object
     schema: CastTouchbackCapability
+
+  - id: 0x1610
+    name: cast.receiverSettings
+    domain: cast
+    status: draft
+    since: 1.0.0
+    description: Optional receiver preference methods discovered by name. The state declares supported restart-only fields and current save availability.
+    type: bool
 
 retired_allocations:
   - kind: method
