@@ -434,6 +434,42 @@
       "type": "object",
       "schema": "SportBasketballCapability",
       "idHex": "0x1802"
+    },
+    {
+      "id": 6401,
+      "name": "license.registration",
+      "domain": "license",
+      "status": "draft",
+      "description": "Device registers its identity after successful connection identification and accepts asynchronous automatic issuance.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "type": "object",
+      "schema": "LicenseRegistrationCapabilities",
+      "idHex": "0x1901"
+    },
+    {
+      "id": 6402,
+      "name": "license.credentialDelivery",
+      "domain": "license",
+      "status": "draft",
+      "description": "Device receives signed credentials, verifies and installs them atomically, and reports delivery receipts.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "type": "object",
+      "schema": "LicenseCredentialDeliveryCapabilities",
+      "idHex": "0x1902"
+    },
+    {
+      "id": 6403,
+      "name": "license.reconciliation",
+      "domain": "license",
+      "status": "draft",
+      "description": "Device persists credential and policy-rowset versions and reports them for reconciliation and pre-delivery probes.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "type": "object",
+      "schema": "LicenseReconciliationCapabilities",
+      "idHex": "0x1903"
     }
   ]
 }

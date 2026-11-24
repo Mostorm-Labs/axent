@@ -109,3 +109,8 @@
 | `0x1805` | `sport.setGoalShotWatermarkConfig` | sport | draft | SportSetGoalShotWatermarkConfigParams | Empty | - |
 | `0x1806` | `sport.getEventClipConfig` | sport | draft | SportConfigTargetParams | SportEventClipConfig | - |
 | `0x1807` | `sport.setEventClipConfig` | sport | draft | SportSetEventClipConfigParams | Empty | - |
+| `0x1901` | `license.registerIdentity` | license | draft | Empty | RegisterIdentityResult | - |
+| `0x1902` | `license.reportReceipt` | license | draft | ReportReceiptParams | ReportReceiptResult | - |
+| `0x1903` | `license.reconcile` | license | draft | ReconcileParams | ReconcileResult | - |
+| `0x1904` | `license.deliverCredential` | license | draft | DeliverCredentialParams | DeliverCredentialResult | - |
+| `0x1905` | `license.resolveCredential` | license | draft | ResolveCredentialParams | ResolveCredentialResult | - |

@@ -26,6 +26,7 @@
 | file | 2 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
 | firmware | 3 | ASK | 6 | 旁路高覆盖 | `firmware.update` P0 已进入 generated；后续补 firmware info/policy 与 P1/P2 更新能力确认。 |
 | input | 6 | ASK / generated | 2 | P0 Typed Input | R2 input.stream 已采纳；Touch 完整采样 7×N、Mouse 事件、标准 Frame 和按所有权释放见 specs/48-input-stream.md；真实采集/注入分别验收。 |
+| license | 3 | generated | 5 | P1 | `license.registration`、`license.credentialDelivery`、`license.reconciliation` 已采纳并生成（domain 0x19，2026-11-18：5 方法 + 3 capability + 3 vendor 错误码进入 IR/generated/mcp）。 |
 | log | 3 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
 | network | 6 | ASK | 26 | 旁路高覆盖 | `network.interface`、`network.ip`、`network.wifi`、`network.ap` 已进入 generated；继续补蓝牙和服务端点草案确认。 |
 | output | 1 | ASK | 0 | P2b | 补产品/设备/legacy 确认。 |

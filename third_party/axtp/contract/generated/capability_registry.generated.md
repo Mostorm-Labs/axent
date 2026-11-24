@@ -39,3 +39,6 @@
 | `0x1702` | `software.updatePolicy` | software | draft | object | SoftwareUpdatePolicyCapability |
 | `0x1801` | `sport.eventDetection` | sport | draft | object | SportEventDetectionCapabilities |
 | `0x1802` | `sport.basketball` | sport | draft | object | SportBasketballCapability |
+| `0x1901` | `license.registration` | license | draft | object | LicenseRegistrationCapabilities |
+| `0x1902` | `license.credentialDelivery` | license | draft | object | LicenseCredentialDeliveryCapabilities |
+| `0x1903` | `license.reconciliation` | license | draft | object | LicenseReconciliationCapabilities |

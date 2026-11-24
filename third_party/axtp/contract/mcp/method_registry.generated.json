@@ -3219,6 +3219,137 @@
         "UNAVAILABLE"
       ],
       "idHex": "0x1807"
+    },
+    {
+      "id": 6401,
+      "bitOffset": 0,
+      "name": "license.registerIdentity",
+      "domain": "license",
+      "status": "draft",
+      "description": "Register the device subject from the dual-form connection identity (idempotent); the platform assigns the deviceId on first registration and accepts automatic entitlement issuance.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "Empty",
+      "responseSchema": "RegisterIdentityResult",
+      "recommendedEncoding": [
+        "json"
+      ],
+      "capabilities": [
+        "license.registration"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "UNAVAILABLE",
+        "LICENSE_IDENTITY_INVALID"
+      ],
+      "idHex": "0x1901"
+    },
+    {
+      "id": 6402,
+      "bitOffset": 1,
+      "name": "license.reportReceipt",
+      "domain": "license",
+      "status": "draft",
+      "description": "Report an install/export/reject receipt for a delivery attempt; accepted only when it correlates to a real platform delivery.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "ReportReceiptParams",
+      "responseSchema": "ReportReceiptResult",
+      "recommendedEncoding": [
+        "json"
+      ],
+      "capabilities": [
+        "license.credentialDelivery"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT"
+      ],
+      "idHex": "0x1902"
+    },
+    {
+      "id": 6403,
+      "bitOffset": 2,
+      "name": "license.reconcile",
+      "domain": "license",
+      "status": "draft",
+      "description": "Pull-channel reconciliation on device online/reconnect; compares credential and policy-rowset versions and answers in one of three forms.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "ReconcileParams",
+      "responseSchema": "ReconcileResult",
+      "recommendedEncoding": [
+        "json"
+      ],
+      "capabilities": [
+        "license.reconciliation"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "NOT_FOUND",
+        "LICENSE_DEVICE_NOT_FOUND"
+      ],
+      "idHex": "0x1903"
+    },
+    {
+      "id": 6404,
+      "bitOffset": 3,
+      "name": "license.deliverCredential",
+      "domain": "license",
+      "status": "draft",
+      "description": "Push one signed credential artifact to the device over dual-key fallback addressing (deviceId first, identity fallback) with channel-side metadata; the device verifies, matches, and atomically installs it.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "DeliverCredentialParams",
+      "responseSchema": "DeliverCredentialResult",
+      "recommendedEncoding": [
+        "json"
+      ],
+      "capabilities": [
+        "license.credentialDelivery"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT"
+      ],
+      "idHex": "0x1904"
+    },
+    {
+      "id": 6405,
+      "bitOffset": 4,
+      "name": "license.resolveCredential",
+      "domain": "license",
+      "status": "draft",
+      "description": "Pure pre-delivery version probe; returns the device-held version triple and never carries credential bytes.",
+      "since": "1.0.0",
+      "deprecated": false,
+      "rpcOp": "request_response",
+      "requestSchema": "ResolveCredentialParams",
+      "responseSchema": "ResolveCredentialResult",
+      "recommendedEncoding": [
+        "json"
+      ],
+      "capabilities": [
+        "license.reconciliation"
+      ],
+      "events": [],
+      "errors": [
+        "SUCCESS",
+        "INVALID_ARGUMENT",
+        "NOT_FOUND",
+        "LICENSE_DEVICE_NOT_FOUND"
+      ],
+      "idHex": "0x1905"
     }
   ]
 }

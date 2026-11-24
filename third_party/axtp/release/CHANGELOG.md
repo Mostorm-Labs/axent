@@ -4,6 +4,162 @@ This changelog records AXTP Spec releases published with `spec/vMAJOR.MINOR.PATC
 
 Current repository path note: conformance cases now live at the root `conformance/` directory. Older release entries may mention their historical paths.
 
+## spec/v0.20.0
+
+### Protocol
+
+- Adds the R2 typed input stream for receiver-to-source input. Stream open
+  negotiates event types and limits for an immutable input context.
+- Specifies complete multi-contact Touch samples, Mouse pointer events,
+  Standard Framed Binary transport, and owned input release on reset or close.
+- Defines per-target touchback permission and output policy, independent
+  receiver top-bar visibility, and persistent receiver startup settings.
+
+### Registry and Schemas
+
+- Adds input.openStream, input.closeStream, input.stream, the typed sample
+  and stream context schemas, and the cast control and settings contracts.
+- Retains the license domain from spec/v0.19.1. Regenerates Protocol IR,
+  registry references, MCP schema and test vectors from the source facts.
+
+### Conformance
+
+- Adds typed Touch and Mouse control and frame cases, including multi-contact
+  boundaries, malformed input, state release and receiver settings.
+
+### Migration and Compatibility
+
+- Existing Standard Framed Binary framing and published method IDs remain
+  available. Peers use the negotiated typed stream capability for R2 input.
+- Replace the fixed-mode touchback development drafts with the R2 typed input
+  contract. The development draft wire payloads do not interoperate with R2.
+
+### Runtime Impact
+
+- Regenerate language runtime artifacts from this exact release. NearCast
+  and Axent adopt the matching C++ runtime before packaging a formal build.
+
+## spec/v0.19.1
+
+### Protocol
+
+- Amends the license domain device-identity semantics to align with the
+  upstream entitlement licensing spec's device-identity rulings: `deviceId` is
+  assigned by the platform at first registration
+  (`^axldev_[0-9a-f]{32}$`, 40 characters) and must be persisted and
+  self-reported by the device on later connections; the device's outward
+  identity is the `identity_value` public key (`^[0-9a-f]{128}$`), self-reported
+  in dual form (unregistered = identity_value / registered = deviceId) with the
+  identification layer only checking non-empty.
+- All S2D calls (deliverCredential, resolveCredential, T2 online push, online
+  judgment) now use dual-key fallback addressing: the registered deviceId
+  first, with identity-mapping fallback covering the first-registration
+  same-connection window.
+- `license.registerIdentity` becomes re-resolution idempotent: an identity_value
+  or deviceId hit always returns the same deviceId; `0x7001` rejects only when
+  both dual-form patterns fail to match or the identity_value is already mapped
+  to another subject (terminal-error semantics preserved).
+
+### Registry
+
+- Updates `contract/registry/domains/license/domain.yaml`: the four `deviceId`
+  fields (RegisterIdentityResult, ReportReceiptParams, ReconcileParams,
+  ResolveCredentialParams) move to `max_length: 40` with platform-assigned /
+  current self-reported addressing value descriptions;
+  `registerIdentity`/`deliverCredential` method descriptions reflect
+  platform assignment and dual-key fallback addressing.
+- Updates `contract/registry/error/error_code.yaml`: `0x7001`
+  LICENSE_IDENTITY_INVALID adopts the dual-form pattern and
+  identity-occupied semantics.
+- All method/capability/error IDs, field IDs, bitOffsets and names are
+  unchanged (draft-status breaking correction); generated artifacts
+  (protocol IR, generated docs, MCP JSON) refreshed via the generator only.
+
+### Schemas
+
+- `LicenseRegistrationCapabilities.deviceIdFormat` becomes a dual-form format
+  declaration (identity_value or platform-assigned deviceId), `max_length`
+  32 → 64; the license flow document and the three license protocol drafts
+  are re-reviewed (coverage complete) with adoption/revision history recorded.
+
+### Conformance
+
+- Refreshes the generator protocol snapshots
+  (`protocol.generated.json` / `protocol.generated.md`) for the amended
+  deviceId facts; no new conformance cases (license conformance remains
+  covered by cross-repo golden vectors from the peer credential verifier).
+
+### Migration
+
+- Draft-status breaking correction with no wire migration: every ID, field
+  ID, bitOffset and name is preserved. Runtimes that validated the former
+  `dev_`-prefixed 36-character constraint must update to the platform-assigned
+  `axldev_` 40-character form and the dual-form registration adoption rules.
+
+### Runtime Impact
+
+- Runtime implementations targeting the license domain must bind this exact
+  spec tag; the upstream platform's method contract must be corrected against
+  this registry (its quoted global error values and the former device-local
+  identity wording do not match; flow OQ-6/OQ-7).
+- Documentation scrub: upstream repository identity (repository name, internal
+  paths, review rounds, requirement/story IDs) is removed from the license
+  flow document, protocol drafts, and this changelog; upstream inputs are
+  referenced only as the anonymous "upstream entitlement licensing spec".
+- Back-fills seven missing flow-plan index rows in `workspace/flows/README.md`.
+
+## spec/v0.19.0
+
+### Protocol
+
+- Adds the `license` business domain (0x19) for the device entitlement licensing
+  lifecycle over the cloud-reverse channel: identity registration, signed
+  credential delivery and receipts, and reconciliation with a pure pre-delivery
+  version probe.
+- All five methods are RPC request/response over JSON with zero custom events;
+  the credential artifact (frozen CBOR V1) travels as an opaque Base64 string.
+
+### Registry
+
+- Registers domain `license` at high byte `0x19`; methods `0x1901`–`0x1905`
+  (registerIdentity, reportReceipt, reconcile, deliverCredential,
+  resolveCredential) with bitOffsets 0–4, capabilities `0x1901`–`0x1903`
+  (registration, credentialDelivery, reconciliation), and 14 schemas including
+  the shared `LicenseCredentialInfo` and `LicenseVersionTriple`.
+- Adds the first vendor-segment error codes `0x7001` LICENSE_IDENTITY_INVALID
+  (terminal, device must rebuild its local identity), `0x7002`
+  LICENSE_DEVICE_NOT_FOUND and `0x7003` LICENSE_CREDENTIAL_STALE
+  (anti-rollback), registered with `domain: vendor` per the new vendor-segment
+  usage rule documented in specs/30-registry.md.
+
+### Schemas
+
+- Defines registration results (REGISTERED/EXISTING, credentialPending),
+  delivery params with an embedded shared credential object, receipts
+  (INSTALLED/EXPORTED/REJECTED with deliveryRef correlation), the mutually
+  exclusive three-form reconcile answer (upToDate / credential /
+  reissueAccepted), and the device-held version triple.
+
+### Conformance
+
+- No conformance cases yet for the license domain; runtime verification relies
+  on the generated contract and cross-repo golden vectors from the peer
+  credential verifier.
+
+### Migration
+
+- Supersedes the never-adopted `system.license` skeleton draft (marked
+  deprecated); its generic license-config semantics do not project onto this
+  domain. No adopted facts changed, so no wire migration is required.
+
+### Runtime Impact
+
+- Runtime implementations targeting license must bind this exact spec tag.
+  Business source: upstream entitlement licensing spec; its quoted global error
+  values must be corrected against this registry (flow OQ-6), and the
+  cloud-reverse `helloSender` contradiction (flow OQ-1) remains open for
+  SDK-side verification.
+
 ## spec/v0.18.0
 
 ### Protocol

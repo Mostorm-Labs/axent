@@ -122,7 +122,7 @@ and applied values intact. Clients re-read the state after a conflict or
 an unknown outcome and never automatically replay a write with a fresh
 revision. An authorized local startup manager may restart and reconnect
 using the verified effective endpoint. See the
-[receiver startup flow](../workspace/protocol/cast/cast.receiverSettings.md).
+[generated method registry](../contract/generated/method_registry.generated.md) for the request and response schemas.
 
 ## Settings facts and revisions
 

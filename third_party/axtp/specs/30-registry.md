@@ -130,6 +130,8 @@ Error 规则：
 | `0x7000-0x7EFF` | vendor |
 | `0x7F00-0x7FFF` | legacy adapter |
 
+Vendor 段 `0x7000-0x7EFF` 供业务域专属错误码使用：条目登记于 `contract/registry/error/error_code.yaml`，`domain` 固定为 `vendor`，`description` MUST 标注所属业务域与使用方（如 license）；登记后遵循与全局 ErrorCode 相同的稳定性与不复用约束，方法 errors 引用按名称解析。
+
 Runtime MUST 使用生成的 error enum/lookup，并 SHOULD 为诊断保留未知 error code。
 
 ## 配置 Profile

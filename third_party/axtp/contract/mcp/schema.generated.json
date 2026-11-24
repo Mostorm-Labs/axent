@@ -12993,6 +12993,423 @@
       ]
     },
     {
+      "name": "RegisterIdentityResult",
+      "type": "object",
+      "description": "Registration acceptance result; issuance is asynchronous and converges via delivery or reconciliation.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "deviceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 40,
+          "description": "Platform-assigned device subject identifier (axldev_ followed by 32 lowercase hex), returned on registration; the device must persist it and self-report it on later connections (non-authoritative reference; the authoritative identity is the identity_value public key)."
+        },
+        {
+          "id": 2,
+          "name": "status",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "REGISTERED",
+            "EXISTING"
+          ],
+          "description": "New registration or idempotent hit on an existing subject."
+        },
+        {
+          "id": 3,
+          "name": "credentialPending",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "True when the ledger still has unconverged credential state; the credential arrives via push or a later reconcile."
+        }
+      ]
+    },
+    {
+      "name": "ReportReceiptParams",
+      "type": "object",
+      "description": "Device receipt for one delivery or offline-export attempt.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "deviceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 40,
+          "description": "Connection addressing key current self-reported value (registered form, axldev_ prefix); cross-validated against the connection identity."
+        },
+        {
+          "id": 2,
+          "name": "credentialId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Credential artifact the receipt refers to."
+        },
+        {
+          "id": 3,
+          "name": "outcome",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "INSTALLED",
+            "EXPORTED",
+            "REJECTED"
+          ],
+          "description": "Install confirmation, offline export record, or rejection."
+        },
+        {
+          "id": 4,
+          "name": "errorCode",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "Required when outcome is REJECTED; currently the only rejection cause is LICENSE_CREDENTIAL_STALE."
+        },
+        {
+          "id": 5,
+          "name": "deliveryRef",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "Echo of the platform deliveryId; may be omitted for offline exports, where acceptance is validated by credentialId lookup."
+        }
+      ]
+    },
+    {
+      "name": "ReportReceiptResult",
+      "type": "object",
+      "description": "Receipt acceptance result; false means the receipt does not correlate to a real delivery attempt and the ledger is unchanged.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "accepted",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether the receipt was accepted for recording; only INSTALLED advances the acknowledged pointer."
+        }
+      ]
+    },
+    {
+      "name": "ReconcileParams",
+      "type": "object",
+      "description": "Device-held version report for online/reconnect reconciliation.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "deviceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 40,
+          "description": "Connection addressing key current self-reported value (registered form, axldev_ prefix); filled with the current self-reported value also when the platform addresses via the identity fallback."
+        },
+        {
+          "id": 2,
+          "name": "version",
+          "type": "LicenseVersionTriple",
+          "required": false,
+          "deprecated": false,
+          "description": "Device-held version triple; omitted entirely when the device holds no credential."
+        }
+      ]
+    },
+    {
+      "name": "ReconcileResult",
+      "type": "object",
+      "description": "Reconciliation answer in one of three mutually exclusive forms, namely up to date, latest credential attached, or reissue accepted.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "upToDate",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "True only when the device pointer is self-consistent and the aggregate matches the ledger."
+        },
+        {
+          "id": 2,
+          "name": "policyVersion",
+          "type": "uint32",
+          "required": false,
+          "deprecated": false,
+          "description": "Current policy rowset revision; returned alongside the credential for device-side persistence."
+        },
+        {
+          "id": 3,
+          "name": "credential",
+          "type": "LicenseCredentialInfo",
+          "required": false,
+          "deprecated": false,
+          "description": "Latest ledger credential; present only in the credential form."
+        },
+        {
+          "id": 4,
+          "name": "reissueAccepted",
+          "type": "bool",
+          "required": false,
+          "deprecated": false,
+          "description": "Reissue acceptance form; present only when issuance must rerun asynchronously and no credential bytes are returned."
+        }
+      ]
+    },
+    {
+      "name": "ResolveCredentialParams",
+      "type": "object",
+      "description": "Pre-delivery version probe request.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "deviceId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 40,
+          "description": "Connection addressing key current self-reported value (registered form, axldev_ prefix); the same string as the connection addressing key, also under the platform identity-fallback addressing."
+        }
+      ]
+    },
+    {
+      "name": "ResolveCredentialResult",
+      "type": "object",
+      "description": "Device-held version report; never carries credential bytes.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "hasCredential",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether the device currently holds a credential."
+        },
+        {
+          "id": 2,
+          "name": "version",
+          "type": "LicenseVersionTriple",
+          "required": false,
+          "deprecated": false,
+          "description": "Held version triple; required when hasCredential is true."
+        }
+      ]
+    },
+    {
+      "name": "DeliverCredentialParams",
+      "type": "object",
+      "description": "Credential push with channel-side metadata; the CBOR artifact itself is opaque to the protocol.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "deliveryId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "Platform delivery attempt identifier, echoed by reportReceipt.deliveryRef."
+        },
+        {
+          "id": 2,
+          "name": "policyVersion",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Policy rowset revision of the credential source; channel-side metadata persisted by the device."
+        },
+        {
+          "id": 3,
+          "name": "credential",
+          "type": "LicenseCredentialInfo",
+          "required": true,
+          "deprecated": false,
+          "description": "Signed credential object shared with the reconcile answer."
+        }
+      ]
+    },
+    {
+      "name": "DeliverCredentialResult",
+      "type": "object",
+      "description": "Device acceptance result; rejection is expressed in the business result, not as a transport error.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "accepted",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "True after signature verification, identity matching, and atomic install succeed."
+        },
+        {
+          "id": 2,
+          "name": "errorCode",
+          "type": "string",
+          "required": false,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "Required when accepted is false; currently the only rejection cause is LICENSE_CREDENTIAL_STALE (anti-rollback)."
+        }
+      ]
+    },
+    {
+      "name": "LicenseCredentialInfo",
+      "type": "object",
+      "description": "Shared credential object reused by deliverCredential params and the reconcile answer.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "credentialId",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 36,
+          "description": "Credential artifact identifier."
+        },
+        {
+          "id": 2,
+          "name": "authorityRevision",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Credential authority revision (first axis of the monotonic version pair)."
+        },
+        {
+          "id": 3,
+          "name": "credentialGeneration",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Credential generation (second axis, strictly increasing on the same revision axis)."
+        },
+        {
+          "id": 4,
+          "name": "reason",
+          "type": "enum",
+          "required": true,
+          "deprecated": false,
+          "enum": [
+            "ISSUE",
+            "REVISE",
+            "REVOKE"
+          ],
+          "description": "Issuance semantics; REVOKE carries an empty entitlement set."
+        },
+        {
+          "id": 5,
+          "name": "cborBase64",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 87384,
+          "description": "Opaque signed credential bytes (frozen CBOR V1 artifact, at most 64 KiB before Base64 encoding with padding)."
+        }
+      ]
+    },
+    {
+      "name": "LicenseVersionTriple",
+      "type": "object",
+      "description": "Shared version triple reused by reconcile params and the resolveCredential answer.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "authorityRevision",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Credential authority revision."
+        },
+        {
+          "id": 2,
+          "name": "credentialGeneration",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Credential generation."
+        },
+        {
+          "id": 3,
+          "name": "policyVersion",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "description": "Installed policy rowset revision persisted by the device."
+        }
+      ]
+    },
+    {
+      "name": "LicenseRegistrationCapabilities",
+      "type": "object",
+      "description": "Device-side declaration of the registration flow support.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "deviceIdFormat",
+          "type": "string",
+          "required": true,
+          "deprecated": false,
+          "maxLength": 64,
+          "description": "Dual-form format declaration of the self-reported connection identity accepted by registration adoption (unregistered identity_value ^[0-9a-f]{128}$ or platform-assigned deviceId ^axldev_[0-9a-f]{32}$)."
+        }
+      ]
+    },
+    {
+      "name": "LicenseCredentialDeliveryCapabilities",
+      "type": "object",
+      "description": "Device-side declaration of credential receive, verify, and install support.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "maxArtifactBytes",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "max": 65536,
+          "description": "Maximum single artifact size in bytes the device accepts."
+        },
+        {
+          "id": 2,
+          "name": "maxEntitlements",
+          "type": "uint32",
+          "required": true,
+          "deprecated": false,
+          "max": 256,
+          "description": "Maximum entitlement entries per credential."
+        },
+        {
+          "id": 3,
+          "name": "supportedReasons",
+          "type": "array",
+          "required": true,
+          "deprecated": false,
+          "array": {
+            "itemType": "string"
+          },
+          "description": "Subset of ISSUE, REVISE, and REVOKE the device accepts."
+        }
+      ]
+    },
+    {
+      "name": "LicenseReconciliationCapabilities",
+      "type": "object",
+      "description": "Device-side declaration of reconciliation and version reporting support.",
+      "fields": [
+        {
+          "id": 1,
+          "name": "persistentPolicyVersion",
+          "type": "bool",
+          "required": true,
+          "deprecated": false,
+          "description": "Whether the device persists policyVersion locally for reconcile and probe reporting."
+        }
+      ]
+    },
+    {
       "name": "NetworkGetInterfacesParams",
       "type": "object",
       "description": "Selector for network interface enumeration.",

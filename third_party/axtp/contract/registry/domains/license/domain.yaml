@@ -1,0 +1,371 @@
+domain: license
+description: Device entitlement licensing lifecycle covering identity registration, signed credential delivery and receipts, and reconciliation over the cloud-reverse channel.
+
+methods:
+  - id: 0x1901
+    name: license.registerIdentity
+    domain: license
+    status: draft
+    bitOffset: 0
+    since: 1.0.0
+    description: Register the device subject from the dual-form connection identity (idempotent); the platform assigns the deviceId on first registration and accepts automatic entitlement issuance.
+    rpc_op: request_response
+    request_schema: Empty
+    response_schema: RegisterIdentityResult
+    recommended_encoding: [json]
+    capabilities: [license.registration]
+    errors: [SUCCESS, INVALID_ARGUMENT, UNAVAILABLE, LICENSE_IDENTITY_INVALID]
+
+  - id: 0x1902
+    name: license.reportReceipt
+    domain: license
+    status: draft
+    bitOffset: 1
+    since: 1.0.0
+    description: Report an install/export/reject receipt for a delivery attempt; accepted only when it correlates to a real platform delivery.
+    rpc_op: request_response
+    request_schema: ReportReceiptParams
+    response_schema: ReportReceiptResult
+    recommended_encoding: [json]
+    capabilities: [license.credentialDelivery]
+    errors: [SUCCESS, INVALID_ARGUMENT]
+
+  - id: 0x1903
+    name: license.reconcile
+    domain: license
+    status: draft
+    bitOffset: 2
+    since: 1.0.0
+    description: Pull-channel reconciliation on device online/reconnect; compares credential and policy-rowset versions and answers in one of three forms.
+    rpc_op: request_response
+    request_schema: ReconcileParams
+    response_schema: ReconcileResult
+    recommended_encoding: [json]
+    capabilities: [license.reconciliation]
+    errors: [SUCCESS, INVALID_ARGUMENT, NOT_FOUND, LICENSE_DEVICE_NOT_FOUND]
+
+  - id: 0x1904
+    name: license.deliverCredential
+    domain: license
+    status: draft
+    bitOffset: 3
+    since: 1.0.0
+    description: Push one signed credential artifact to the device over dual-key fallback addressing (deviceId first, identity fallback) with channel-side metadata; the device verifies, matches, and atomically installs it.
+    rpc_op: request_response
+    request_schema: DeliverCredentialParams
+    response_schema: DeliverCredentialResult
+    recommended_encoding: [json]
+    capabilities: [license.credentialDelivery]
+    errors: [SUCCESS, INVALID_ARGUMENT]
+
+  - id: 0x1905
+    name: license.resolveCredential
+    domain: license
+    status: draft
+    bitOffset: 4
+    since: 1.0.0
+    description: Pure pre-delivery version probe; returns the device-held version triple and never carries credential bytes.
+    rpc_op: request_response
+    request_schema: ResolveCredentialParams
+    response_schema: ResolveCredentialResult
+    recommended_encoding: [json]
+    capabilities: [license.reconciliation]
+    errors: [SUCCESS, INVALID_ARGUMENT, NOT_FOUND, LICENSE_DEVICE_NOT_FOUND]
+
+types:
+  RegisterIdentityResult:
+    kind: object
+    description: Registration acceptance result; issuance is asynchronous and converges via delivery or reconciliation.
+    fields:
+      - id: 0x01
+        name: deviceId
+        type: string
+        required: true
+        max_length: 40
+        description: Platform-assigned device subject identifier (axldev_ followed by 32 lowercase hex), returned on registration; the device must persist it and self-report it on later connections (non-authoritative reference; the authoritative identity is the identity_value public key).
+      - id: 0x02
+        name: status
+        type: enum
+        enum: [REGISTERED, EXISTING]
+        required: true
+        description: New registration or idempotent hit on an existing subject.
+      - id: 0x03
+        name: credentialPending
+        type: bool
+        required: true
+        description: True when the ledger still has unconverged credential state; the credential arrives via push or a later reconcile.
+
+  ReportReceiptParams:
+    kind: object
+    description: Device receipt for one delivery or offline-export attempt.
+    fields:
+      - id: 0x01
+        name: deviceId
+        type: string
+        required: true
+        max_length: 40
+        description: Connection addressing key current self-reported value (registered form, axldev_ prefix); cross-validated against the connection identity.
+      - id: 0x02
+        name: credentialId
+        type: string
+        required: true
+        max_length: 36
+        description: Credential artifact the receipt refers to.
+      - id: 0x03
+        name: outcome
+        type: enum
+        enum: [INSTALLED, EXPORTED, REJECTED]
+        required: true
+        description: Install confirmation, offline export record, or rejection.
+      - id: 0x04
+        name: errorCode
+        type: string
+        required: false
+        max_length: 64
+        description: Required when outcome is REJECTED; currently the only rejection cause is LICENSE_CREDENTIAL_STALE.
+      - id: 0x05
+        name: deliveryRef
+        type: string
+        required: false
+        max_length: 64
+        description: Echo of the platform deliveryId; may be omitted for offline exports, where acceptance is validated by credentialId lookup.
+
+  ReportReceiptResult:
+    kind: object
+    description: Receipt acceptance result; false means the receipt does not correlate to a real delivery attempt and the ledger is unchanged.
+    fields:
+      - id: 0x01
+        name: accepted
+        type: bool
+        required: true
+        description: Whether the receipt was accepted for recording; only INSTALLED advances the acknowledged pointer.
+
+  ReconcileParams:
+    kind: object
+    description: Device-held version report for online/reconnect reconciliation.
+    fields:
+      - id: 0x01
+        name: deviceId
+        type: string
+        required: true
+        max_length: 40
+        description: Connection addressing key current self-reported value (registered form, axldev_ prefix); filled with the current self-reported value also when the platform addresses via the identity fallback.
+      - id: 0x02
+        name: version
+        type: LicenseVersionTriple
+        required: false
+        description: Device-held version triple; omitted entirely when the device holds no credential.
+
+  ReconcileResult:
+    kind: object
+    description: Reconciliation answer in one of three mutually exclusive forms, namely up to date, latest credential attached, or reissue accepted.
+    fields:
+      - id: 0x01
+        name: upToDate
+        type: bool
+        required: true
+        description: True only when the device pointer is self-consistent and the aggregate matches the ledger.
+      - id: 0x02
+        name: policyVersion
+        type: uint32
+        required: false
+        description: Current policy rowset revision; returned alongside the credential for device-side persistence.
+      - id: 0x03
+        name: credential
+        type: LicenseCredentialInfo
+        required: false
+        description: Latest ledger credential; present only in the credential form.
+      - id: 0x04
+        name: reissueAccepted
+        type: bool
+        required: false
+        description: Reissue acceptance form; present only when issuance must rerun asynchronously and no credential bytes are returned.
+
+  ResolveCredentialParams:
+    kind: object
+    description: Pre-delivery version probe request.
+    fields:
+      - id: 0x01
+        name: deviceId
+        type: string
+        required: true
+        max_length: 40
+        description: Connection addressing key current self-reported value (registered form, axldev_ prefix); the same string as the connection addressing key, also under the platform identity-fallback addressing.
+
+  ResolveCredentialResult:
+    kind: object
+    description: Device-held version report; never carries credential bytes.
+    fields:
+      - id: 0x01
+        name: hasCredential
+        type: bool
+        required: true
+        description: Whether the device currently holds a credential.
+      - id: 0x02
+        name: version
+        type: LicenseVersionTriple
+        required: false
+        description: Held version triple; required when hasCredential is true.
+
+  DeliverCredentialParams:
+    kind: object
+    description: Credential push with channel-side metadata; the CBOR artifact itself is opaque to the protocol.
+    fields:
+      - id: 0x01
+        name: deliveryId
+        type: string
+        required: true
+        max_length: 64
+        description: Platform delivery attempt identifier, echoed by reportReceipt.deliveryRef.
+      - id: 0x02
+        name: policyVersion
+        type: uint32
+        required: true
+        description: Policy rowset revision of the credential source; channel-side metadata persisted by the device.
+      - id: 0x03
+        name: credential
+        type: LicenseCredentialInfo
+        required: true
+        description: Signed credential object shared with the reconcile answer.
+
+  DeliverCredentialResult:
+    kind: object
+    description: Device acceptance result; rejection is expressed in the business result, not as a transport error.
+    fields:
+      - id: 0x01
+        name: accepted
+        type: bool
+        required: true
+        description: True after signature verification, identity matching, and atomic install succeed.
+      - id: 0x02
+        name: errorCode
+        type: string
+        required: false
+        max_length: 64
+        description: Required when accepted is false; currently the only rejection cause is LICENSE_CREDENTIAL_STALE (anti-rollback).
+
+  LicenseCredentialInfo:
+    kind: object
+    description: Shared credential object reused by deliverCredential params and the reconcile answer.
+    fields:
+      - id: 0x01
+        name: credentialId
+        type: string
+        required: true
+        max_length: 36
+        description: Credential artifact identifier.
+      - id: 0x02
+        name: authorityRevision
+        type: uint32
+        required: true
+        description: Credential authority revision (first axis of the monotonic version pair).
+      - id: 0x03
+        name: credentialGeneration
+        type: uint32
+        required: true
+        description: Credential generation (second axis, strictly increasing on the same revision axis).
+      - id: 0x04
+        name: reason
+        type: enum
+        enum: [ISSUE, REVISE, REVOKE]
+        required: true
+        description: Issuance semantics; REVOKE carries an empty entitlement set.
+      - id: 0x05
+        name: cborBase64
+        type: string
+        required: true
+        max_length: 87384
+        description: Opaque signed credential bytes (frozen CBOR V1 artifact, at most 64 KiB before Base64 encoding with padding).
+
+  LicenseVersionTriple:
+    kind: object
+    description: Shared version triple reused by reconcile params and the resolveCredential answer.
+    fields:
+      - id: 0x01
+        name: authorityRevision
+        type: uint32
+        required: true
+        description: Credential authority revision.
+      - id: 0x02
+        name: credentialGeneration
+        type: uint32
+        required: true
+        description: Credential generation.
+      - id: 0x03
+        name: policyVersion
+        type: uint32
+        required: true
+        description: Installed policy rowset revision persisted by the device.
+
+  LicenseRegistrationCapabilities:
+    kind: object
+    description: Device-side declaration of the registration flow support.
+    fields:
+      - id: 0x01
+        name: deviceIdFormat
+        type: string
+        required: true
+        max_length: 64
+        description: Dual-form format declaration of the self-reported connection identity accepted by registration adoption (unregistered identity_value ^[0-9a-f]{128}$ or platform-assigned deviceId ^axldev_[0-9a-f]{32}$).
+
+  LicenseCredentialDeliveryCapabilities:
+    kind: object
+    description: Device-side declaration of credential receive, verify, and install support.
+    fields:
+      - id: 0x01
+        name: maxArtifactBytes
+        type: uint32
+        required: true
+        max: 65536
+        description: Maximum single artifact size in bytes the device accepts.
+      - id: 0x02
+        name: maxEntitlements
+        type: uint32
+        required: true
+        max: 256
+        description: Maximum entitlement entries per credential.
+      - id: 0x03
+        name: supportedReasons
+        type: array
+        array:
+          item_type: string
+        required: true
+        description: Subset of ISSUE, REVISE, and REVOKE the device accepts.
+
+  LicenseReconciliationCapabilities:
+    kind: object
+    description: Device-side declaration of reconciliation and version reporting support.
+    fields:
+      - id: 0x01
+        name: persistentPolicyVersion
+        type: bool
+        required: true
+        description: Whether the device persists policyVersion locally for reconcile and probe reporting.
+
+capabilities:
+  - id: 0x1901
+    name: license.registration
+    domain: license
+    status: draft
+    since: 1.0.0
+    description: Device registers its identity after successful connection identification and accepts asynchronous automatic issuance.
+    type: object
+    schema: LicenseRegistrationCapabilities
+
+  - id: 0x1902
+    name: license.credentialDelivery
+    domain: license
+    status: draft
+    since: 1.0.0
+    description: Device receives signed credentials, verifies and installs them atomically, and reports delivery receipts.
+    type: object
+    schema: LicenseCredentialDeliveryCapabilities
+
+  - id: 0x1903
+    name: license.reconciliation
+    domain: license
+    status: draft
+    since: 1.0.0
+    description: Device persists credential and policy-rowset versions and reports them for reconciliation and pre-delivery probes.
+    type: object
+    schema: LicenseReconciliationCapabilities

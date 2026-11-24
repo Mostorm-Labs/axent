@@ -150,6 +150,9 @@
 | `0x1406` | `SEC_SIGNATURE_INVALID` | auth | draft | false |
 | `0x1407` | `SEC_CERT_INVALID` | auth | draft | false |
 | `0x1408` | `SEC_TOKEN_EXPIRED` | auth | draft | false |
+| `0x7001` | `LICENSE_IDENTITY_INVALID` | vendor | draft | false |
+| `0x7002` | `LICENSE_DEVICE_NOT_FOUND` | vendor | draft | false |
+| `0x7003` | `LICENSE_CREDENTIAL_STALE` | vendor | draft | false |
 | `0x7F01` | `LEGACY_CMD_UNMAPPED` | legacy | mvp | false |
 | `0x7F02` | `LEGACY_STATUS_UNMAPPED` | legacy | mvp | false |
 | `0x7F03` | `LEGACY_PAYLOAD_INVALID` | legacy | mvp | false |

@@ -3,8 +3,8 @@
 The four former receiver-private input-policy/master routes are registered as
 `cast.getInputMode` (0x1620), `cast.setInputMode` (0x1621),
 `cast.getTouchbackMaster` (0x1622), `cast.setTouchbackMaster` (0x1623).
-`cast.touchbackMasterChanged` is event 0x1616. These remain unpublished draft
-facts. The retired 0x161E / method bit 29 is never reused.
+`cast.touchbackMasterChanged` is event 0x1616. The R2 input policy contract is included in spec/v0.20.0.
+The retired 0x161E / method bit 29 is never reused.
 
 These methods control receiver product policy; `input.openStream` negotiates
 actual accepted types and STREAM carries input-sample-v1 bytes, unchanged.
