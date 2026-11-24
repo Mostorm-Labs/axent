@@ -1979,24 +1979,34 @@ int main()
             "audio recovery must not reopen video");
     }
 
-    axent::testing::AxtpAdapterTestSeam::enqueue_stream_payload(
-        *media_adapter,
-        "hid:0581:2582:NA20-SERIAL",
-        1,
-        5,
-        999000,
-        {0x00, 0x00, 0x01, 0x41});
     {
         std::lock_guard<std::mutex> lock(stream_events_mutex);
         block_next_stream_event = true;
         stream_event_blocked = false;
         unblock_stream_event = false;
     }
-    // reopen_media_streams() wakes the dispatcher itself. Arm the callback
-    // gate first so the test does not race that notification and accidentally
-    // observe a frame only after the lifecycle event was already delivered.
-    axent::testing::AxtpAdapterTestSeam::reopen_media_streams(
-        *media_adapter, "hid:0581:2582:NA20-SERIAL");
+    // Stage the old frame while the replacement response is held. The video
+    // lifecycle fence is active and the old generation is still current.
+    media_scripted->hold_next_video_open_response.store(true);
+    std::thread reopen([&]() {
+        axent::testing::AxtpAdapterTestSeam::reopen_media_streams(
+            *media_adapter, "hid:0581:2582:NA20-SERIAL");
+    });
+    const bool video_open_held = wait_until([&]() {
+        return media_scripted->video_open_response_held.load();
+    });
+    if (video_open_held) {
+        axent::testing::AxtpAdapterTestSeam::enqueue_stream_payload(
+            *media_adapter,
+            "hid:0581:2582:NA20-SERIAL",
+            1,
+            5,
+            999000,
+            {0x00, 0x00, 0x01, 0x41});
+    }
+    media_scripted->releaseHeldVideoOpenResponse();
+    reopen.join();
+    require(video_open_held, "replacement video open response should be held");
     std::thread first_drain([&]() {
         axent::testing::AxtpAdapterTestSeam::drain_media_callbacks(*media_adapter);
     });
