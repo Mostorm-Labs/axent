@@ -1481,6 +1481,36 @@
       "idHex": "0x1408"
     },
     {
+      "id": 28673,
+      "name": "LICENSE_IDENTITY_INVALID",
+      "domain": "vendor",
+      "status": "draft",
+      "description": "License registration identity adoption failed — the dual-form patterns (unregistered identity_value ^[0-9a-f]{128}$ or platform-assigned deviceId ^axldev_[0-9a-f]{32}$) both fail to match, or the identity_value is already mapped to another subject; terminal error, the device must rebuild its local identity before retrying. Used by the license business domain.",
+      "deprecated": false,
+      "retryable": false,
+      "idHex": "0x7001"
+    },
+    {
+      "id": 28674,
+      "name": "LICENSE_DEVICE_NOT_FOUND",
+      "domain": "vendor",
+      "status": "draft",
+      "description": "License subject not found for the given deviceId. Used by the license business domain.",
+      "deprecated": false,
+      "retryable": false,
+      "idHex": "0x7002"
+    },
+    {
+      "id": 28675,
+      "name": "LICENSE_CREDENTIAL_STALE",
+      "domain": "vendor",
+      "status": "draft",
+      "description": "Credential version is below the device high-water mark (anti-rollback) or signature verification failed. Used by the license business domain.",
+      "deprecated": false,
+      "retryable": false,
+      "idHex": "0x7003"
+    },
+    {
       "id": 32513,
       "name": "LEGACY_CMD_UNMAPPED",
       "domain": "legacy",

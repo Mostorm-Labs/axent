@@ -5,18 +5,18 @@ generated: true
 domain: signage
 feature: signage.playlist
 registry: ../../../../contract/registry/domains/signage/domain.yaml
-lastReviewed: 2026-06-16
+lastReviewed: 2026-09-15
 ---
 
 # AXTP signage.playlist 协议草案
 
-版本：v1.4（已采纳）
+版本：v1.6（已采纳）
 
 归属域：`signage`（DomainId `0x0D`）
 
 Capability ID：`signage.playlist`（capability `0x0D01`）
 
-适用范围：数字标牌播放列表全量同步、查询、恢复默认和播放项资源 URL 刷新。
+适用范围：数字标牌播放列表全量同步、查询、恢复默认、播放项资源 URL 刷新和播放项整体刷新。
 
 ---
 
@@ -46,9 +46,10 @@ Capability ID：`signage.playlist`（capability `0x0D01`）
 | method | `0x0D03` | `signage.setPlaylistConfig` |
 | method | `0x0D04` | `signage.resetPlaylistConfig` |
 | method | `0x0D05` | `signage.getPlaylistItemUrl` |
+| method | `0x0D06` | `signage.getPlaylistItem` |
 | event | `0x0D01` | `signage.playlistConfigChanged` |
 
-signage domain 区段 `0x0D00-0x0DFF`（DomainId `0x0D`）；method/event/capability 各自独立 ID 命名空间；bitOffset 在 signage domain 内各自从 0 连续（methods 0–4，events 0）。
+signage domain 区段 `0x0D00-0x0DFF`（DomainId `0x0D`）；method/event/capability 各自独立 ID 命名空间；bitOffset 在 signage domain 内各自从 0 连续（methods 0–5，events 0）。
 
 ### 错误码决策（复用 common）
 
@@ -87,9 +88,17 @@ registry YAML 中 schema 名加 `Signage`/`Playlist` 前缀以保证全局唯一
 | `PlaylistConfigChangedEvent` | `SignagePlaylistConfigChangedEvent` |
 | `Playlist` | `SignagePlaylist` |
 | `PlaylistItem` | `SignagePlaylistItem` |
-| `PlaylistItemSettings` | `SignagePlaylistItemSettings` |
+| `ImageItemSettings` | `SignageImageItemSettings` |
+| `VideoItemSettings` | `SignageVideoItemSettings` |
+| `WebsiteItemSettings` | `SignageWebsiteItemSettings` |
+| `ClockItemSettings` | `SignageClockItemSettings` |
+| `UnsplashItemSettings` | `SignageUnsplashItemSettings` |
+| `PowerBiItemSettings` | `SignagePowerBiItemSettings` |
+| `GetPlaylistItemParams` | `SignageGetPlaylistItemParams` |
+| `GetPlaylistItemResult` | `SignageGetPlaylistItemResult` |
 | `ClockEntry` | `SignagePlaylistClockEntry` |
 | `UnsplashPhoto` | `SignagePlaylistUnsplashPhoto` |
+| `UnsplashUser` | `SignagePlaylistUnsplashUser` |
 
 ### 命名与附录差异说明
 
@@ -103,8 +112,88 @@ registry YAML 中 schema 名加 `Signage`/`Playlist` 前缀以保证全局唯一
 
 ---
 
+## Amendment History（修订记录）
+
+本节记录 Stage 40 `40-amend-adopted-protocol` 阶段对已采纳事实的修订。machine 事实源为 `registry/domains/signage/domain.yaml`，修订均先改本草案、再同步 YAML、最后由 `50-generate-axtp-protocol` 重跑 generated 产物。
+
+### A1 2026-09-15 · 补充枚举声明（枚举类型说明）
+
+- **变更**：registry YAML 中 4 个 `type: enum` 字段补充正式 `enum:` 列表（此前枚举值仅存于 description 散文）：
+  - `SignagePlaylistItem.type` → `[image, website, video, clock, unsplash]`
+  - `SignagePlaylist.type` → `[default, scheduled]`
+  - `SignagePlaylistConfigChangedEvent.reason` → `[set_config, reset_config]`
+  - `SignageGetPlaylistItemUrlResult.type` → `[image, video, website, unsplash]`
+- **同步**：2 处 `supportedItemTypes`（`SignagePlaylistCapabilitiesResult` / `SignagePlaylistCapability`）description 措辞对齐为「`SignagePlaylistItem.type` 枚举值的子集」。
+- **理由**：specs/40-codec.md 规定 enum「合法值 MUST 已声明」；`enum:` 列表为仓库既有机制（sport/cast/stream/video 域在用），补齐后 generated protocol.md 的 Value Restrictions 列与 MCP schema JSON 才能携带枚举事实。
+- **兼容性**：非破坏——仅补充声明，wire 语义不变。
+- **YAML target**：`contract/registry/domains/signage/domain.yaml`。
+
+### A2 2026-09-15 · 拆分 PlaylistItemSettings + variants 判别机制
+
+- **变更 1（拆分）**：聚合类型 `PlaylistItemSettings`（registry `SignagePlaylistItemSettings`，9 字段平铺、全 optional）拆分为 5 个 per-type 独立 schema，每类型内 required 语义恢复：
+
+  | 草案类型 | registry 类型 | 字段（粗体 = 该类型内必填） |
+  |---|---|---|
+  | `ImageItemSettings` | `SignageImageItemSettings` | **urls**, **delaySeconds**, expiresAt |
+  | `VideoItemSettings` | `SignageVideoItemSettings` | **url**, expiresAt, muted |
+  | `WebsiteItemSettings` | `SignageWebsiteItemSettings` | **url**, ignoreCertificateError, refreshIntervalSecs |
+  | `ClockItemSettings` | `SignageClockItemSettings` | **clocks** |
+  | `UnsplashItemSettings` | `SignageUnsplashItemSettings` | **photos**, **delaySeconds**, expiresAt |
+
+- **变更 2（新机制）**：`PlaylistItem.settings` 与 `GetPlaylistItemUrlResult.settings` 字段改为 `type: object` + `variants: { discriminator: type, mapping: { <枚举值>: <settings schema> } }`，判别绑定成为机器事实（generator 校验：discriminator 必须为同 schema 内已声明枚举值的兄弟字段、mapping 全覆盖枚举值、value 必须为已注册 schema）。`GetPlaylistItemUrlResult` 的 mapping 不含 `clock`。specs/40-codec.md 新增规范性条款。
+- **变更 3（删除）**：聚合类型 `SignagePlaylistItemSettings` 自 registry YAML 删除。
+- **fieldId 重排**：settings 内字段 ID 由聚合布局改为每类型从 0x01 连续，新旧映射：
+
+  | 聚合旧 ID | 字段 | image | video | website | clock | unsplash |
+  |---|---|---|---|---|---|---|
+  | 0x01 | urls | 0x01 | — | — | — | — |
+  | 0x02 | delaySeconds | 0x02 | — | — | — | 0x02 |
+  | 0x03 | expiresAt | 0x03 | 0x02 | — | — | 0x03 |
+  | 0x04 | url | — | 0x01 | 0x01 | — | — |
+  | 0x05 | muted | — | 0x03 | — | — | — |
+  | 0x06 | ignoreCertificateError | — | — | 0x02 | — | — |
+  | 0x07 | refreshIntervalSecs | — | — | 0x03 | — | — |
+  | 0x08 | clocks | — | — | — | 0x01 | — |
+  | 0x09 | photos | — | — | — | — | 0x01 |
+
+- **兼容性判定**：draft 阶段 breaking correction。依据：本 capability 全部事实 status 为 `draft`（未达 stable/mvp）；零设备实现（Drafted only）；无 signage conformance/test vectors；无 SDK 消费者。spec/v0.10.0–v0.16.0 各 tag 的 generated 产物曾包含聚合类型，本修订后不再包含——历史 tag 不受影响。
+- **不变量**：method/event/capability ID 与 bitOffset、全部 method/event schema 名、父级字段 ID（`SignagePlaylistItem.settings`=0x05、`SignageGetPlaylistItemUrlResult.settings`=0x02）、`SignagePlaylist` / `SignagePlaylistItem` / `SignagePlaylistClockEntry` 全部字段及 ID、`SignagePlaylistUnsplashPhoto` 类型名（其字段结构变更见 A3）、错误码决策均不变。
+- **YAML target**：`contract/registry/domains/signage/domain.yaml`；机制实现于 `tooling/generators/src/`（variants 穿透 + 校验 + protocol.md 渲染）。
+
+### A3 2026-09-15 · UnsplashPhoto user 嵌套对齐
+
+- **变更**：`SignagePlaylistUnsplashPhoto` 的扁平字段 `userName`（0x02）/ `userLink`（0x03）改为嵌套对象字段 `user`（0x02，类型 `SignagePlaylistUnsplashUser`）；新类型 `SignagePlaylistUnsplashUser`（草案名 `UnsplashUser`）：`name`=0x01（max_length 128）、`link`=0x02（max_length 2048），约束从旧扁平字段平移。
+- **性质**：采纳时草案↔registry 的结构偏差修正——草案 v0.3 引入 `unsplash` 起全部 JSON 示例即为嵌套 `user: { name, link }` 写法，v1.4 采纳时 registry 误写为扁平。本修订以草案嵌套语义为准（registry 向草案对齐），草案 JSON 示例零改动。
+- **兼容性判定**：draft 阶段 breaking correction（同 A2 依据：零实现、无 conformance vectors、无 SDK 消费者）。fieldId 影响：photo 层 `userName`=0x02 / `userLink`=0x03 → `user`=0x02（类型内 `name`=0x01、`link`=0x02）。
+- **不变量**：`photo.url`=0x01、`SignagePlaylistUnsplashPhoto` 类型名、`UnsplashItemSettings.photos` 引用及其余全部字段不变。
+- **YAML target**：`contract/registry/domains/signage/domain.yaml`。
+
+### A4 2026-09-15 · 新增 powerbi 播放项类型 + getPlaylistItem 播放项整体刷新方法
+
+- **变更 1（新类型）**：`PlaylistItem.type` 枚举新增 `powerbi`（线上字面值小写），新增 per-type settings schema `PowerBiItemSettings`（registry `SignagePowerBiItemSettings`，5 字段全必填：`groupId` / `dashboardId` / `embedUrl` / `token` / `expiresAt`），`PlaylistItem.settings` 的 `variants.mapping` 追加 `powerbi` 项。
+- **变更 2（新方法）**：新增 `signage.getPlaylistItem`（method `0x0D06`，bitOffset 5，Device → Server）。params `{ itemId }`，result `{ item: PlaylistItem }`（与 `setPlaylistConfig` / `getPlaylistConfig` 的 `items` 元素同构）。行为契约：设备检测到 `settings.expiresAt` 临期时主动调用，用返回 `item` 整体替换本地播放项；非 URL 型资源（powerbi）MUST 使用本方法；URL 型资源 MAY 沿用 `getPlaylistItemUrl` 或统一使用本方法。读取方法，不触发事件。
+- **变更 3（能力边界澄清）**：`getPlaylistItemUrl` 不支持 powerbi（embed token 属非 URL 型资源，返回 `NOT_SUPPORTED`，与 `clock` 同类排除）；`GetPlaylistItemUrlResult.type` 枚举保持 4 值不变，仅描述注明。
+- **token 安全语义**：`token` 为 AAD access token（PowerBI audience `https://analysis.windows.net/powerbi/api`，约 60 分钟有效，tokenType=Aad 嵌入）；敏感凭证，仅经 RPC 通道传输，不得进资源 URL、不得写日志。`expiresAt` 必填恒有值且 MUST > 0（与其他类型的可选 `expiresAt`、0 表示永不过期的语义不同）。**扩散面**：token 会随 `getPlaylistConfig` 响应与 `playlistConfigChanged` 事件的可选 `playlists` 载荷重复下发，事件扇出还可复制到多个订阅 session——relay、订阅方与 SDK 必须将含 token 的载荷按敏感数据处理（不落日志、不进 debug dump）。
+- **理由**：同步 device-sdk 新增的 powerbi 播放项与 `GetPlaylistItem` 指令（device-sdk commit 6e64f388，2026-09-10，首次发布于 1.5.0；本次对照契约版本 v1.6.0）。
+- **兼容性**：draft 阶段非破坏扩展——纯新增枚举值 + variant + 方法；既有 method/event/capability ID、bitOffset、fieldId、错误码决策全部不变。对旧解码端的兼容依赖 specs/40-codec.md 的 unknown-enum policy（unknown enum 值为诊断保留，strict business validation MAY 在 decode 后拒绝）：不支持 `powerbi` 的对端收到含 powerbi 项的 `setPlaylistConfig` 可能整单拒绝，发送方 SHOULD 经 `supportedItemTypes` 能力协商避免向不支持的设备下发 powerbi 项。
+- **不变量**：0x0D01-0x0D05 方法与 0x0D01 事件的 ID / bitOffset / schema 名；既有 5 种类型的全部 settings 字段；`GetPlaylistItemUrlResult` 枚举（4 值）；错误码复用 common 决策。
+- **Legacy**：`getPlaylistItem` 无 legacy 对应（NearHub 证据源仅 3 命令），按 AXTP-only 新增登记于 §9.0；`powerbi` 类型同 `unsplash` 属 AXTP-only。
+- **Capability 决策**：`SignagePlaylistCapability` 不新增 `supportsItemRefresh` 字段——device-sdk 能力面无此确认事实（仅有 `supportsUrlRefresh`），Stage 40 只写确认事实；方法可用性按标准回退（不支持时返回 `NOT_SUPPORTED`）。如产品需要独立开关，走后续 amendment。
+- **YAML target**：`contract/registry/domains/signage/domain.yaml`。
+
+### Follow-up 登记（非本次范围）
+
+- 全仓库约 130 个 `type: enum` 字段缺 `enum:` 列表（audio 37 / network 37 / video 25 / device 14 / firmware 8 / software 5），generator 已加警告级报告；后续全域补全后再将硬校验写入 50-tooling validate-sources MUST 清单。
+- `switch:`（按枚举值条件约束任意字段）if-then 机制登记为未来扩展（可将 `Playlist` 的 scheduled 条件必填从 prose 升级为结构化）。
+- TLV8 单字段 value 上限 255 字节（specs/40-codec.md）与 signage 长字符串字段的张力（`token` max 8192、`embedUrl` / URL 类字段 max 2048）——按 `recommended_encoding: tlv` 实现 powerbi 刷新通道时这些字段无法单字段编解码，需要 codec 层的 TLV16 或分片策略（属未来 codec 扩展，本次不改 recommended_encoding 声明；实现方在 TLV 路径上应退回 JSON 编码）。
+- 敏感字段结构化标记机制（区别于字段 description 散文约束，如 `sensitive: true` 或 secretRef 引用模式）登记为未来扩展——`PowerBiItemSettings.token` 为首个明文凭证字段，会随配置查询 / 事件载荷扩散，当前仅靠 prose 安全语义约束。
+
+---
+
 **变更历史：**
 
+- **v1.6** — Stage 40 `40-amend-adopted-protocol` 修订（见「Amendment History」A4）：(1) `PlaylistItem.type` 新增 `powerbi`（PowerBI Dashboard 嵌入），新增 per-type schema `PowerBiItemSettings`（5 字段全必填：`groupId` / `dashboardId` / `embedUrl` / `token` / `expiresAt`；`token` 为 AAD access token 敏感凭证、仅经 RPC 通道传输且不得写日志，`expiresAt` 恒有值）；(2) 新增 `signage.getPlaylistItem`（`0x0D06` / bitOffset 5）播放项整体刷新方法，params `{ itemId }`、result `{ item }`，设备在资源临期时主动调用并整项替换本地播放项，powerbi MUST 走此通道；(3) `getPlaylistItemUrl` 明确不支持 powerbi（返回 `NOT_SUPPORTED`，与 `clock` 同类排除），`GetPlaylistItemUrlResult` 枚举保持 4 值；(4) 兼容性：draft 阶段非破坏纯新增，既有 ID / bitOffset / fieldId / 错误码不变；(5) 依据 device-sdk v1.6.0 契约同步；generated 产物由 `50-generate-axtp-protocol` 重跑生效。
+- **v1.5** — Stage 40 `40-amend-adopted-protocol` 修订（见「Amendment History」A1/A2/A3）：(1) A1——registry YAML 4 个 enum 字段补正式 `enum:` 列表（`PlaylistItem.type` / `Playlist.type` / 事件 `reason` / `GetPlaylistItemUrlResult.type`），2 处 `supportedItemTypes` 措辞对齐；(2) A2——聚合类型 `PlaylistItemSettings` 拆分为 5 个 per-type settings schema（`ImageItemSettings` 等，每类型内 required 语义恢复、fieldId 从 0x01 连续重排），`settings` 字段新增 `variants: {discriminator: type, mapping}` 判别绑定机制（generator 新机制 + specs/40-codec.md 规范性条款），聚合类型删除；(3) A3——`UnsplashPhoto` 的扁平 `userName`/`userLink` 对齐为嵌套 `user` 对象（新类型 `UnsplashUser`），修正采纳时草案↔registry 结构偏差；(4) 兼容性判定为 draft 阶段 breaking correction（零实现、无 conformance vectors）；method/event/capability ID、bitOffset、父级字段 ID 全部不变；(5) generated 产物由 `50-generate-axtp-protocol` 重跑生效。
 - **v1.4** — Stage 30 adopt-protocol-draft 采纳冻结（业务语义、schema、错误码、legacy 映射均不变）：(1) 新增 `## 采纳记录 (Adoption)` 节，记录已分配 ID（capability `0x0D01` / methods `0x0D01-0x0D05` / event `0x0D01`）、schema 名映射、命名与附录差异说明、后续约束；(2) 错误码决策——候选业务码 `SIGNAGE_PLAYLIST_*` 不新增，统一复用 common（`INVALID_ARGUMENT` / `NOT_FOUND`），signage 错误区段 `0x0D00-0x0DFF` 保持空；(3) 固化 `playlists` 可选、`sort` 同 playlist 内唯一、`duration > 0`、reset 无参；(4) 方法/事件速览表补 methodId/eventId 列并标记 `[REVIEW-ADOPTED]`，§8 错误表、§0/§10 readiness 同步更新；(5) registry YAML 已写入 `registry/domains/signage/domain.yaml`，generated 产物待 `50-generate-axtp-protocol` 重跑。
 - **v1.3** — 对齐 20-draft-business-protocol skill 与 `system.lifecycle.md` 范式（业务语义、schema、错误码、legacy 映射均不变）：(1) 在 §0 速读结论后新增 `## JSON 示例约定` 节（RPC envelope 速查 + op=6/7/8 表）；(2) 将原集中式第 7 节 14 个 JSON 示例迁移到各 method/event 小节，每个 method 补齐 Request / Success Response / Error Response `d block` 内联示例 + 错误表 + 规则，每个 event 补齐 Event `d block` 示例 + 客户端处理建议表 + 规则；(3) 第 7 节改为 `## 7. 交互流程示例 Flow Examples`，只保留端到端 flow；(4) method/event 子标题改为带编号风格（`3.x.1`…`4.1.1`…）。Item 标题统一标注 `op=7` / `op=8` / `op=6`。
 - **v1.2** — 格式修复与 per-method 结构补全：(1) 修复变更历史版本号顺序错乱，统一为倒序（原 v0.2–v0.7 为正序、v0.9/v0.8 为倒序，与顶部 v1.1/v1.0 倒序不一致）；(2) 为 `setPlaylistConfig` / `resetPlaylistConfig` 补 per-method「可能触发的事件」明细表，对齐标准 per-method 结构；(3) 统一 `setPlaylistConfig` 的 Result Schema 表述为「无 result body，仅返回标准 success status」。
@@ -125,7 +214,7 @@ registry YAML 中 schema 名加 `Signage`/`Playlist` 前缀以保证全局唯一
 
 | 项目 | 内容 |
 |---|---|
-| 这个能力做什么 | 数字标牌播放列表全量同步、查询、恢复默认和播放项资源 URL 刷新。 |
+| 这个能力做什么 | 数字标牌播放列表全量同步、查询、恢复默认、播放项资源 URL 刷新和播放项整体刷新。 |
 | 当前状态 | draft（已采纳；见下方「采纳记录」） |
 | 是否可直接实现 | 是（采纳后）。machine 事实源为 `registry/domains/signage/domain.yaml`，实现以 generated 为准。 |
 | 主要交互 | RPC + EVENT |
@@ -160,15 +249,15 @@ registry YAML 中 schema 名加 `Signage`/`Playlist` 前缀以保证全局唯一
 
 ## 1. 功能说明
 
-`signage.playlist` 定义数字标牌播放列表的全量同步、查询、恢复默认和播放项资源 URL 刷新。
+`signage.playlist` 定义数字标牌播放列表的全量同步、查询、恢复默认、播放项资源 URL 刷新和播放项整体刷新。
 
-本文落实 `workspace/flows/signage-device-management.md` 中对 legacy `SetPlaylistConfig` / `GetPlaylistConfig` / `GetPlaylistItemUrl` 的最终定域。当前 generated 协议未包含这些方法或事件；本文所有 method、event、schema 均为候选，正式数值为 `TBD after adoption`。
+本文落实 `workspace/flows/signage-device-management.md` 中对 legacy `SetPlaylistConfig` / `GetPlaylistConfig` / `GetPlaylistItemUrl` 的最终定域。本文已采纳（v1.4），method / event / capability ID 与 bitOffset 已由 registry 分配（见上方「采纳记录」与各方法小节）。
 
 **需求来源**：NearHub Launcher 数字标牌设备管理 — 播放列表管理。
 
 **目标用户**：运维人员（通过云端管理控制台）、设备标牌播放器服务。
 
-**目标行为**：云端全量同步播放列表到设备；设备查询当前播放列表；设备检测到资源 URL 即将过期时主动请求刷新获取新 URL。
+**目标行为**：云端全量同步播放列表到设备；设备查询当前播放列表；设备检测到资源 URL 即将过期时主动请求刷新获取新 URL；设备检测到非 URL 型资源（powerbi embed token）临期时经 `getPlaylistItem` 整项刷新。
 
 **当前实现程度**：Drafted only — 无已有 registry/generated 事实。
 
@@ -178,9 +267,9 @@ registry YAML 中 schema 名加 `Signage`/`Playlist` 前缀以保证全局唯一
 
 | 类型 | 内容 |
 |---|---|
-| 包含 | 播放列表全量同步（硬替换）、查询、恢复默认、播放项资源 URL 刷新、播放列表配置变更事件。 |
+| 包含 | 播放列表全量同步（硬替换）、查询、恢复默认、播放项资源 URL 刷新、播放项整体刷新（`getPlaylistItem`）、播放列表配置变更事件。 |
 | 包含 | `default` 和 `scheduled` 两种播放列表类型。 |
-| 包含 | 5 种播放项类型：`image`、`website`、`video`、`clock`、`unsplash`。 |
+| 包含 | 6 种播放项类型：`image`、`website`、`video`、`clock`、`unsplash`、`powerbi`。 |
 | 不包含 | 播放控制（`signage.playback`）—— 播放/暂停/跳转归播放控制域。 |
 | 不包含 | 设备外观配置（`software.config` target: `"launcher"`）。 |
 | 不包含 | 系统调度（`system.lifecycle`）—— 定时重启/关机归系统生命周期域。 |
@@ -202,7 +291,7 @@ registry YAML 中 schema 名加 `Signage`/`Playlist` 前缀以保证全局唯一
 
 ## 3. 方法
 
-方法 ID、bitOffset 和 schema fieldId 均为 `TBD after adoption`，由 registry 采纳时分配。
+方法 ID、bitOffset 和 schema fieldId 已由 registry 采纳时分配（methods `0x0D01-0x0D06` / bitOffset 0–5，事件 `0x0D01`），machine 事实源为 `contract/registry/domains/signage/domain.yaml`。
 
 ### 3.0 方法速览
 
@@ -213,6 +302,7 @@ registry YAML 中 schema 名加 `Signage`/`Playlist` 前缀以保证全局唯一
 | `signage.setPlaylistConfig` | `0x0D03` | command | 全量替换播放列表配置。 | `SetPlaylistConfigParams` | *(无 result body，仅返回标准 success status)* | 是：`playlistConfigChanged` | [REVIEW-ADOPTED] |
 | `signage.resetPlaylistConfig` | `0x0D04` | action | 恢复默认播放列表配置。 | `ResetPlaylistConfigParams` | `PlaylistConfigResult` | 是：`playlistConfigChanged` | [REVIEW-ADOPTED] |
 | `signage.getPlaylistItemUrl` | `0x0D05` | query | 按播放项 ID 获取最新资源 URL（URL 刷新）。 | `GetPlaylistItemUrlParams` | `GetPlaylistItemUrlResult` | 否 | [REVIEW-ADOPTED] |
+| `signage.getPlaylistItem` | `0x0D06` | query | 按播放项 ID 获取完整播放项（整项刷新，powerbi 等非 URL 型资源的刷新通道）。 | `GetPlaylistItemParams` | `GetPlaylistItemResult` | 否 | [REVIEW-ADOPTED] |
 
 ### 3.1 `signage.getPlaylistCapabilities`
 
@@ -237,7 +327,7 @@ registry YAML 中 schema 名加 `Signage`/`Playlist` 前缀以保证全局唯一
 
 | 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
 |---|---|---:|---|---|---|
-| `supportedItemTypes` | string[] | yes | `image`, `website`, `video`, `clock`, `unsplash` | none | 支持的播放项类型。 |
+| `supportedItemTypes` | string[] | yes | `image`, `website`, `video`, `clock`, `unsplash`, `powerbi` | none | 支持的播放项类型。 |
 | `maxPlaylists` | uint32 | no | product-defined | omitted | 最大播放列表数量。 |
 | `maxItemsPerPlaylist` | uint32 | no | product-defined | omitted | 每个播放列表最大播放项数量。 |
 | `supportsScheduledPlaylist` | boolean | yes | `true`, `false` | none | 是否支持 `scheduled` 类型播放列表。 |
@@ -266,7 +356,7 @@ success:
     "code": 0
   },
   "result": {
-    "supportedItemTypes": ["image", "website", "video", "clock", "unsplash"],
+    "supportedItemTypes": ["image", "website", "video", "clock", "unsplash", "powerbi"],
     "maxPlaylists": 10,
     "maxItemsPerPlaylist": 50,
     "supportsScheduledPlaylist": true,
@@ -276,7 +366,7 @@ success:
 }
 ```
 
-读法：request 为空，返回设备支持的播放项类型集合、数量限制与功能开关；`id` 由调用方分配且非零。success 中 `supportedItemTypes` 告诉调用方该设备支持哪些播放项类型，`supportsUrlRefresh: true` 表示设备会主动调用 `getPlaylistItemUrl` 刷新过期 URL。
+读法：request 为空，返回设备支持的播放项类型集合、数量限制与功能开关；`id` 由调用方分配且非零。success 中 `supportedItemTypes` 告诉调用方该设备支持哪些播放项类型，`supportsUrlRefresh: true` 表示设备具备 URL 刷新能力（URL 型资源主动调用 `getPlaylistItemUrl`，也可统一改用 `getPlaylistItem`，见 §3.6）。
 
 #### 3.1.4 可能触发的事件
 
@@ -553,6 +643,38 @@ request:
 }
 ```
 
+补充 request 示例 C — `powerbi` 类型播放项（PowerBI Dashboard 嵌入；`settings` 5 字段全必填，`token` 为敏感凭证，`expiresAt` 恒有值）：
+
+```json
+{
+  "id": 17,
+  "method": "signage.setPlaylistConfig",
+  "params": {
+    "playlists": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "default",
+        "items": [
+          {
+            "id": "9ba7b810-9dad-11d1-80b4-00c04fd430c8",
+            "type": "powerbi",
+            "duration": 600,
+            "sort": 0,
+            "settings": {
+              "groupId": "f089354e-3a18-4d43-8db5-3c58a1a0c9f2",
+              "dashboardId": "69ff5868-12d6-4f1c-8c2f-7b6b6bc11d4b",
+              "embedUrl": "https://app.powerbi.com/dashboardEmbed?dashboardId=69ff5868-12d6-4f1c-8c2f-7b6b6bc11d4b&groupId=f089354e-3a18-4d43-8db5-3c58a1a0c9f2",
+              "token": "eyJhbGciOiJSUzI1NiIs...<aad-access-token>",
+              "expiresAt": 1704153600
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
 success:
 
 ```json
@@ -599,7 +721,7 @@ error:
 }
 ```
 
-读法：request 中 `startDate` < `endDate`、`startTime < endTime` 落在同一天内（不跨午夜），`days` 指定周一到周五生效，`scheduled` 命中时间窗口时优先播放否则回落 `default`（见 §2.1）；`clock` 类型不依赖远程 URL，`getPlaylistItemUrl` 对 `clock` 返回 `NOT_SUPPORTED`。success 只有 `status`、不携带业务 `result`，调用方通过 `getPlaylistConfig` 或等待 `playlistConfigChanged` 事件确认落地。error 失败响应使用 `op=8` 且不携带业务 `result`，校验失败不落地、不触发事件；`code: 10` 对应 common `INVALID_ARGUMENT`（0x000A）。
+读法：request 中 `startDate` < `endDate`、`startTime < endTime` 落在同一天内（不跨午夜），`days` 指定周一到周五生效，`scheduled` 命中时间窗口时优先播放否则回落 `default`（见 §2.1）；`clock` 类型不依赖远程 URL，`getPlaylistItemUrl` 对 `clock` 返回 `NOT_SUPPORTED`；`powerbi` 类型的 `token` 为敏感凭证（AAD access token，约 60 分钟有效），仅经 RPC 通道传输，不得写入资源 URL 或日志，设备在 `expiresAt` 临期时经 `getPlaylistItem` 整项刷新（见 §3.6）。success 只有 `status`、不携带业务 `result`，调用方通过 `getPlaylistConfig` 或等待 `playlistConfigChanged` 事件确认落地。error 失败响应使用 `op=8` 且不携带业务 `result`，校验失败不落地、不触发事件；`code: 10` 对应 common `INVALID_ARGUMENT`（0x000A）。
 
 #### 3.3.4 可能触发的事件
 
@@ -645,7 +767,7 @@ error:
 | Error | Code | 触发条件 |
 |---|---|---|
 | `SUCCESS` | 0x0000 | 全量替换成功，触发 `playlistConfigChanged`。 |
-| `INVALID_ARGUMENT` | 0x000A | scheduled 时间区间约束违反（见 `Playlist` schema）；播放项 `settings` 字段非法。 |
+| `INVALID_ARGUMENT` | 0x000A | scheduled 时间区间约束违反（见 `Playlist` schema）；播放项 `settings` 字段非法（含 `powerbi` 的 5 个必填字段缺失或超长）。 |
 | `SIGNAGE_PLAYLIST_EMPTY` | TBD | `playlists` 为空数组，或某播放列表 `items` 为空。 |
 | `NOT_SUPPORTED` | 0x0003 | 设备不支持 `signage.playlist` 能力或当前模式不可写。 |
 | `PERMISSION_DENIED` | 0x0009 | 调用方无权修改播放列表配置。 |
@@ -749,7 +871,7 @@ success:
 
 ### 3.5 `signage.getPlaylistItemUrl`
 
-**用途**：按播放项 ID 获取最新资源 URL（URL 刷新）。设备检测到资源 URL 即将过期时主动调用此方法。`clock` 类型播放项无 URL 资源，调用此方法返回 `NOT_SUPPORTED`。
+**用途**：按播放项 ID 获取最新资源 URL（URL 刷新）。设备检测到资源 URL 即将过期时主动调用此方法。`clock` 类型播放项无 URL 资源、`powerbi` 类型播放项携带非 URL 型 embed token 资源，调用此方法均返回 `NOT_SUPPORTED`（powerbi 改用 `getPlaylistItem` 整项刷新，见 §3.6）。
 
 | 项 | 内容 |
 |---|---|
@@ -770,17 +892,17 @@ success:
 
 | 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
 |---|---|---:|---|---|---|
-| `type` | enum | yes | `image`, `video`, `website`, `unsplash` | none | 播放项类型。用于判别 `settings` 的内部结构。`clock` 类型不涉及 URL 资源刷新。 |
-| `settings` | `PlaylistItemSettings` | yes | see `PlaylistItemSettings` | none | 刷新后的完整设置。设备可直接用此值替换本地缓存的 `settings`。 |
+| `type` | enum | yes | `image`, `video`, `website`, `unsplash` | none | 播放项类型。判别 `settings` 的 variant schema。`clock` 与 `powerbi` 类型不涉及 URL 资源刷新（`powerbi` 走 `getPlaylistItem`，见 §3.6）。 |
+| `settings` | per-type settings | yes | 由 `type` 经 `variants` 判别 | none | 刷新后的完整设置。设备可直接用此值替换本地缓存的 `settings`。 |
 
-`settings` 按 `type` 值对应 `PlaylistItemSettings` 的各类型子集：
+`settings` 字段携带 `variants: { discriminator: type, mapping: {...} }`，按 `type` 值对应 settings schema（见 §6.5）：
 
-| `type` | `settings` 包含字段 |
+| `type` | settings schema |
 |---|---|
-| `image` | `urls`, `delaySeconds`, `expiresAt` |
-| `video` | `url`, `expiresAt`, `muted` |
-| `website` | `url`, `ignoreCertificateError`, `refreshIntervalSecs` |
-| `unsplash` | `photos`, `delaySeconds`, `expiresAt` |
+| `image` | `ImageItemSettings`（registry `SignageImageItemSettings`） |
+| `video` | `VideoItemSettings`（registry `SignageVideoItemSettings`） |
+| `website` | `WebsiteItemSettings`（registry `SignageWebsiteItemSettings`） |
+| `unsplash` | `UnsplashItemSettings`（registry `SignageUnsplashItemSettings`） |
 
 #### 3.5.3 d block 示例
 
@@ -928,7 +1050,7 @@ error:
 | Error | Code | 触发条件 |
 |---|---|---|
 | `SUCCESS` | 0x0000 | 返回刷新后的 `type` + `settings`。 |
-| `NOT_SUPPORTED` | 0x0003 | 播放项类型为 `clock`（无远程 URL 资源）。 |
+| `NOT_SUPPORTED` | 0x0003 | 播放项类型为 `clock`（无远程 URL 资源）或 `powerbi`（非 URL 型 embed token 资源，改用 `getPlaylistItem`）。 |
 | `SIGNAGE_PLAYLIST_ITEM_NOT_FOUND` | TBD | `itemId` 不存在于当前播放列表中。 |
 | `SIGNAGE_PLAYLIST_URL_EXPIRED` | TBD | 资源 URL 已不可用且无法刷新。 |
 
@@ -936,8 +1058,122 @@ error:
 
 - Request MUST 使用 `op=7`。
 - Success / Error Response MUST 使用 `op=8`，并回显 Request 的 `d.id`。
-- `clock` 类型调用此方法 MUST 返回 `NOT_SUPPORTED`，不返回 `settings`。
+- `clock` 与 `powerbi` 类型调用此方法 MUST 返回 `NOT_SUPPORTED`，不返回 `settings`（`powerbi` 的 embed token 刷新走 `getPlaylistItem`，见 §3.6）。
+- URL 型资源（image / video / website / unsplash）MAY 使用本方法或 `getPlaylistItem` 二选一刷新；非 URL 型资源（powerbi）MUST 使用 `getPlaylistItem`。
 - 草案阶段不得分配正式 methodId、bitOffset 或 fieldId。
+
+### 3.6 `signage.getPlaylistItem`
+
+**用途**：按播放项 ID 获取完整播放项（整项刷新）。设备检测到 `settings.expiresAt` 临期时主动调用，用返回的 `item` **整体替换**本地对应播放项。`powerbi` 等非 URL 型资源（embed token）MUST 使用本方法刷新；URL 型资源 MAY 沿用 `getPlaylistItemUrl` 或统一使用本方法。
+
+| 项 | 内容 |
+|---|---|
+| 调用类型 | query |
+| Params Schema | `GetPlaylistItemParams` |
+| Result Schema | `GetPlaylistItemResult` |
+| 是否触发事件 | 否 |
+| 幂等性 / 异步性 | 读取语义幂等、不触发事件；但返回的 `token` / `expiresAt` 每次可能不同（服务端按需铸发新 token），调用方不得对响应做缓存或去重。 |
+| 常见错误 | `NOT_SUPPORTED`, `SIGNAGE_PLAYLIST_ITEM_NOT_FOUND`, `INTERNAL_ERROR` |
+
+#### 3.6.1 请求参数 Params：`GetPlaylistItemParams`
+
+| 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
+|---|---|---:|---|---|---|
+| `itemId` | string (UUID) | yes | UUID format | none | 播放项唯一标识。与 `getPlaylistItemUrl` 使用同一标识空间。 |
+
+#### 3.6.2 返回结果 Result：`GetPlaylistItemResult`
+
+| 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
+|---|---|---:|---|---|---|
+| `item` | `PlaylistItem` | yes | see `PlaylistItem` schema | none | 刷新后的完整播放项，与 `setPlaylistConfig` / `getPlaylistConfig` 的 `items` 元素同构。设备用此值整体替换本地对应播放项。 |
+
+#### 3.6.3 d block 示例
+
+request:
+
+```json
+{
+  "id": 15,
+  "method": "signage.getPlaylistItem",
+  "params": {
+    "itemId": "9ba7b810-9dad-11d1-80b4-00c04fd430c8"
+  }
+}
+```
+
+success:
+
+主示例（`powerbi` 整项刷新——返回含新 token 的完整播放项）：
+
+```json
+{
+  "id": 15,
+  "status": {
+    "ok": true,
+    "code": 0
+  },
+  "result": {
+    "item": {
+      "id": "9ba7b810-9dad-11d1-80b4-00c04fd430c8",
+      "type": "powerbi",
+      "duration": 600,
+      "sort": 0,
+      "settings": {
+        "groupId": "f089354e-3a18-4d43-8db5-3c58a1a0c9f2",
+        "dashboardId": "69ff5868-12d6-4f1c-8c2f-7b6b6bc11d4b",
+        "embedUrl": "https://app.powerbi.com/dashboardEmbed?dashboardId=69ff5868-12d6-4f1c-8c2f-7b6b6bc11d4b&groupId=f089354e-3a18-4d43-8db5-3c58a1a0c9f2",
+        "token": "eyJhbGciOiJSUzI1NiIs...<new-aad-access-token>",
+        "expiresAt": 1704157200
+      }
+    }
+  }
+}
+```
+
+error:
+
+失败示例 — `itemId` 不存在（候选业务码 `SIGNAGE_PLAYLIST_ITEM_NOT_FOUND`，示例借用 common `NOT_FOUND` 并写入 `candidateError`）：
+
+```json
+{
+  "id": 15,
+  "status": {
+    "ok": false,
+    "code": 12,
+    "msg": "Playlist item not found.",
+    "details": {
+      "candidateError": "SIGNAGE_PLAYLIST_ITEM_NOT_FOUND"
+    }
+  }
+}
+```
+
+读法：request 中设备检测到 `itemId` 对应播放项的 `settings.expiresAt` 临期时主动调用；success 中设备用返回的 `item` 整体替换本地播放项（`id` / `type` / `duration` / `sort` / `settings` 全部以返回值为准，不做字段级合并），`powerbi` 的 `embedUrl` 稳定不变、实际刷新的是 `token` 与 `expiresAt`；error 中 `code: 12` 对应 common `NOT_FOUND`（0x000C），设备应停止对该 `itemId` 重试，通过重新 `getPlaylistConfig` 或等待 `playlistConfigChanged` 校准（与 §3.5.3 同策略）。
+
+#### 3.6.4 可能触发的事件
+
+| Event | 触发条件 | Payload Schema | 客户端处理建议 |
+|---|---|---|---|
+| 无 | query method 不应因查询触发状态变化事件。 | none | 无需处理。 |
+
+#### 3.6.5 错误
+
+| Error | Code | 触发条件 |
+|---|---|---|
+| `SUCCESS` | 0x0000 | 返回刷新后的完整 `item`。 |
+| `NOT_SUPPORTED` | 0x0003 | 对端不支持 `signage.playlist` 能力。 |
+| `SIGNAGE_PLAYLIST_ITEM_NOT_FOUND` | TBD | `itemId` 不存在于当前播放列表中（通常表示条目已被全量替换删除）。设备应停止对该 `itemId` 重试，改走全量校准。 |
+| `INTERNAL_ERROR` | 0x000E | 对端生成刷新资源失败（如 PowerBI embed token 签发失败、上游 OAuth 暂不可用）。条目本身仍可能有效，设备 SHOULD 稍后重试，不得据此丢弃本地播放项。 |
+
+#### 3.6.6 规则
+
+- Request MUST 使用 `op=7`。
+- Success / Error Response MUST 使用 `op=8`，并回显 Request 的 `d.id`。
+- 设备检测到 `settings.expiresAt` 临期时 SHOULD 主动调用本方法，并用返回的 `item` 整体替换本地对应播放项。
+- `powerbi` 类型播放项 MUST 使用本方法刷新（embed token 属非 URL 型资源，`getPlaylistItemUrl` 返回 `NOT_SUPPORTED`）。
+- URL 型资源（image / video / website / unsplash）MAY 使用本方法或 `getPlaylistItemUrl` 二选一刷新。
+- `result.item.id` MUST 等于 `params.itemId`；设备若收到不一致的响应，SHOULD 丢弃本次结果并调用 `getPlaylistConfig` 校准（云端可能已删除并以新 UUID 重建条目）。
+- 本方法为读取方法，MUST NOT 触发 `playlistConfigChanged` 事件。
 
 ---
 
@@ -1023,7 +1259,7 @@ Capability name: `signage.playlist`。
 | 能力字段 | 类型 | 必填 | 取值范围 / 枚举 | 说明 |
 |---|---|---:|---|---|
 | `capability` | string | yes | fixed `signage.playlist` | capability 名称。 |
-| `supportedItemTypes` | string[] | yes | `image`, `website`, `video`, `clock`, `unsplash` | 支持的播放项类型。 |
+| `supportedItemTypes` | string[] | yes | `image`, `website`, `video`, `clock`, `unsplash`, `powerbi` | 支持的播放项类型。 |
 | `maxPlaylists` | uint32 | no | product-defined | 最大播放列表数量。 |
 | `maxItemsPerPlaylist` | uint32 | no | product-defined | 每个播放列表最大播放项数量。 |
 | `supportsScheduledPlaylist` | boolean | yes | `true`, `false` | 是否支持 `scheduled` 类型播放列表。 |
@@ -1043,17 +1279,23 @@ Capability name: `signage.playlist`。
   SetPlaylistConfigParams     → setPlaylistConfig
   ResetPlaylistConfigParams   → resetPlaylistConfig
   GetPlaylistItemUrlParams    → getPlaylistItemUrl
+  GetPlaylistItemParams       → getPlaylistItem
 
 响应 Schemas:
   PlaylistCapabilitiesResult  ← getPlaylistCapabilities
   PlaylistConfigResult        ← getPlaylistConfig / resetPlaylistConfig
   GetPlaylistItemUrlResult    ← getPlaylistItemUrl
+  GetPlaylistItemResult       ← getPlaylistItem
 
 事件 Payload Schemas:
   PlaylistConfigChangedEvent  ← playlistConfigChanged
 
 共享对象:
-  Playlist, PlaylistItem, PlaylistItemSettings, ClockEntry, UnsplashPhoto
+  Playlist, PlaylistItem
+  ImageItemSettings, VideoItemSettings, WebsiteItemSettings, ClockItemSettings, UnsplashItemSettings, PowerBiItemSettings
+    （PlaylistItem.settings / GetPlaylistItemUrlResult.settings 经 variants 按 type 判别；
+      GetPlaylistItemUrlResult 的判别不含 clock / powerbi）
+  ClockEntry, UnsplashPhoto, UnsplashUser
 ```
 
 ### 6.2 请求 Schemas
@@ -1070,6 +1312,12 @@ Capability name: `signage.playlist`。
 |---|---|---:|---|---|---|
 | `itemId` | string (UUID) | yes | UUID format | none | 播放项唯一标识。 |
 
+#### `GetPlaylistItemParams`
+
+| 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
+|---|---|---:|---|---|---|
+| `itemId` | string (UUID) | yes | UUID format | none | 播放项唯一标识。与 `getPlaylistItemUrl` 使用同一标识空间。 |
+
 `PlaylistCapabilitiesParams`、`GetPlaylistConfigParams`、`ResetPlaylistConfigParams`：无必填参数，详见各方法 per-method 字段表。
 
 ### 6.3 响应 Schemas
@@ -1078,7 +1326,7 @@ Capability name: `signage.playlist`。
 
 | 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
 |---|---|---:|---|---|---|
-| `supportedItemTypes` | string[] | yes | `image`, `website`, `video`, `clock`, `unsplash` | none | 支持的播放项类型。 |
+| `supportedItemTypes` | string[] | yes | `image`, `website`, `video`, `clock`, `unsplash`, `powerbi` | none | 支持的播放项类型。 |
 | `maxPlaylists` | uint32 | no | product-defined | omitted | 最大播放列表数。 |
 | `maxItemsPerPlaylist` | uint32 | no | product-defined | omitted | 每列表最大播放项数。 |
 | `supportsScheduledPlaylist` | boolean | yes | `true`, `false` | none | 是否支持 scheduled 类型。 |
@@ -1095,8 +1343,14 @@ Capability name: `signage.playlist`。
 
 | 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
 |---|---|---:|---|---|---|
-| `type` | enum | yes | `image`, `video`, `website`, `unsplash` | none | 播放项类型。用于判别 `settings` 内部结构。 |
-| `settings` | `PlaylistItemSettings` | yes | see `PlaylistItemSettings` | none | 刷新后的完整设置。按 `type` 对应不同内部字段。 |
+| `type` | enum | yes | `image`, `video`, `website`, `unsplash` | none | 播放项类型。判别 `settings` 的 variant schema。 |
+| `settings` | per-type settings | yes | 由 `type` 经 `variants` 判别 | none | 刷新后的完整设置。按 `type` 对应 §6.5 的 per-type settings schema。 |
+
+#### `GetPlaylistItemResult`
+
+| 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
+|---|---|---:|---|---|---|
+| `item` | `PlaylistItem` | yes | see `PlaylistItem` | none | 刷新后的完整播放项，与 `setPlaylistConfig` / `getPlaylistConfig` 的 `items` 元素同构。设备用此值整体替换本地对应播放项。 |
 
 ### 6.4 事件 Payload Schemas
 
@@ -1131,14 +1385,14 @@ Capability name: `signage.playlist`。
 | 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
 |---|---|---:|---|---|---|
 | `id` | string (UUID) | yes | UUID format | none | 播放项唯一标识。 |
-| `type` | enum | yes | `image`, `website`, `video`, `clock`, `unsplash` | none | 播放项类型。 |
+| `type` | enum | yes | `image`, `website`, `video`, `clock`, `unsplash`, `powerbi` | none | 播放项类型。该值经 `settings` 的 `variants` 判别选择对应 settings schema。 |
 | `duration` | uint32 | yes | 0-86400（`0` 语义见说明） | 60 | 单次播放时长（秒）。`0` 语义未定义——推荐禁止 `0`（要求 `> 0`），或允许 `0` 表示「直到下一次列表循环或切换」。`[REVIEW-ASK]` 采纳前确认。 |
 | `sort` | uint32 | yes | 非负整数 | 0 | 播放顺序，按 `sort` 升序排列。相同 `sort` 值时的相对顺序未定义——建议按 `PlaylistItem.id` 稳定排序。`[REVIEW-ASK]` 采纳前确认。 |
-| `settings` | `PlaylistItemSettings` | yes | see `PlaylistItemSettings` | none | 播放项设置。按 `type` 不同结构不同。 |
+| `settings` | per-type settings | yes | 由 `type` 经 `variants` 判别 | none | 播放项设置。字段携带 `variants: { discriminator: type, mapping: { image: ImageItemSettings, website: WebsiteItemSettings, video: VideoItemSettings, clock: ClockItemSettings, unsplash: UnsplashItemSettings, powerbi: PowerBiItemSettings } }`（registry 名加 `Signage` 前缀）。 |
 
-#### `PlaylistItemSettings`（按 type 区分）
+#### `ImageItemSettings`
 
-**image 类型：**
+> registry 名：`SignageImageItemSettings`。`image` 类型播放项的 settings schema（经 `PlaylistItem.settings` 的 `variants` 判别）。fieldId 从 0x01 连续重排（见 Amendment History A2）。
 
 | 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
 |---|---|---:|---|---|---|
@@ -1146,7 +1400,9 @@ Capability name: `signage.playlist`。
 | `delaySeconds` | uint32 | yes | > 0 | 5 | 每个图片显示时长（秒）。 |
 | `expiresAt` | uint64 | no | Unix timestamp | `null` | URL 过期时间。`null` 表示永不过期。 |
 
-**video 类型：**
+#### `VideoItemSettings`
+
+> registry 名：`SignageVideoItemSettings`。`video` 类型播放项的 settings schema。fieldId 从 0x01 连续重排（见 Amendment History A2）。
 
 | 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
 |---|---|---:|---|---|---|
@@ -1154,7 +1410,9 @@ Capability name: `signage.playlist`。
 | `expiresAt` | uint64 | no | Unix timestamp | `null` | URL 过期时间。`null` 表示永不过期。 |
 | `muted` | boolean | no | `true`, `false` | `false` | 是否静音播放。 |
 
-**website 类型：**
+#### `WebsiteItemSettings`
+
+> registry 名：`SignageWebsiteItemSettings`。`website` 类型播放项的 settings schema。fieldId 从 0x01 连续重排（见 Amendment History A2）。
 
 | 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
 |---|---|---:|---|---|---|
@@ -1162,7 +1420,9 @@ Capability name: `signage.playlist`。
 | `ignoreCertificateError` | boolean | no | `true`, `false` | `false` | 忽略 TLS 证书错误。`[REVIEW-ASK]` 安全敏感字段——允许跳过证书校验有中间人风险，需明确何时允许、调用方权限要求与默认策略；采纳前由安全/架构确认。 |
 | `refreshIntervalSecs` | uint32 | no | > 0 | `null` | 刷新间隔秒数。`null` 表示不刷新。 |
 
-**clock 类型：**
+#### `ClockItemSettings`
+
+> registry 名：`SignageClockItemSettings`。`clock` 类型播放项的 settings schema。fieldId 从 0x01 连续重排（见 Amendment History A2）。
 
 | 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
 |---|---|---:|---|---|---|
@@ -1175,7 +1435,9 @@ Capability name: `signage.playlist`。
 | `timezone` | string (IANA) | yes | IANA timezone | none | 时区标识。 |
 | `label` | string | yes | non-empty | none | 城市标签。 |
 
-**unsplash 类型：**
+#### `UnsplashItemSettings`
+
+> registry 名：`SignageUnsplashItemSettings`。`unsplash` 类型播放项的 settings schema。fieldId 从 0x01 连续重排（见 Amendment History A2）。
 
 | 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
 |---|---|---:|---|---|---|
@@ -1188,9 +1450,28 @@ Capability name: `signage.playlist`。
 | 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
 |---|---|---:|---|---|---|
 | `url` | string | yes | valid URL | none | 图片 URL。 |
-| `user` | object | yes | see below | none | 摄影师信息。 |
-| `user.name` | string | yes | non-empty | none | 摄影师名称。 |
-| `user.link` | string | yes | valid URL | none | 摄影师 Unsplash 主页链接。 |
+| `user` | `UnsplashUser` | yes | see `UnsplashUser` | none | 摄影师信息（嵌套对象，registry 名 `SignagePlaylistUnsplashUser`）。 |
+
+#### `UnsplashUser`
+
+> registry 名：`SignagePlaylistUnsplashUser`。Unsplash 照片的摄影师署名对象（v1.5 A3 由扁平 `userName`/`userLink` 对齐为嵌套，见 Amendment History A3）。
+
+| 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
+|---|---|---:|---|---|---|
+| `name` | string | yes | non-empty | none | 摄影师名称。 |
+| `link` | string | yes | valid URL | none | 摄影师 Unsplash 主页链接。 |
+
+#### `PowerBiItemSettings`
+
+> registry 名：`SignagePowerBiItemSettings`。`powerbi` 类型播放项的 settings schema（v1.6 A4 新增，经 `PlaylistItem.settings` 的 `variants` 判别）。5 字段**全必填**——与其他类型不同，`powerbi` 无可省略字段，`expiresAt` 恒有值（AAD token 必然过期）。`token` 为敏感凭证：仅经 RPC 通道传输，不得进资源 URL、不得写日志。
+
+| 字段名 | 类型 | 必填 | 取值范围 / 枚举 | 默认值 | 说明 |
+|---|---|---:|---|---|---|
+| `groupId` | string (GUID) | yes | GUID format | none | PowerBI workspace（group）ID。 |
+| `dashboardId` | string (GUID) | yes | GUID format | none | PowerBI Dashboard ID。 |
+| `embedUrl` | string | yes | valid URL | none | Dashboard embed URL。稳定不变（token 刷新不改变此值），设备可缓存复用。 |
+| `token` | string | yes | AAD access token | none | AAD access token（PowerBI audience，tokenType=Aad 嵌入）。敏感凭证，仅经 RPC 通道传输，不得写日志。约 60 分钟有效。 |
+| `expiresAt` | uint64 | yes | Unix timestamp | none | token 过期时间。**恒有值**（与其他类型 `expiresAt` 可空不同）。设备在临期时经 `getPlaylistItem` 刷新。 |
 
 ---
 
@@ -1219,7 +1500,7 @@ Capability name: `signage.playlist`。
   "id": 201,
   "status": { "ok": true, "code": 0 },
   "result": {
-    "supportedItemTypes": ["image", "website", "video", "clock", "unsplash"],
+    "supportedItemTypes": ["image", "website", "video", "clock", "unsplash", "powerbi"],
     "supportsUrlRefresh": true,
     "supportsReset": true
   }
@@ -1330,6 +1611,48 @@ Capability name: `signage.playlist`。
 
 读法：成功时设备用返回的 `settings` 替换本地缓存继续播放；失败时设备停止对该 `itemId` 重试，改为调用 `signage.getPlaylistConfig`（或等待 `playlistConfigChanged`）获取云端最新配置。`code: 12` 借用 common `NOT_FOUND`（0x000C），候选业务码 `SIGNAGE_PLAYLIST_URL_EXPIRED` 采纳时二选一（见 §8）。
 
+### 7.3 场景：powerbi embed token 临期，设备主动整项刷新
+
+设备检测到某 `powerbi` 播放项的 `settings.expiresAt`（AAD token 约 60 分钟有效）临期，主动调用 `signage.getPlaylistItem` 获取含新 token 的完整播放项并整体替换本地缓存。`powerbi` 等非 URL 型资源 MUST 使用本方法（`getPlaylistItemUrl` 返回 `NOT_SUPPORTED`）。
+
+#### Step 1. 整项刷新：`signage.getPlaylistItem` 请求 (op=7)
+
+```json
+{
+  "id": 204,
+  "method": "signage.getPlaylistItem",
+  "params": {
+    "itemId": "9ba7b810-9dad-11d1-80b4-00c04fd430c8"
+  }
+}
+```
+
+#### Step 2. 整项刷新：成功响应 (op=8)
+
+```json
+{
+  "id": 204,
+  "status": { "ok": true, "code": 0 },
+  "result": {
+    "item": {
+      "id": "9ba7b810-9dad-11d1-80b4-00c04fd430c8",
+      "type": "powerbi",
+      "duration": 600,
+      "sort": 0,
+      "settings": {
+        "groupId": "f089354e-3a18-4d43-8db5-3c58a1a0c9f2",
+        "dashboardId": "69ff5868-12d6-4f1c-8c2f-7b6b6bc11d4b",
+        "embedUrl": "https://app.powerbi.com/dashboardEmbed?dashboardId=69ff5868-12d6-4f1c-8c2f-7b6b6bc11d4b&groupId=f089354e-3a18-4d43-8db5-3c58a1a0c9f2",
+        "token": "eyJhbGciOiJSUzI1NiIs...<new-aad-access-token>",
+        "expiresAt": 1704157200
+      }
+    }
+  }
+}
+```
+
+读法：设备用返回的 `item` **整体替换**本地对应播放项（`id` / `type` / `duration` / `sort` / `settings` 全部以返回值为准，不做字段级合并）；`embedUrl` 稳定不变可缓存复用，实际变化的是 `token` 与 `expiresAt`。若 `itemId` 已不存在（如配置已被全量替换删除），设备收到 `NOT_FOUND` 后应停止重试，改经 `getPlaylistConfig` / `playlistConfigChanged` 校准（与 §7.2 失败分支同策略）。
+
 ---
 
 ## 8. 错误
@@ -1337,16 +1660,16 @@ Capability name: `signage.playlist`。
 | Error | Code | 类别 | 说明 | Review |
 |---|---|---|---|---|
 | `INVALID_ARGUMENT` | 0x000A | common | 参数校验失败：scheduled 时间约束违反、播放项 `settings` 字段非法、播放列表数组为空、播放项数组为空、`sort` 在同一 playlist 内重复。 | [REVIEW-ADOPTED] |
-| `NOT_SUPPORTED` | 0x0003 | common | 操作不支持当前播放项类型（如 `clock` 调用 `getPlaylistItemUrl`）或设备不支持 `signage.playlist` 能力。 | [REVIEW-ADOPTED] |
+| `NOT_SUPPORTED` | 0x0003 | common | 操作不支持当前播放项类型（如 `clock` 或 `powerbi` 调用 `getPlaylistItemUrl`）或设备不支持 `signage.playlist` 能力。 | [REVIEW-ADOPTED] |
 | `PERMISSION_DENIED` | 0x0009 | common | 调用方无权修改播放列表配置（`setPlaylistConfig`）。 | [REVIEW-ADOPTED] |
-| `INTERNAL_ERROR` | 0x000E | common | 设备内部错误（`getPlaylistCapabilities` / `getPlaylistConfig` / `resetPlaylistConfig` 执行失败）。 | [REVIEW-ADOPTED] |
-| `NOT_FOUND` | 0x000C | common | 指定资源不存在：`itemId` 不存在于当前播放列表、资源 URL 已过期且无法刷新。 | [REVIEW-ADOPTED] |
+| `INTERNAL_ERROR` | 0x000E | common | 设备内部错误（`getPlaylistCapabilities` / `getPlaylistConfig` / `resetPlaylistConfig` 执行失败）；对 `getPlaylistItem` 亦承载对端生成刷新资源失败（如 PowerBI embed token 签发失败，设备 SHOULD 稍后重试）。 | [REVIEW-ADOPTED] |
+| `NOT_FOUND` | 0x000C | common | 指定资源不存在：`getPlaylistItemUrl` / `getPlaylistItem` 的 `itemId` 不存在于当前播放列表、资源 URL 已过期且无法刷新。 | [REVIEW-ADOPTED] |
 
-> 采纳决策：候选业务码 `SIGNAGE_PLAYLIST_EMPTY` / `SIGNAGE_PLAYLIST_ITEM_NOT_FOUND` / `SIGNAGE_PLAYLIST_URL_EXPIRED` **不新增为独立业务码，统一复用 common 错误码**（见上方「采纳记录」错误码决策表）。signage domain 错误码区段 `0x0D00-0x0DFF` 保持空；§3.3.3 / §3.5.3 JSON 示例中的 `candidateError` 占位以 common 码为准（空列表→`INVALID_ARGUMENT`，item 不存在/URL 过期→`NOT_FOUND`）。
+> 采纳决策：候选业务码 `SIGNAGE_PLAYLIST_EMPTY` / `SIGNAGE_PLAYLIST_ITEM_NOT_FOUND` / `SIGNAGE_PLAYLIST_URL_EXPIRED` **不新增为独立业务码，统一复用 common 错误码**（见上方「采纳记录」错误码决策表）。signage domain 错误码区段 `0x0D00-0x0DFF` 保持空；§3.3.3 / §3.5.3 / §3.6.3 JSON 示例中的 `candidateError` 占位以 common 码为准（空列表→`INVALID_ARGUMENT`，item 不存在/URL 过期→`NOT_FOUND`）。
 
 > 通用错误码数值取自 `registry/error/error_code.yaml`。业务域错误 `SIGNAGE_PLAYLIST_*` 落点在业务域区段 `0x0600-0x15FF`，编号 `TBD after adoption`，由 registry 采纳时分配。
 
-> **错误码双轨制说明**：上表 `SIGNAGE_PLAYLIST_ITEM_NOT_FOUND` / `SIGNAGE_PLAYLIST_EMPTY` / `SIGNAGE_PLAYLIST_URL_EXPIRED` 为**候选业务错误码**，数值 `TBD after adoption`。在候选码尚未分配数值前，本文 JSON 示例（§3.3.3 / §3.5.3）按 20-draft-business-protocol 约定借用**语义最近的 common 错误码**（`NOT_FOUND` 0x000C、`INVALID_ARGUMENT` 0x000A），并将候选名写入 `status.details.candidateError`。采纳阶段需对每个候选码做二选一决定：**新增为独立业务码**（落入 `0x0600-0x15FF`），还是**直接复用对应 common 码**（减少 registry 膨胀）。见 §12 待确认问题。
+> **错误码双轨制说明**：上表 `SIGNAGE_PLAYLIST_ITEM_NOT_FOUND` / `SIGNAGE_PLAYLIST_EMPTY` / `SIGNAGE_PLAYLIST_URL_EXPIRED` 为**候选业务错误码**，数值 `TBD after adoption`。在候选码尚未分配数值前，本文 JSON 示例（§3.3.3 / §3.5.3 / §3.6.3）按 20-draft-business-protocol 约定借用**语义最近的 common 错误码**（`NOT_FOUND` 0x000C、`INVALID_ARGUMENT` 0x000A），并将候选名写入 `status.details.candidateError`。采纳阶段需对每个候选码做二选一决定：**新增为独立业务码**（落入 `0x0600-0x15FF`），还是**直接复用对应 common 码**（减少 registry 膨胀）。见 §12 待确认问题。
 
 ---
 
@@ -1362,7 +1685,7 @@ Capability name: `signage.playlist`。
 
 > **证据源文件**：`workspace/legacy-migration/evidence/NearHub-Launcher数字标牌设备管理通用管理命令.md`。
 
-> **AXTP-only 新增（无 legacy 对应）**：`signage.getPlaylistCapabilities`（能力查询）、`signage.resetPlaylistConfig`（恢复默认）、`unsplash` 播放项类型、`signage.playlistConfigChanged` 事件均为 AXTP 新增能力，legacy NearHub Launcher 无对应命令。迁移所有者据此判断完整 delta——legacy 侧仅有 `SetPlaylistConfig` / `GetPlaylistConfig` / `GetPlaylistItemUrl` 三个命令可映射，其余为纯新增。
+> **AXTP-only 新增（无 legacy 对应）**：`signage.getPlaylistCapabilities`（能力查询）、`signage.resetPlaylistConfig`（恢复默认）、`signage.getPlaylistItem`（播放项整项刷新，v1.6 A4 新增）、`unsplash` / `powerbi` 播放项类型、`signage.playlistConfigChanged` 事件均为 AXTP 新增能力，legacy NearHub Launcher 无对应命令。迁移所有者据此判断完整 delta——legacy 侧仅有 `SetPlaylistConfig` / `GetPlaylistConfig` / `GetPlaylistItemUrl` 三个命令可映射，其余为纯新增。
 
 ### 9.1 `SetPlaylistConfig` → `signage.setPlaylistConfig`
 
@@ -1382,13 +1705,13 @@ Legacy Server → Device，请求 `{ playlists: [...] }`，响应 `{ ok: true }`
 | `playlists[].days` | Array (1-7) | `days` | uint8[] | 直传。1=周一，语义不变。 |
 | `playlists[].items` | Array | `items` | `PlaylistItem[]` | 直传。AXTP 增加非空约束。 |
 | `playlists[].items[].id` | String | `id` | string (UUID) | 直传。 |
-| `playlists[].items[].type` | String (`image`/`slideshow`/`website`/`video`/`clock`) | `type` | enum | AXTP 新增 `unsplash`，废弃 `slideshow`。Legacy `slideshow` 由 adapter 映射为 `image`。 |
+| `playlists[].items[].type` | String (`image`/`slideshow`/`website`/`video`/`clock`) | `type` | enum | AXTP 新增 `unsplash`，废弃 `slideshow`。Legacy `slideshow` 由 adapter 映射为 `image`。AXTP 另新增 `powerbi`（v1.6 A4，AXTP-only，legacy 无此类型，Adapter 不需处理）。 |
 | `playlists[].items[].duration` | Number | `duration` | uint32 | 直传。默认 60，范围 0-86400。 |
 | `playlists[].items[].sort` | Number | `sort` | uint32 | 直传。默认 0。 |
-| `playlists[].items[].settings` | Object | `settings` | `PlaylistItemSettings` | 按 `type` 区分结构。字段 1:1 映射。 |
+| `playlists[].items[].settings` | Object | `settings` | per-type settings（`ImageItemSettings` 等 6 种，由 `type` 经 `variants` 判别；含 AXTP-only 的 `PowerBiItemSettings`，Adapter 不需处理） | 按 `type` 区分结构。字段 1:1 映射。 |
 | *(none)* | — | *(AXTP 无额外字段)* | — | — |
 
-**Legacy `slideshow` 类型废弃说明** `[REVIEW-RESOLVED]`：AXTP 不保留 `slideshow` 播放项类型。Legacy `slideshow` 由 Adapter 映射为 AXTP `image` 类型。以下子表展示 `settings` 字段级转换：
+**Legacy `slideshow` 类型废弃说明** `[REVIEW-RESOLVED]`：AXTP 不保留 `slideshow` 播放项类型。Legacy `slideshow` 由 Adapter 映射为 AXTP `image` 类型（settings schema 为 `ImageItemSettings`）。以下子表展示 `settings` 字段级转换：
 
 | Legacy `slideshow` 字段 | 类型 | AXTP `image` 字段 | 类型 | 转换规则 |
 |---|---|---|---|---|
@@ -1444,12 +1767,13 @@ Legacy Device → Server，请求 `{ itemId }`，响应 `{ url / urls, expiresAt
 | *(none)* | — | `type` | enum | AXTP 新增。Legacy 响应无 `type` 字段，Adapter 必须从当前播放列表配置中查找 `itemId` 对应的 `type` 并填充。 |
 | *(none)* | — | `type: "unsplash"` + `settings.photos` / `settings.delaySeconds` / `settings.expiresAt` | enum + `UnsplashPhoto[]` + uint32 + uint64 | **AXTP-only**。Legacy `GetPlaylistItemUrl` 无 `unsplash` 类型响应。AXTP 新增此类型，Adapter 不需处理。 |
 
-> **Adapter 说明**：这是三个 legacy 命令中**结构变化最大**的。v0.4 将响应从顶层互斥字段（`url` / `urls` / `expiresAt`）重构为 `type` + `settings` 显式类型判别模式。Adapter 需要：(1) 从设备当前播放列表配置中查找 `itemId` 对应的播放项 `type`；(2) 将旧顶层字段按类型移入 `settings` 子对象：
-> - **image**：顶层 `urls[]` + `expiresAt` → `settings.urls` + `settings.expiresAt`；`delaySeconds` 取设备当前配置原值（legacy 刷新响应不含此字段）。
-> - **video / website**：顶层 `url` + `expiresAt` → `settings.url` + `settings.expiresAt`（website 保留 `ignoreCertificateError` / `refreshIntervalSecs`，video 保留 `muted`）。
-> - **slideshow**：legacy `GetPlaylistItemUrl` 响应 `url`（String）按 `image` 策略包装为 `settings.urls`（单元素数组 `["<url>"]`），补充 `settings.delaySeconds`（默认 `5`）和 `settings.expiresAt`（从响应顶层 `expiresAt` 移入）。Adapter 还需将推断的 `type` 从 `"slideshow"` 替换为 `"image"`。
-> - **unsplash**：Legacy 无此类型。AXTP 直接返回 `type: "unsplash"` + `settings`。Adapter 不需处理。
+> **Adapter 说明**：这是三个 legacy 命令中**结构变化最大**的。v0.4 将响应从顶层互斥字段（`url` / `urls` / `expiresAt`）重构为 `type` + `settings` 显式类型判别模式（v1.5 起判别由 `variants` 机制承载，见 Amendment History A2）。Adapter 需要：(1) 从设备当前播放列表配置中查找 `itemId` 对应的播放项 `type`；(2) 将旧顶层字段按类型移入 `settings` 子对象：
+> - **image**（`ImageItemSettings`）：顶层 `urls[]` + `expiresAt` → `settings.urls` + `settings.expiresAt`；`delaySeconds` 取设备当前配置原值（legacy 刷新响应不含此字段）。
+> - **video**（`VideoItemSettings`）/ **website**（`WebsiteItemSettings`）：顶层 `url` + `expiresAt` → `settings.url` + `settings.expiresAt`（website 保留 `ignoreCertificateError` / `refreshIntervalSecs`，video 保留 `muted`）。
+> - **slideshow**：legacy `GetPlaylistItemUrl` 响应 `url`（String）按 `image` 策略包装为 `ImageItemSettings.urls`（单元素数组 `["<url>"]`），补充 `delaySeconds`（默认 `5`）和 `expiresAt`（从响应顶层 `expiresAt` 移入）。Adapter 还需将推断的 `type` 从 `"slideshow"` 替换为 `"image"`。
+> - **unsplash**（`UnsplashItemSettings`）：Legacy 无此类型。AXTP 直接返回 `type: "unsplash"` + `settings`。Adapter 不需处理。
 > - **clock**：不涉及刷新，设备不应调用 `getPlaylistItemUrl`。
+> - **powerbi**（`PowerBiItemSettings`）：Legacy 无此类型（AXTP-only，v1.6 A4）。AXTP 对 powerbi 调用 `getPlaylistItemUrl` 返回 `NOT_SUPPORTED`——Adapter 不得把该错误映射为带空 `url` 的 legacy 成功响应（会静默弄坏设备侧 token 刷新）；powerbi 的 embed token 刷新走 `signage.getPlaylistItem`（无 legacy 对应，Adapter 不需处理）。
 
 ### 9.4 Adapter 通用转换模式
 
@@ -1509,10 +1833,10 @@ Legacy Device → Server，请求 `{ itemId }`，响应 `{ url / urls, expiresAt
 
 | 项 | 状态 |
 |---|---|
-| Registry YAML | **adopted** — `registry/domains/signage/domain.yaml` 已写入（capability `0x0D01` / methods `0x0D01-0x0D05` / event `0x0D01`） |
-| Generated docs | 待生成（由 `50-generate-axtp-protocol` 重跑 `protocol/axtp.protocol.yaml` 与 `docs/generated/*`） |
+| Registry YAML | **adopted** — `registry/domains/signage/domain.yaml` 已写入（capability `0x0D01` / methods `0x0D01-0x0D06` / event `0x0D01`） |
+| Generated docs | **已生成** — `contract/protocol/axtp.protocol.yaml` 与 `contract/generated/*` / `contract/mcp/*` 已由 `50-generate-axtp-protocol` 重跑并随本修订入库（真实产物路径为 `contract/generated/*`，草案早期表述中的 `docs/generated/*` 为旧路径）。 |
 | Method / event IDs | 已分配：见上方「采纳记录」 |
-| Conformance | 采纳后需覆盖：全量同步、查询、恢复默认、URL 刷新（4 种类型）、clock 类型 NOT_SUPPORTED、scheduled 时间约束、空列表 / `sort` 重复 / item 不存在错误、事件触发。 |
+| Conformance | 采纳后需覆盖：全量同步（含 powerbi 项）、查询、恢复默认、URL 刷新（4 种类型）、播放项整项刷新（powerbi token 刷新）、clock / powerbi 类型调 `getPlaylistItemUrl` 返回 NOT_SUPPORTED、scheduled 时间约束、空列表 / `sort` 重复 / item 不存在错误、事件触发。 |
 
 ---
 
@@ -1520,10 +1844,11 @@ Legacy Device → Server，请求 `{ itemId }`，响应 `{ url / urls, expiresAt
 
 | 类型 | 要点 |
 |---|---|
-| happy path | `getCapabilities` 返回支持类型和限制；`getConfig` 返回当前配置；`setConfig` 全量替换；`resetConfig` 恢复默认；`getItemUrl` 按 4 种类型返回刷新 URL。 |
+| happy path | `getCapabilities` 返回支持类型和限制；`getConfig` 返回当前配置；`setConfig` 全量替换；`resetConfig` 恢复默认；`getItemUrl` 按 4 种类型返回刷新 URL；`getItem` 返回完整播放项。 |
 | hard-replace | `setConfig` 第二次调用不出现的旧 item 被删除；设备不应保留旧 item。 |
 | scheduled constraint | `startDate == endDate` 时 `startTime <= endTime`（单日约束违反返回 `INVALID_ARGUMENT`）；`startDate < endDate` 时允许跨午夜。 |
-| URL refresh | `image`/`video`/`website`/`unsplash` 类型返回对应 `type`+`settings`；`clock` 类型返回 `NOT_SUPPORTED`；不存在 item 返回 `SIGNAGE_PLAYLIST_ITEM_NOT_FOUND`。 |
+| URL refresh | `image`/`video`/`website`/`unsplash` 类型返回对应 `type`+`settings`；`clock` / `powerbi` 类型返回 `NOT_SUPPORTED`；不存在 item 返回 `SIGNAGE_PLAYLIST_ITEM_NOT_FOUND`。 |
+| powerbi refresh | `setConfig` 含 powerbi 项（5 字段全必填）；token 临期时 `getItem` 返回新 `token` + `expiresAt` 的完整播放项，设备整项替换（`embedUrl` 不变）；`getItemUrl` 对 powerbi 返回 `NOT_SUPPORTED`。 |
 | event | `setConfig`/`resetConfig` 成功后触发 `playlistConfigChanged`；失败请求不触发事件。 |
 | error path | 空播放列表（`SIGNAGE_PLAYLIST_EMPTY`）、无效参数（`INVALID_ARGUMENT`）、不支持的操作（`NOT_SUPPORTED`）、资源 URL 已过期（`SIGNAGE_PLAYLIST_URL_EXPIRED`）。 |
 
@@ -1554,6 +1879,7 @@ Legacy Device → Server，请求 `{ itemId }`，响应 `{ url / urls, expiresAt
 | `scheduled` 类型时间区间约束 | `startDate == endDate` 时 `startTime <= endTime`；`startDate < endDate` 时允许跨午夜。违反返回 `INVALID_ARGUMENT`（0x000A）。 | v0.6 |
 | URL 过期刷新方式 | 设备端主动 Pull 模式。设备调用 `signage.getPlaylistItemUrl` 获取新 URL。服务端不推送。 | v0.5 |
 | `clock` 类型播放项调用 `getPlaylistItemUrl` | 返回 `NOT_SUPPORTED`（0x0003）。`clock` 不依赖远程 URL 资源。 | v0.5 |
+| powerbi 等非 URL 型资源的刷新通道 | `getPlaylistItem`（`0x0D06`）整项刷新；`getPlaylistItemUrl` 不支持 powerbi（返回 `NOT_SUPPORTED`）。 | v1.6 (A4) |
 
 ---
 
@@ -1601,6 +1927,8 @@ methods:
 
 采纳日期：2026-06-17（Stage 30 adopt-protocol-draft）。
 
+> **当前状态注记（v1.6 A4 后）**：以下清单中「method `0x0D01-0x0D05`，bitOffset 0–4」为 v1.4 采纳时点记录；v1.6 A4 新增 `signage.getPlaylistItem`（`0x0D06` / bitOffset 5）后方法集为 `0x0D01-0x0D06`（bitOffset 0–5），见「采纳记录」与 Amendment History。generator 产物已随本修订重跑入库。
+
 - [x] 已确认 domain.feature 粒度和 method/event 命名。
 - [x] 已确认 Domain/ID 规划和生成链路。（signage DomainId `0x0D`；capability/method/event ID 已分配）
 - [x] 已确认 methodId、bitOffset、request/response schema。（method `0x0D01-0x0D05`，bitOffset 0–4）
@@ -1609,4 +1937,4 @@ methods:
 - [x] 已确认 schema fieldId、capabilityId、supportedMethods。
 - [x] 已确认 `PlaylistCapabilitiesResult`、`PlaylistConfigResult`、`ResetPlaylistConfigParams`、`PlaylistConfigChangedEvent` 的 schema 字段。
 - [x] 已确认 Legacy `slideshow` 类型已废弃，Adapter 映射为 `image`。
-- [ ] YAML 写入后 Generator 能完整生成 `protocol/axtp.protocol.yaml` 和 `docs/generated/*`。（待 50-generate-axtp-protocol）
+- [x] YAML 写入后 Generator 能完整生成 `protocol/axtp.protocol.yaml` 和 `docs/generated/*`。（`50-generate-axtp-protocol` 已重跑，产物位于 `contract/protocol/` 与 `contract/generated/*`、`contract/mcp/*`）

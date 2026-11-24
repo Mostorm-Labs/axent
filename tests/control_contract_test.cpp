@@ -37,6 +37,10 @@ static_assert(std::is_same_v<
 int main()
 {
     using namespace axent::control;
+    const nlohmann::json inputCapability={{"capability","input.stream"},{"direction","receiver_to_source"},{"reliability","ordered_reliable"},{"profiles",{"AXTP-TYPED-INPUT-V1"}},{"formats",{"input-sample-v1"}},{"inputTypes",{"touch"}},{"maxDataBytes",4096},{"touch",{{"maxContacts",10}}}};
+    if(!validate_object("InputStreamCapability",inputCapability))return 10;
+    auto malformed=inputCapability;malformed["maxDataBytes"]="4096";
+    if(validate_object("InputStreamCapability",malformed)||validate_object("UnknownInputType",inputCapability))return 11;
     if (parse_decimal_uint64("18446744073709551615") != UINT64_MAX ||
         parse_decimal_uint64("18446744073709551616") || parse_decimal_uint64("01")) return 2;
     nlohmann::json params = {{"controlVersion",1},
@@ -77,6 +81,19 @@ int main()
     if(!validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 17;
     params["patch"]={{"presentationFocusOnDoubleClick","false"}};
     if(validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 16;
+    const nlohmann::json windowPreferences={{"topBarTrigger","always"},{"topBarShowLayout",true},
+        {"topBarShowDebug",false},{"topBarShowMinimize",true},{"topBarShowMaximize",false},
+        {"topBarShowCastCode",false},{"topBarShowBackground",false},{"startupWindowMode","fullscreen"}};
+    for(const auto& [field,value]:windowPreferences.items()){
+        params["patch"]={{field,value}};
+        if(!validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 18;
+    }
+    if(!validate_object("CastPresentationSettingsValues",windowPreferences)||
+        !validate_object("CastPresentationStartupSettings",{{"startupWindowMode","fullscreen"}}))return 19;
+    params["patch"]={{"topBarTrigger","hover"}};
+    if(validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 20;
+    params["patch"]={{"topBarShowDebug","true"}};
+    if(validate_payload("cast.setPresentationSettings",PayloadRole::Request,params))return 21;
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-field-initializers"

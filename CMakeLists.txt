@@ -23,6 +23,49 @@ target_link_libraries(axent_control_contract PUBLIC nlohmann_json::nlohmann_json
 target_link_libraries(axent_control_contract PRIVATE axtp::core)
 axent_enable_warnings(axent_control_contract)
 
+add_library(axent_input_contract STATIC src/input/axtp_input_codec.cpp src/input/input_route.cpp)
+add_library(axent::input_contract ALIAS axent_input_contract)
+target_include_directories(axent_input_contract PUBLIC include)
+target_compile_features(axent_input_contract PUBLIC cxx_std_17)
+target_link_libraries(axent_input_contract PRIVATE axtp::core)
+axent_enable_warnings(axent_input_contract)
+
+add_library(axent_framed_control_client STATIC src/control/framed_client.cpp)
+set(_axent_event_input "${AXENT_AXTP_SPEC_ROOT}/contract/mcp/event_registry.generated.json")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${_axent_event_input}")
+file(READ "${_axent_event_input}" _axent_event_json)
+string(JSON _axent_event_count LENGTH "${_axent_event_json}" events)
+math(EXPR _axent_event_last "${_axent_event_count}-1")
+set(_axent_event_facts "// Derived from the exact vendored AXTP generated event registry.\n")
+foreach(_event_index RANGE 0 ${_axent_event_last})
+    string(JSON _event_name GET "${_axent_event_json}" events ${_event_index} name)
+    string(JSON _event_id GET "${_axent_event_json}" events ${_event_index} id)
+    string(JSON _event_bit GET "${_axent_event_json}" events ${_event_index} bitOffset)
+    math(EXPR _event_domain "${_event_id} >> 8")
+    string(APPEND _axent_event_facts "{\"${_event_name}\",${_event_domain},${_event_bit}},\n")
+endforeach()
+file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/generated/axent_event_mask_facts.inc" CONTENT "${_axent_event_facts}")
+add_library(axent::framed_control_client ALIAS axent_framed_control_client)
+target_include_directories(axent_framed_control_client PUBLIC include)
+target_include_directories(axent_framed_control_client PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
+target_compile_features(axent_framed_control_client PUBLIC cxx_std_17)
+target_link_libraries(axent_framed_control_client PRIVATE axtp::core)
+axent_enable_warnings(axent_framed_control_client)
+
+if(AXENT_BUILD_TESTING)
+    add_executable(input_stream_test tests/input_stream_test.cpp)
+    add_executable(input_route_test tests/input_route_test.cpp)
+    target_link_libraries(input_route_test PRIVATE axent::input_contract)
+    add_test(NAME input_route_test COMMAND input_route_test)
+    target_link_libraries(input_stream_test PRIVATE axent::input_contract)
+    add_test(NAME input_stream_test COMMAND input_stream_test)
+    add_executable(framed_client_test tests/framed_client_test.cpp)
+    target_link_libraries(framed_client_test PRIVATE axent::framed_control_client axtp::core)
+    add_test(NAME framed_client_test COMMAND framed_client_test)
+    add_executable(framed_client_probe tests/framed_client_probe.cpp)
+    target_link_libraries(framed_client_probe PRIVATE axent::framed_control_client axent::input_contract nlohmann_json::nlohmann_json)
+endif()
+
 add_library(axent_media_contract INTERFACE)
 add_library(axent::media_contract ALIAS axent_media_contract)
 target_include_directories(axent_media_contract INTERFACE
@@ -116,7 +159,7 @@ target_include_directories(libaxent PRIVATE
 )
 target_link_libraries(libaxent
     PUBLIC nlohmann_json::nlohmann_json axent::media_contract axent::firmware
-    PRIVATE axtp::core axtp::json_rpc axtp::runtime axtp::sdk
+    PRIVATE axent::input_contract axent::control_contract axtp::core axtp::json_rpc axtp::runtime axtp::sdk
 )
 if(TARGET axent::transport_hidapi)
     target_link_libraries(libaxent PRIVATE axent::transport_hidapi)
@@ -124,6 +167,7 @@ if(TARGET axent::transport_hidapi)
 
     add_library(axent_axtp_adapter_test_support STATIC EXCLUDE_FROM_ALL
         src/adapters/axtp_adapter_test_seam.cpp
+        src/adapters/input_endpoint_fixture.cpp
     )
     add_library(axent::axtp_adapter_test_support ALIAS axent_axtp_adapter_test_support)
     target_include_directories(axent_axtp_adapter_test_support
@@ -133,6 +177,7 @@ if(TARGET axent::transport_hidapi)
     )
     target_link_libraries(axent_axtp_adapter_test_support
         PUBLIC axent::libaxent axent::transport_hidapi
+        PRIVATE axent::input_contract axtp::core axtp::sdk
     )
     axent_enable_warnings(axent_axtp_adapter_test_support)
 endif()
@@ -383,6 +428,13 @@ if(AXENT_BUILD_TESTING)
     target_link_libraries(axtp_real_adapter_test PRIVATE axent::libaxent axent::axtp_adapter_test_support)
     axent_enable_warnings(axtp_real_adapter_test)
     add_test(NAME axtp_real_adapter_test COMMAND axtp_real_adapter_test)
+
+    add_executable(axtp_input_adapter_test tests/axtp_input_adapter_test.cpp)
+    target_link_libraries(axtp_input_adapter_test PRIVATE
+        axent::libaxent axent::input_contract axent::control_contract axent::axtp_adapter_test_support)
+    axent_enable_warnings(axtp_input_adapter_test)
+    add_test(NAME axtp_input_adapter_test COMMAND axtp_input_adapter_test)
+    set_tests_properties(axtp_input_adapter_test PROPERTIES TIMEOUT 30)
 
     add_executable(axtp_endpoint_identity_test tests/axtp_endpoint_identity_test.cpp)
     target_link_libraries(axtp_endpoint_identity_test PRIVATE axent::libaxent)

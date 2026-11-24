@@ -15,6 +15,14 @@ contract/protocol/axtp.protocol.yaml = generated Protocol IR
 
 草案的公共写法只维护在 [Protocol Draft Conventions](draft-conventions.md)。单篇草案只写 feature-specific 的方法、事件、字段、错误候选、legacy 映射和待确认问题，不重复 JSON envelope、错误占位、合同边界和 flow 示例规则。
 
+## Typed Input R2 当前入口
+
+Touch/Mouse 输入合同已按 R2 修订，业务/流程和协议正文同步维护：
+[business](../business/nearcast-touchback.md)、[flow](../flows/nearcast-touchback-na20-nt10.md)、
+[input.stream](input/input.stream.md)、[cast.touchback](cast/cast.touchback.md)、
+[正式规范](../../specs/48-input-stream.md)。旧模式正文从 Git e986dcf 追溯；当前实现
+依据机器事实与精确生成合同，不依据历史草案或未发布版本名称推测能力。
+
 ## 权威边界
 
 | 路径 | 角色 | 能否作为实现合同 |

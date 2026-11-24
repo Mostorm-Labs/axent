@@ -1,14 +1,16 @@
 ---
-status: draft
+status: deprecated
 contract: false
 generated: false
 domain: system
 feature: system.license
 registry:
-lastReviewed: 2026-06-15
+lastReviewed: 2026-11-18
 ---
 
 # system.license
+
+> Supersede note (2026-11-18): 本草案从未被采纳（registry/generated 零事实）。其泛型「系统级 license 配置查询/设置」语义与设备权益授权场景不匹配，已被独立 `license` 业务域（domain `0x19`，`contract/registry/domains/license/domain.yaml`）取代——设备授权凭证生命周期见 `workspace/protocol/license/license.registration.md` / `license.credentialDelivery.md` / `license.reconciliation.md`。本文件停止维护，不再进入采纳流程（flow OQ-2 已裁决）。
 
 ## 0. 速读结论
 

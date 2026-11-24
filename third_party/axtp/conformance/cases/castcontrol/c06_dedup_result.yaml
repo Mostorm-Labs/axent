@@ -1,0 +1,480 @@
+id: castcontrol.c06_dedup_result
+title: P0 c06 dedup result
+since: spec/v0.18.0
+level: cast-control
+profiles:
+  - cast-control
+  - websocket-jsonrpc
+given:
+  device_profile: cast_control_receiver
+  oracle: reference/cast-control.mjs
+  source: specs/45-cast-control.md
+scenarios:
+  - name: lost_receipt_same_key
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params: {}
+          expect:
+            operation:
+              operationId: operation-1
+              state: queued
+      - id: retry
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params:
+              unusedOptional: ignored
+          expect:
+            operation:
+              operationId: operation-1
+              state: queued
+      - id: event_before_receipt
+        direction: runtime_local
+        control_model:
+          action: execute
+          input: {}
+          expect:
+            operation:
+              state: applied
+      - id: timeout_query
+        direction: runtime_local
+        control_model:
+          action: query
+          input: {}
+          expect:
+            operation:
+              operationId: operation-1
+              state: applied
+      - id: retry_after_commit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params: {}
+          expect:
+            operation:
+              operationId: operation-1
+              state: applied
+      - id: once
+        direction: runtime_local
+        control_model:
+          action: assert_state
+          input: {}
+          expect:
+            cleanups:
+              - receiverId: receiver-hid
+                session:
+                  id: session-hid
+                  generation: "9007199254740993"
+            retained: 1
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: key_conflict
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params: {}
+          expect:
+            status: SUCCESS
+      - id: different_payload
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params:
+              reason: different
+          expect:
+            status: INVALID_ARGUMENT
+            outcomeReason: COMMAND_ID_CONFLICT
+      - id: different_method
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.setSessionAudioEnabled
+            params:
+              enabled: true
+          expect:
+            status: INVALID_ARGUMENT
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: bound_0
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params: {}
+            limits:
+              maxPendingOperations: 1
+          expect:
+            status: SUCCESS
+      - id: full
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params:
+              commandId: 44444444-4444-4444-8444-444444444444
+            limits:
+              maxPendingOperations: 1
+          expect:
+            status: BUSY
+      - id: still_queryable
+        direction: runtime_local
+        control_model:
+          action: query
+          input: {}
+          expect:
+            operation:
+              state: queued
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: bound_1
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params: {}
+            limits:
+              maxPendingPerClient: 1
+          expect:
+            status: SUCCESS
+      - id: full
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params:
+              commandId: 44444444-4444-4444-8444-444444444444
+            limits:
+              maxPendingPerClient: 1
+          expect:
+            status: BUSY
+      - id: still_queryable
+        direction: runtime_local
+        control_model:
+          action: query
+          input: {}
+          expect:
+            operation:
+              state: queued
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: bound_2
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params: {}
+            limits:
+              maxRetainedResults: 1
+          expect:
+            status: SUCCESS
+      - id: full
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params:
+              commandId: 44444444-4444-4444-8444-444444444444
+            limits:
+              maxRetainedResults: 1
+          expect:
+            status: BUSY
+      - id: still_queryable
+        direction: runtime_local
+        control_model:
+          action: query
+          input: {}
+          expect:
+            operation:
+              state: queued
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: request_size
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: large
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params: {}
+            limits:
+              maxRequestBytes: 1
+          expect:
+            status: BUSY
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: retained_then_expired
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params: {}
+          expect:
+            status: SUCCESS
+      - id: execute
+        direction: runtime_local
+        control_model:
+          action: execute
+          input: {}
+          expect:
+            operation:
+              state: applied
+      - id: within
+        direction: runtime_local
+        control_model:
+          action: advance_clock
+          input:
+            ms: 999
+          expect:
+            retained: 1
+      - id: query
+        direction: runtime_local
+        control_model:
+          action: query
+          input: {}
+          expect:
+            operation:
+              state: applied
+      - id: expired
+        direction: runtime_local
+        control_model:
+          action: advance_clock
+          input:
+            ms: 1
+          expect:
+            retained: 0
+      - id: unknown
+        direction: runtime_local
+        control_model:
+          action: query
+          input: {}
+          expect:
+            status: NOT_FOUND
+            outcome: unknown
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: pending_never_evicted
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params: {}
+          expect:
+            status: SUCCESS
+      - id: over_window
+        direction: runtime_local
+        control_model:
+          action: advance_clock
+          input:
+            ms: 1001
+          expect:
+            retained: 1
+      - id: query
+        direction: runtime_local
+        control_model:
+          action: query
+          input: {}
+          expect:
+            operation:
+              state: queued
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: nested_unknown_fields_do_not_conflict
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+          expect:
+            status: SUCCESS
+      - id: retry
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params:
+              target:
+                session:
+                  id: session-hid
+                  generation: "9007199254740993"
+                slotId: 0
+                bindingGeneration: "1"
+                lifecycleGeneration: "1"
+                futureOptional: 42
+          expect:
+            status: SUCCESS
+            operation:
+              operationId: operation-1
+    assertions:
+      - All observable state and synchronization guarantees are maintained.
+  - name: terminal_result_full
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            limits:
+              maxRetainedResults: 1
+          expect:
+            status: SUCCESS
+      - id: apply
+        direction: runtime_local
+        control_model:
+          action: execute
+          input: {}
+          expect:
+            operation:
+              state: applied
+      - id: full
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+            params:
+              commandId: 44444444-4444-4444-8444-444444444444
+            limits:
+              maxRetainedResults: 1
+          expect:
+            status: BUSY
+      - id: original_retained
+        direction: runtime_local
+        control_model:
+          action: query
+          input: {}
+          expect:
+            operation:
+              state: applied
+              operationId: operation-1
+    assertions:
+      - All observable state and synchronization guarantees are maintained.
+  - name: operation_event_before_rpc_receipt
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: install
+        direction: runtime_local
+        control_model:
+          action: install_snapshot
+          input: {}
+          expect:
+            installed: true
+      - id: admit
+        direction: runtime_local
+        control_model:
+          action: admit
+          input:
+            method: cast.stopPresentation
+          expect:
+            operation:
+              operationId: operation-1
+              state: queued
+      - id: event
+        direction: runtime_local
+        control_model:
+          action: receive_event
+          input:
+            event:
+              name: cast.controlOperationChanged
+              data:
+                context:
+                  controlVersion: 1
+                  runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+                  revision: "1"
+                  eventSequence: "1"
+                  batchId: "1"
+                  partIndex: 0
+                  partCount: 1
+                operation: &a1
+                  operationId: operation-1
+                  runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+                  clientInstanceId: 22222222-2222-4222-8222-222222222222
+                  commandId: 33333333-3333-4333-8333-333333333333
+                  kind: stopPresentation
+                  state: queued
+                  submittedAt: 2026-10-20T08:00:00Z
+                  target:
+                    session:
+                      id: session-hid
+                      generation: "9007199254740993"
+                    slotId: 0
+                    bindingGeneration: "1"
+                    lifecycleGeneration: "1"
+          expect:
+            applied: true
+      - id: correlated
+        direction: runtime_local
+        control_model:
+          action: assert_state
+          input: {}
+          expect:
+            operations:
+              - *a1
+      - id: original_reply
+        direction: runtime_local
+        control_model:
+          action: query
+          input: {}
+          expect:
+            operation: *a1
+    assertions:
+      - The required identity and record guarantees hold.

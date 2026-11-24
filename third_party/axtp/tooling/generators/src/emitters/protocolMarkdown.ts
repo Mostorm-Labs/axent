@@ -101,6 +101,7 @@ function renderFieldConstraint(field: SchemaField): string {
     field.derivedFrom === undefined ? undefined : `derivedFrom=${field.derivedFrom}`,
     field.schema === undefined ? undefined : `schema=${field.schema}`,
     field.enumValues === undefined || field.enumValues.length === 0 ? undefined : `enum=${field.enumValues.join("/")}`,
+    field.variants === undefined ? undefined : `variants=${field.variants.discriminator}->${Object.entries(field.variants.mapping).map(([key, value]) => `${key}=${value}`).join(",")}`,
     field.repeated ? "repeated" : undefined,
     field.array?.itemType === undefined ? undefined : `array.itemType=${field.array.itemType}`,
     field.array?.itemSchema === undefined ? undefined : `array.itemSchema=${field.array.itemSchema}`,
@@ -124,6 +125,7 @@ function renderTypeName(type: string, field?: SchemaField): string {
     bytes: "Bytes",
     enum: "Enum",
     bitmap: "Bitmap",
+    object: "Object",
     string: "String",
     uint8: "UInt8",
     uint16: "UInt16",
@@ -236,14 +238,13 @@ function renderProfile(profile: ProfileDefinition): string[] {
 }
 
 function referencedTypeNames(model: ProtocolModel): Set<string> {
+  // Only method/event root schemas and capability schemas are inlined in the
+  // document; every other schema (nested field.schema/array.itemSchema refs and
+  // variant mappings) gets its own "Additional Types" section instead.
   return new Set([
     ...model.methods.flatMap((method) => [method.request.type, method.response.type]),
     ...model.events.map((event) => event.payload.type),
-    ...model.capabilities.flatMap((capability) => capability.schema ? [capability.schema] : []),
-    ...model.schemas.flatMap((schema) => schema.fields.flatMap((field) => [
-      field.schema,
-      field.array?.itemSchema
-    ].filter((value): value is string => Boolean(value))))
+    ...model.capabilities.flatMap((capability) => capability.schema ? [capability.schema] : [])
   ]);
 }
 
@@ -617,6 +618,7 @@ export function renderProtocolMarkdown(model: ProtocolModel): string {
     ...renderWireExamples(model),
     "",
     ...renderCapabilityDiscovery(model),
+    ...(model.inputStream ? renderInputStream(model) : []),
     "",
     "## Generated Method Index",
     "",
@@ -682,4 +684,23 @@ export function renderProtocolMarkdown(model: ProtocolModel): string {
 
 export async function emitProtocolMarkdown(model: ProtocolModel, outDir: string): Promise<void> {
   await writeTextFile(path.join(outDir, "protocol.md"), renderProtocolMarkdown(model));
+}
+
+function renderInputStream(model: ProtocolModel): string[] {
+  const w = model.inputStream!;
+  const fieldRows = (fields: typeof w.touch.fields) => fields.map(f => [f.name,String(f.offset),f.type,String(f.bytes)]);
+  return [
+    "", "## Typed Input STREAM Data", "",
+    `Format: \`${w.format}\`. Wire facts come from input domain \`input_stream\`; full control, state and failure rules are in \`specs/48-input-stream.md\`.`, "",
+    "Standard Frame/CRC16 surrounds STREAM16 and input data. Data is inputType:u8 followed by one complete Touch sample or one Mouse event; no input magic/version, custom header, count, repeated length, CRC32 or binding fields.", "",
+    `Max input data: ${w.maxDataBytes}B. Touch=${w.inputTypes.touch}; Mouse=${w.inputTypes.mouse}. All multi-byte fields are big-endian with no padding.`, "",
+    "### Touch complete sample", "",
+    `Touch data = type(1B) + record(${w.touch.recordBytes}B) × N. N=(dataLength-1)/7; every sample includes unchanged active contacts and current Up/Cancel records. All records share STREAM.cursor; the whole sample is validated before native submission.`, "",
+    ...table(["Field","Offset","Type","Bytes"],fieldRows(w.touch.fields)), "",
+    "### Mouse event variants", "",
+    ...table(["Kind","Value","Record bytes","Data bytes"],w.mouse.records.map(r=>[r.name,String(r.kind),String(r.bytes),String(r.bytes+1)])), "",
+    ...w.mouse.records.flatMap(r=>[`#### Mouse ${r.name}`,"",...table(["Field","Offset","Type","Bytes"],fieldRows(r.fields)),""]),
+    "Buttons encode the complete after-state. Move/Wheel cannot change buttons. Mouse Cancel does not cancel Touch. Modifiers require reliable owned release; otherwise modifierMask=0. Wheel units are detent120 and regionQ16_16, with right/down positive and explicit continuous phases/anchor.", "",
+    "Open binds authenticated session, source, target, format, types and limits once. A session never reuses an input streamId; source/geometry changes fence and close the old context. CleanupPending never acknowledges closed. AXTP-TYPED-INPUT-V1 requires stream.getState/stateChanged only, without implicitly requiring all flow-control methods.", ""
+  ];
 }

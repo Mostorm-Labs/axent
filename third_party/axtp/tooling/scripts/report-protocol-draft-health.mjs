@@ -47,7 +47,7 @@ function walk(dir) {
 }
 
 function readFrontmatter(file) {
-  const text = fs.readFileSync(file, "utf8");
+  const text = fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n");
   if (!text.startsWith("---\n")) return { text, data: {} };
   const end = text.indexOf("\n---", 4);
   if (end < 0) return { text, data: {} };
@@ -348,7 +348,7 @@ if (json) {
   console.log(`[OK] wrote ${path.relative(root, absolute)}`);
 } else if (checkPath) {
   const absolute = path.resolve(root, checkPath);
-  const current = fs.existsSync(absolute) ? fs.readFileSync(absolute, "utf8") : "";
+  const current = fs.existsSync(absolute) ? fs.readFileSync(absolute, "utf8").replace(/\r\n/g, "\n") : "";
   if (current !== rendered) {
     console.error(`[FAIL] ${path.relative(root, absolute)} is out of date`);
     console.error(`Run: node tooling/scripts/report-protocol-draft-health.mjs --write ${path.relative(root, absolute)}`);

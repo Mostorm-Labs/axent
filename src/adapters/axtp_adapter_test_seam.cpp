@@ -9,8 +9,9 @@ namespace {
 
 class InjectedRuntimeFactory final : public detail::AxtpAdapterRuntimeFactory {
 public:
-    explicit InjectedRuntimeFactory(AxtpAdapterTestSeam::TransportFactory factory)
-        : factory_(std::move(factory))
+    explicit InjectedRuntimeFactory(AxtpAdapterTestSeam::TransportFactory factory,
+                                    std::vector<transport::HidDeviceInfo> discovery)
+        : factory_(std::move(factory)), discovery_(std::move(discovery))
     {
     }
 
@@ -19,11 +20,12 @@ public:
         return factory_ ? factory_(options) : nullptr;
     }
     std::optional<std::vector<transport::HidDeviceInfo>> discovery_override() const override {
-        return std::vector<transport::HidDeviceInfo>{};
+        return discovery_;
     }
 
 private:
     AxtpAdapterTestSeam::TransportFactory factory_;
+    std::vector<transport::HidDeviceInfo> discovery_;
 };
 
 const char* trace_event_name(axent::transport::HidReportTraceKind kind)
@@ -45,9 +47,10 @@ const char* trace_event_name(axent::transport::HidReportTraceKind kind)
 
 std::unique_ptr<AxtpAdapter> AxtpAdapterTestSeam::make(
     AxtpAdapterConfig config,
-    TransportFactory transport_factory)
+    TransportFactory transport_factory,
+    std::vector<transport::HidDeviceInfo> discovery)
 {
-    auto factory = std::make_shared<InjectedRuntimeFactory>(std::move(transport_factory));
+    auto factory = std::make_shared<InjectedRuntimeFactory>(std::move(transport_factory), std::move(discovery));
     return std::unique_ptr<AxtpAdapter>(new AxtpAdapter(std::move(config), std::move(factory)));
 }
 

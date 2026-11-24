@@ -14,6 +14,7 @@ given:
     id: wireless_cast_video
     state: receiving
     active_video_stream: false
+    active_audio_stream: false
     frameRates: [1, 24, 30, 60]
     bitratesKbps: [256, 4000, 6000, 12000]
     supportsReconfigure: true
@@ -62,6 +63,7 @@ steps:
         peerRole: transmitter
         codec: h264
         streamProfile: media.video
+        syncGroupId: cast-av-idle-1
         castSessionId: cast-session-17
         frameRate: 30
         bitrateKbps: 6000
@@ -86,12 +88,84 @@ steps:
           frameRate: 30
           bitrateKbps: 6000
           streamProfile: media.video
+          syncGroupId: cast-av-idle-1
+
+  - id: open_audio
+    role: observe
+    triggeredBy: open_result
+    direction: server_to_client
+    rpc:
+      op: REQUEST
+      requestId: 622
+      method: audio.openStream
+      params:
+        source: wireless_cast_audio
+        peerRole: transmitter
+        codec: aac
+        transportFormat: adts
+        sampleFormat: aac
+        streamProfile: media.audio
+        syncGroupId: cast-av-idle-1
+        castSessionId: cast-session-17
+        cursorUnit: sourceCaptureTimestampUs
+        audioPtsMode: derivedFromSeq
+        timebase: 48000
+        sampleRate: 48000
+        channels: 2
+        samplesPerPacket: 1024
+        firstMediaSeqId: 0
+        audioPtsBase: 0
+        packetizationMode: fixedSamplesPerPacket
+
+  - id: open_audio_result
+    role: observe
+    responseTo: open_audio
+    direction: client_to_server
+    expect:
+      rpc:
+        op: REQUEST_RESPONSE
+        requestId: 622
+        statusCode: SUCCESS
+        result:
+          streamId:
+            gt: 0
+          state:
+            oneOf: [opening, streaming]
+          source: wireless_cast_audio
+          peerRole: transmitter
+          codec: aac
+          transportFormat: adts
+          sampleFormat: aac
+          streamProfile: media.audio
+          syncGroupId: cast-av-idle-1
+          castSessionId: cast-session-17
+          cursorUnit: sourceCaptureTimestampUs
+          audioPtsMode: derivedFromSeq
+          timebase: 48000
+          sampleRate: 48000
+          channels: 2
+          samplesPerPacket: 1024
+          firstMediaSeqId: 0
+          audioPtsBase: 0
+          packetizationMode: fixedSamplesPerPacket
 
 assertions:
   - source.active_video_stream == false before set_params
+  - source.active_audio_stream == false before set_params
   - set_params accepted with state pending
-  - no video.closeStream is sent for an idle source
+  - no video.closeStream or audio.closeStream is sent for an idle source
   - video.openStream is sent directly with frameRate == 30 and bitrateKbps == 6000
   - open_result.result.streamId > 0
   - open_result.result.frameRate == 30
   - open_result.result.bitrateKbps == 6000
+  - open_result.result.streamProfile == media.video
+  - open_result.result.syncGroupId == cast-av-idle-1
+  - open_audio.params.codec == aac
+  - open_audio.params.transportFormat == adts
+  - open_audio.params.streamProfile == media.audio
+  - open_audio.params.audioPtsMode == derivedFromSeq
+  - open_audio.params.syncGroupId == cast-av-idle-1
+  - open_audio_result.result.streamId > 0
+  - open_audio_result.result.streamId != open_result.result.streamId
+  - open_audio_result.result.syncGroupId == cast-av-idle-1
+  - open_audio_result.result.syncGroupId == open_result.result.syncGroupId

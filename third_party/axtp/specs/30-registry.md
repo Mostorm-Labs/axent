@@ -130,6 +130,8 @@ Error 规则：
 | `0x7000-0x7EFF` | vendor |
 | `0x7F00-0x7FFF` | legacy adapter |
 
+Vendor 段 `0x7000-0x7EFF` 供业务域专属错误码使用：条目登记于 `contract/registry/error/error_code.yaml`，`domain` 固定为 `vendor`，`description` MUST 标注所属业务域与使用方（如 license）；登记后遵循与全局 ErrorCode 相同的稳定性与不复用约束，方法 errors 引用按名称解析。
+
 Runtime MUST 使用生成的 error enum/lookup，并 SHOULD 为诊断保留未知 error code。
 
 ## 配置 Profile
@@ -148,6 +150,17 @@ Profile 规则：
 Profile 或 capability 不匹配 MUST 只降级受影响的 operation。已注册但因 profile/capability 不可用的 operation MUST 返回 `NOT_SUPPORTED`；它不能触发 session rejection、retry/reconnect，或关闭不相关功能。
 
 Runtime 仓库 MUST 声明自己支持的 profile，并绑定精确 spec tag、commit 或 release artifact metadata。
+
+## 退役分配与 Typed Input
+
+移除已生成 draft 方法时，`retired_allocations` 保留 kind/id/domain/bitOffset；
+bitOffset 的连续性计算包含这些不可用槽，支持掩码不重新编号。退役记录不是
+可调用方法，不进入有效 method lookup。schema 的 `retired_field_ids` 同样禁止
+复用；source/IR/JSON 均保留墓碑且验证碰撞。
+
+Typed Input 的允许类型、控制上下文、7×N Touch 与 Mouse 变体见
+[48-input-stream](48-input-stream.md)；数据面事实由 input domain 的 input_stream
+元数据进入生成 IR、文档、向量及 C++ 常量，不在某个产品私造第二份布局。
 
 ## 校验
 

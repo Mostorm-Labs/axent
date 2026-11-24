@@ -55,6 +55,10 @@ function optionalString(value: unknown): string | undefined {
 
 function mapSchemaField(field: any, schemaName: string): SchemaField {
   const enumValues = field.enumValues ?? field.enum;
+  const variants = field.variants === undefined ? undefined : {
+    discriminator: String(field.variants.discriminator),
+    mapping: Object.fromEntries(Object.entries(field.variants.mapping ?? {}).map(([key, value]) => [String(key), String(value)]))
+  };
   return {
     fieldId: normalizeId(field.fieldId, `${schemaName}.${field.name}`),
     name: String(field.name),
@@ -68,6 +72,7 @@ function mapSchemaField(field: any, schemaName: string): SchemaField {
     derivedFrom: optionalString(field.derivedFrom),
     schema: optionalString(field.schema),
     enumValues: enumValues === undefined ? undefined : asStringArray(enumValues),
+    variants,
     repeated: field.repeated === undefined ? undefined : Boolean(field.repeated),
     array: field.array === undefined ? undefined : {
       itemType: optionalString(field.array?.itemType),
@@ -86,6 +91,7 @@ function mapSchemas(raw: any): SchemaDefinition[] {
       name,
       kind: String(entry.kind ?? "object"),
       description: entry.description === undefined ? undefined : String(entry.description),
+      retiredFieldIds: entry.retiredFieldIds,
       fields: asArray(entry.fields).map((field) => mapSchemaField(field, name))
     };
   });
@@ -352,6 +358,8 @@ export function loadProtocolDefinitionFromRaw(specRoot: string, sourcePath: stri
   return {
     specRoot,
     sourcePath,
+    inputStream: raw.inputStream,
+    retiredAllocations: raw.retiredAllocations,
     protocol: mapProtocol(raw.protocol),
     overview: mapOverview(raw.overview),
     architecture: mapArchitecture(raw.architecture),

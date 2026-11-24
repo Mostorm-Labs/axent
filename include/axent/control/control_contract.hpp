@@ -74,6 +74,7 @@ enum class PayloadRole { Request, Response, Event };
 // Generated protocol facts are kept inside Axent's private runtime adapter.
 // Product capability/ownership/operation semantics remain host responsibilities.
 bool validate_payload(std::string_view route, PayloadRole role, const nlohmann::json& value);
+bool validate_object(std::string_view schema, const nlohmann::json& value);
 std::optional<std::uint64_t> parse_decimal_uint64(std::string_view value) noexcept;
 // Exact generated source metadata; development versions remain visibly unpublished.
 std::string_view protocol_spec_version() noexcept;

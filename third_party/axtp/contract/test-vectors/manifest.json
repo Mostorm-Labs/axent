@@ -61,5 +61,19 @@
       "hexFile": "compact_message_id_overflow.hex",
       "expectError": "COMPACT_MESSAGE_ID_OVERFLOW"
     }
+  ],
+  "inputStream": {
+    "format": "input-sample-v1",
+    "file": "input_stream.json"
+  },
+  "schemaVectors": [
+    {
+      "schema": "CastSessionRef",
+      "pairsFile": "cast_control_encoding.json"
+    },
+    {
+      "schema": "CastSettingsEventContext",
+      "pairsFile": "cast_settings_encoding.json"
+    }
   ]
 }

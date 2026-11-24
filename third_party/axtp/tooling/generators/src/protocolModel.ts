@@ -114,6 +114,11 @@ export interface CompatibilityDefinition {
   rules: string[];
 }
 
+export interface FieldVariants {
+  discriminator: string;
+  mapping: Record<string, string>;
+}
+
 export interface SchemaField {
   fieldId: number;
   name: string;
@@ -127,6 +132,7 @@ export interface SchemaField {
   derivedFrom?: string;
   schema?: string;
   enumValues?: string[];
+  variants?: FieldVariants;
   repeated?: boolean;
   array?: {
     itemType?: string;
@@ -136,6 +142,7 @@ export interface SchemaField {
 }
 
 export interface SchemaDefinition {
+  retiredFieldIds?: number[];
   name: string;
   kind: string;
   description?: string;
@@ -232,6 +239,8 @@ export interface WireExample {
 }
 
 export interface ProtocolModel {
+  inputStream?: import("./inputStream.js").InputStreamWire;
+  retiredAllocations?: import("./inputStream.js").RetiredAllocation[];
   specRoot: string;
   sourcePath: string;
   protocol: ProtocolMetadata;

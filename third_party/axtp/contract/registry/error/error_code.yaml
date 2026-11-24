@@ -1090,3 +1090,24 @@ errors:
     status: mvp
     description: Legacy response timed out.
     retryable: true
+
+  - id: 0x7001
+    name: LICENSE_IDENTITY_INVALID
+    domain: vendor
+    status: draft
+    description: License registration identity adoption failed — the dual-form patterns (unregistered identity_value ^[0-9a-f]{128}$ or platform-assigned deviceId ^axldev_[0-9a-f]{32}$) both fail to match, or the identity_value is already mapped to another subject; terminal error, the device must rebuild its local identity before retrying. Used by the license business domain.
+    retryable: false
+
+  - id: 0x7002
+    name: LICENSE_DEVICE_NOT_FOUND
+    domain: vendor
+    status: draft
+    description: License subject not found for the given deviceId. Used by the license business domain.
+    retryable: false
+
+  - id: 0x7003
+    name: LICENSE_CREDENTIAL_STALE
+    domain: vendor
+    status: draft
+    description: Credential version is below the device high-water mark (anti-rollback) or signature verification failed. Used by the license business domain.
+    retryable: false

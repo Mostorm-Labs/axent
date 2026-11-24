@@ -17,7 +17,7 @@
 |---|---:|---|---:|---|---|
 | audio | 12 | ASK | 13 | 旁路高覆盖 / P0 stream | `audio.algorithm` 与 `audio.stream` 已进入 generated；后续按修订流程维护并补齐剩余 audio 草案确认。 |
 | auth | 3 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
-| cast | 7 | ASK / generated | 32 | P2 / 投屏接收端控制 | `cast.*` confirmed subset 已进入 generated；`cast.getStatus` 仅保留快照查询。PIN 格式、AirPlay 名称 schema、无窗口行为和快照裁剪策略作为后续修订项。 |
+| cast | 14 | ASK / generated | 59 | P0/P1 多路控制已采纳 | `cast.presentation`、`cast.audioPolicy`、`cast.controlOperations`、`cast.presentationSettings`、`cast.receiverSettings`、R2 `cast.touchback` 已登记。接收端启动配置见 specs/46-cast-settings.md，输入流见 specs/48-input-stream.md。 |
 | camera | 7 | ASK | 0 | P3/P4 | 补产品/设备/legacy 确认。 |
 | capability | 1 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
 | device | 6 | ASK | 5 | P1 | `device.info`、`device.enrollment` 已进入 generated；继续补 `device.childDevice` 等通用底座确认。 |
@@ -25,14 +25,16 @@
 | display | 6 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
 | file | 2 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
 | firmware | 3 | ASK | 6 | 旁路高覆盖 | `firmware.update` P0 已进入 generated；后续补 firmware info/policy 与 P1/P2 更新能力确认。 |
-| input | 5 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
+| input | 6 | ASK / generated | 2 | P0 Typed Input | R2 input.stream 已采纳；Touch 完整采样 7×N、Mouse 事件、标准 Frame 和按所有权释放见 specs/48-input-stream.md；真实采集/注入分别验收。 |
+| license | 3 | generated | 5 | P1 | `license.registration`、`license.credentialDelivery`、`license.reconciliation` 已采纳并生成（domain 0x19，2026-11-18：5 方法 + 3 capability + 3 vendor 错误码进入 IR/generated/mcp）。 |
 | log | 3 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
 | network | 6 | ASK | 26 | 旁路高覆盖 | `network.interface`、`network.ip`、`network.wifi`、`network.ap` 已进入 generated；继续补蓝牙和服务端点草案确认。 |
 | output | 1 | ASK | 0 | P2b | 补产品/设备/legacy 确认。 |
 | privacy | 3 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
 | room | 5 | ASK | 0 | P7 | 补产品/设备/legacy 确认。 |
-| signage | 2 | ASK | 6 | P7 | `signage.playlist` 已进入 generated；补产品/设备/legacy 确认。`signage.media`/`signage.osd`/`signage.schedule` 已合并到其他域。 |
+| signage | 2 | ASK | 7 | P7 | `signage.playlist` 已进入 generated；补产品/设备/legacy 确认。`signage.media`/`signage.osd`/`signage.schedule` 已合并到其他域。 |
 | software | 2 | ASK | 8 | P7 | `software.config`、`software.updatePolicy` 已进入 generated，承接应用/launcher 侧配置和更新策略。 |
+| sport | 2 | generated | 9 | P2 | `sport.eventDetection` 与 `sport.basketball` 已进入 generated；新增多设备 Goal/Shot 水印和事件视频片段窗口配置，后续按修订流程维护。 |
 | storage | 6 | ASK | 0 | 待排期 | 补产品/设备/legacy 确认。 |
 | stream | 2 | ASK | 12 | P0 data-plane plumbing | Phase 1 需要通用 STREAM open/data/close 语义支撑 audio/video；具体业务参数仍由 audio/video profile 定义。 |
 | system | 6 | ASK | 0 | P1 | 补产品/设备/legacy 确认，优先进入采纳批次。 |

@@ -1,0 +1,197 @@
+id: castcontrol.c01_capability
+title: P0 c01 capability
+since: spec/v0.18.0
+level: cast-control
+profiles:
+  - cast-control
+  - websocket-jsonrpc
+given:
+  device_profile: cast_control_receiver
+  oracle: reference/cast-control.mjs
+  source: specs/45-cast-control.md
+scenarios:
+  - name: complete
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: discover
+        direction: runtime_local
+        control_model:
+          action: discover
+          input: {}
+          expect:
+            supported: true
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: missing_presentation
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: discover
+        direction: runtime_local
+        control_model:
+          action: discover
+          input:
+            omit:
+              - presentation
+          expect:
+            supported: false
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: missing_audiopolicy
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: discover
+        direction: runtime_local
+        control_model:
+          action: discover
+          input:
+            omit:
+              - audioPolicy
+          expect:
+            supported: false
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: missing_operations
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: discover
+        direction: runtime_local
+        control_model:
+          action: discover
+          input:
+            omit:
+              - operations
+          expect:
+            supported: false
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: partial_methods
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: discover
+        direction: runtime_local
+        control_model:
+          action: discover
+          input:
+            descriptor:
+              methods:
+                - cast.stopPresentation
+                - cast.setSessionAudioEnabled
+                - cast.getControlOperation
+                - cast.getStatus
+          expect:
+            supported: false
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: partial_events
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: discover
+        direction: runtime_local
+        control_model:
+          action: discover
+          input:
+            descriptor:
+              events:
+                - cast.sessionsChanged
+                - cast.presentationChanged
+                - cast.audioPolicyChanged
+                - cast.controlOperationChanged
+                - cast.windowChanged
+          expect:
+            supported: false
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: partial_statussections
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: discover
+        direction: runtime_local
+        control_model:
+          action: discover
+          input:
+            descriptor:
+              statusSections:
+                - receivers
+                - sessions
+                - presentation
+                - audioPolicy
+                - window
+          expect:
+            supported: false
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: legacy_absent_feature
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: discover
+        direction: runtime_local
+        control_model:
+          action: discover
+          input:
+            features: []
+          expect:
+            supported: false
+      - id: liveness
+        direction: runtime_local
+        control_model:
+          action: capture
+          input: {}
+          expect:
+            status: SUCCESS
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: zero_limit
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: discover
+        direction: runtime_local
+        control_model:
+          action: discover
+          input:
+            descriptor:
+              operations:
+                supportsQuery: true
+                supportsDedup: true
+                limits:
+                  maxPendingOperations: 4
+                  maxPendingPerClient: 2
+                  maxRetainedResults: 8
+                  replayWindowMs: 0
+                  maxEventBufferEvents: 8
+                  maxEventBufferBytes: 65536
+                  maxRequestBytes: 4096
+                  maxSnapshotBytes: 65536
+          expect:
+            supported: false
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: unsupported_version
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: query
+        direction: runtime_local
+        control_model:
+          action: capture
+          input:
+            controlVersion: 2
+          expect:
+            status: NOT_SUPPORTED
+      - id: liveness
+        direction: runtime_local
+        control_model:
+          action: capture
+          input: {}
+          expect:
+            status: SUCCESS
+    assertions:
+      - The observable result matches specs/45-cast-control.md.

@@ -1,0 +1,66 @@
+id: event.endpoint_fanout_addressing
+title: Event fanout preserves source and keeps each destination singular
+since: spec/v0.0.2
+level: endpoint-relay
+profiles:
+  - endpoint-relay
+  - websocket-jsonrpc
+  - event
+
+given:
+  event: audio.algorithmConfigChanged
+  source_endpoint: ep-audio-001
+  subscriber_a: ep-app-a
+  subscriber_b: ep-app-b
+
+steps:
+  - id: source_event
+    direction: peer_to_runtime
+    jsonrpc:
+      sid: "12345678"
+      op: EVENT
+      m:
+        src: ep-audio-001
+      d:
+        event: audio.algorithmConfigChanged
+        data:
+          reason: user_request
+          applyState: applied
+
+  - id: fanout_a
+    triggeredBy: source_event
+    direction: server_to_client
+    jsonrpc:
+      sid: "A0000001"
+      op: EVENT
+      m:
+        src: ep-audio-001
+        dst: ep-app-a
+      d:
+        event: audio.algorithmConfigChanged
+        data:
+          reason: user_request
+          applyState: applied
+
+  - id: fanout_b
+    triggeredBy: source_event
+    direction: server_to_client
+    jsonrpc:
+      sid: "B0000001"
+      op: EVENT
+      m:
+        src: ep-audio-001
+        dst: ep-app-b
+      d:
+        event: audio.algorithmConfigChanged
+        data:
+          reason: user_request
+          applyState: applied
+
+assertions:
+  - source_event.m.dst is absent so subscription or relay policy selects recipients
+  - fanout_a.m.src == source_event.m.src
+  - fanout_b.m.src == source_event.m.src
+  - fanout_a.m.dst == given.subscriber_a
+  - fanout_b.m.dst == given.subscriber_b
+  - each fanout copy has zero or one string destination and never an array destination

@@ -1,0 +1,40 @@
+name: VM33PRO multi-device sport event detection fixture
+capabilities:
+  - id: sport.eventDetection
+    methods:
+      - sport.getEventDetectionCapabilities
+      - sport.getEventDetectionConfig
+      - sport.setEventDetectionConfig
+      - sport.getGoalShotWatermarkConfig
+      - sport.setGoalShotWatermarkConfig
+      - sport.getEventClipConfig
+      - sport.setEventClipConfig
+    events:
+      - sport.eventDetectionStateChanged
+      - sport.eventDetected
+  - id: sport.basketball
+    sportType: basketball
+    supportedEvents: [shot, goal]
+    supportedConfigMethods:
+      - sport.getGoalShotWatermarkConfig
+      - sport.setGoalShotWatermarkConfig
+      - sport.getEventClipConfig
+      - sport.setEventClipConfig
+
+devices:
+  - macAddress: AA:BB:CC:DD:EE:FF
+    sportType: basketball
+    watermark:
+      goalVisible: true
+      shotVisible: true
+    eventClip:
+      beforeOffsetSeconds: 5
+      afterOffsetSeconds: 8
+  - macAddress: 11:22:33:44:55:66
+    sportType: basketball
+    watermark:
+      goalVisible: false
+      shotVisible: true
+    eventClip:
+      beforeOffsetSeconds: 3
+      afterOffsetSeconds: 6

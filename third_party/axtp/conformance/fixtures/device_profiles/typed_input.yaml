@@ -1,0 +1,18 @@
+name: typed_input
+queueCapacity: 2
+facts: &facts
+  sessionId: auth-session
+  sourceBindingId: binding-1
+  runtimeInstanceId: rx-1
+  target: {sessionId: source-1, sessionGeneration: '1', slotId: slot-1, bindingGeneration: '1', lifecycleGeneration: '1'}
+  format: input-sample-v1
+  inputTypes: [touch, mouse]
+  maxDataBytes: 4096
+  touch: {maxContacts: 10}
+  mouse: {buttonsMask: 31, modifierMask: 15, allowChords: true, wheelUnits: [detent120, regionQ16_16], continuousScroll: true}
+  nativeReady: true
+  geometryReady: true
+request:
+  <<: *facts
+  controlVersion: 1
+  commandId: open-1

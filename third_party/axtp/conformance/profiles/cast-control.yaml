@@ -1,0 +1,6 @@
+id: cast-control
+title: Optional concurrent cast control P0
+since: spec/v0.18.0
+description: Planned additive spec version; controlVersion=1 is independent of this tag. No existing profile gains required cases.
+capabilities: [cast.presentation, cast.audioPolicy, cast.controlOperations, cast.status, cast.window]
+oracle: reference/cast-control.mjs

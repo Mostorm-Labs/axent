@@ -31,6 +31,8 @@ NA20/NT10 投屏场景中，NT10 插入源端 PC 后自动向 NA20 推送上游 
 
 投屏 MVP 确认使用 AAC 透传，不要求 NA20 解码为 PCM 再发送给 MediaHost。AAC 的具体封装 `transportFormat` 是 ADTS、LATM、raw AAC 还是多种都支持，仍需设备/固件确认。
 
+当 `cast.setVideoStreamParams` 调整活动投屏的 NT10 视频编码参数时，audio stream 与 video stream 作为同一事务一起关闭并重开；replacement 使用新的 audio/video `streamId` 和新的共享 `syncGroupId`，而 audio 保持原有 AAC media/timing 语义。
+
 ## 2. 能力边界
 
 | 类型 | 内容 |
@@ -38,6 +40,7 @@ NA20/NT10 投屏场景中，NT10 插入源端 PC 后自动向 NA20 推送上游 
 | 包含 | 查询实时音频 stream capability、source 能力和 source 当前状态。 |
 | 包含 | `audio.openStream` 同时支持 producer-initiated open 和 receiver-initiated pull。 |
 | 包含 | `audio.closeStream` 可由任一端发起，且只关闭指定 downstream stream。 |
+| 包含 | `cast.setVideoStreamParams` 活动重配置中与 video 协调关闭、重开完整音视频 stream 对。 |
 | 包含 | 音频 stream lifecycle event、source available/receiving event 和统计 event。 |
 | 包含 | NA20/NT10 投屏路径的 AAC 透传音频、时间戳和与视频的同步关联。 |
 | 不包含 | 长时间录制、问题定位抓音和文件化录制，归 `audio.recording`。 |
@@ -297,7 +300,7 @@ success:
 
 ### 3.3 `audio.closeStream`
 
-**用途**：关闭一路已建立的音频 stream。该方法关闭 downstream stream，不默认停止 upstream source。
+**用途**：关闭一路已建立的音频 stream。该方法关闭 downstream stream，不默认停止 upstream source；也用于 `cast.setVideoStreamParams` 协调重建完整音视频对。
 
 | 项 | 内容 |
 |---|---|
@@ -372,6 +375,17 @@ success:
 | `STREAM_NOT_FOUND` | streamId 不属于当前 AXTP session。 | 调用方本地清理旧 context。 |
 | `STREAM_CLOSED` | stream 已关闭且实现选择返回错误。 | 也可返回 `alreadyClosed=true` 的成功结果。 |
 | `MEDIA_STREAM_STOP_FAILED` | 设备无法停止 producer。 | 返回 typed error，并尽快进入 `failed` terminal state。 |
+
+#### 3.3.6 与视频编码重配置协调重启
+
+活动投屏执行 `cast.setVideoStreamParams` 时，audio lifecycle 参与同一个 `pending` -> `closing` -> `opening` -> `streaming` 事务：
+
+- `closing` 阶段对旧 audio `streamId` 调用 `audio.closeStream`，同时对旧 video `streamId` 调用 `video.closeStream(reason=encodingReconfigure)`。audio close 的 `reason` 可以省略；`AudioCloseStreamParams.reason` 不新增 `encodingReconfigure` 或任何其他枚举值。
+- 两个 close 的顺序不作规范性要求，但旧 audio/video 都达到 terminal `closed` 是进入 `opening` 的屏障。此后旧 audio/video `streamId` 和旧 `syncGroupId` 全部退役。
+- `opening` 阶段分配新的 `syncGroupId`。`audio.openStream` 携带该组并保持旧 audio 的 source、AAC codec/transport、采样、packetization、PTS 和时钟等 media/timing 语义；配对的 `video.openStream` 携带同一组、原 video 上下文以及新的 `frameRate` / `bitrateKbps`。两次 open 都必须返回新的 `streamId`。
+- 只有 audio/video 两次 open 都成功且 NT10 新视频编码参数实际生效后，事务才进入 `streaming` / `applied`。cast result 的 `previousStreamId` / `activeStreamId` 仍只表示 video stream ID；audio ID 通过 audio RPC 响应或 `audio.streamStateChanged` 观察。
+- 任一 replacement open 失败时，必须关闭已成功打开的部分。回退以旧 encoder/audio 语义重开完整音视频对，但使用全新的 audio/video `streamId` 和另一个全新的 `syncGroupId`；只有两侧都恢复成功才报告 `rolledBack`，否则关闭部分恢复、报告 `failed`，此时没有完整的活动音视频对。
+- 仅当 session 完全没有任何 audio 或 video downstream stream 时才视为 idle；此时不执行 close，直接使用一个新的共享 `syncGroupId` 打开完整 audio/video 对。若存在单边或其他 partial media state，必须先 cleanup/normalize，不能按 idle direct-open。
 
 ### 3.4 `audio.getStreamState`
 

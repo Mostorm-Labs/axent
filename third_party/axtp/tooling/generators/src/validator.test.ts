@@ -114,6 +114,170 @@ describe("validateSpec", () => {
     expect(() => validateSpec(spec)).toThrow(/missing schema/);
   });
 
+  it("accepts a valid variants binding and warns about enum fields without declared values", () => {
+    const spec = baseSpec();
+    spec.schemas.push({
+      name: "VariantCarrier",
+      type: "object",
+      fields: [
+        { id: 1, name: "kind", type: "enum", required: true, deprecated: false, enum: ["a", "b"] },
+        {
+          id: 2,
+          name: "payload",
+          type: "object",
+          required: true,
+          deprecated: false,
+          variants: { discriminator: "kind", mapping: { a: "AudioSetAlgorithmConfigRequest", b: "AudioSetAlgorithmConfigResponse" } }
+        }
+      ]
+    });
+    const report = validateSpec(spec);
+    expect(report).toContain("[OK] schema: 5 schemas checked");
+    expect(report).toContain("[WARN] AudioSetAlgorithmConfigResponse: 1 enum field(s) without declared enum values (applyState)");
+    expect(report).toContain("[WARN] AudioAlgorithmConfigChangedEvent: 1 enum field(s) without declared enum values (reason)");
+  });
+
+  it("rejects variants on a non-object carrier field", () => {
+    const spec = baseSpec();
+    spec.schemas.push({
+      name: "VariantCarrier",
+      type: "object",
+      fields: [
+        { id: 1, name: "kind", type: "enum", required: true, deprecated: false, enum: ["a"] },
+        {
+          id: 2,
+          name: "payload",
+          type: "string",
+          required: true,
+          deprecated: false,
+          variants: { discriminator: "kind", mapping: { a: "AudioSetAlgorithmConfigRequest" } }
+        }
+      ]
+    });
+    expect(() => validateSpec(spec)).toThrow(/with variants must use type object/);
+  });
+
+  it("rejects a variants discriminator without a matching sibling field", () => {
+    const spec = baseSpec();
+    spec.schemas.push({
+      name: "VariantCarrier",
+      type: "object",
+      fields: [
+        { id: 1, name: "kind", type: "enum", required: true, deprecated: false, enum: ["a"] },
+        {
+          id: 2,
+          name: "payload",
+          type: "object",
+          required: true,
+          deprecated: false,
+          variants: { discriminator: "missing", mapping: { a: "AudioSetAlgorithmConfigRequest" } }
+        }
+      ]
+    });
+    expect(() => validateSpec(spec)).toThrow(/variants\.discriminator must reference a sibling field/);
+  });
+
+  it("rejects a variants discriminator that is not a declared enum field", () => {
+    const spec = baseSpec();
+    spec.schemas.push({
+      name: "VariantCarrier",
+      type: "object",
+      fields: [
+        { id: 1, name: "kind", type: "enum", required: true, deprecated: false },
+        {
+          id: 2,
+          name: "payload",
+          type: "object",
+          required: true,
+          deprecated: false,
+          variants: { discriminator: "kind", mapping: { a: "AudioSetAlgorithmConfigRequest" } }
+        }
+      ]
+    });
+    expect(() => validateSpec(spec)).toThrow(/variants\.discriminator must reference an enum field with declared enum values/);
+  });
+
+  it("rejects a variants mapping key outside the declared enum values", () => {
+    const spec = baseSpec();
+    spec.schemas.push({
+      name: "VariantCarrier",
+      type: "object",
+      fields: [
+        { id: 1, name: "kind", type: "enum", required: true, deprecated: false, enum: ["a"] },
+        {
+          id: 2,
+          name: "payload",
+          type: "object",
+          required: true,
+          deprecated: false,
+          variants: { discriminator: "kind", mapping: { a: "AudioSetAlgorithmConfigRequest", c: "AudioSetAlgorithmConfigResponse" } }
+        }
+      ]
+    });
+    expect(() => validateSpec(spec)).toThrow(/variants\.mapping key is not a declared enum value/);
+  });
+
+  it("rejects a variants mapping that does not cover all enum values", () => {
+    const spec = baseSpec();
+    spec.schemas.push({
+      name: "VariantCarrier",
+      type: "object",
+      fields: [
+        { id: 1, name: "kind", type: "enum", required: true, deprecated: false, enum: ["a", "b"] },
+        {
+          id: 2,
+          name: "payload",
+          type: "object",
+          required: true,
+          deprecated: false,
+          variants: { discriminator: "kind", mapping: { a: "AudioSetAlgorithmConfigRequest" } }
+        }
+      ]
+    });
+    expect(() => validateSpec(spec)).toThrow(/variants\.mapping must cover all enum values/);
+  });
+
+  it("rejects a variants mapping value without a registered schema", () => {
+    const spec = baseSpec();
+    spec.schemas.push({
+      name: "VariantCarrier",
+      type: "object",
+      fields: [
+        { id: 1, name: "kind", type: "enum", required: true, deprecated: false, enum: ["a"] },
+        {
+          id: 2,
+          name: "payload",
+          type: "object",
+          required: true,
+          deprecated: false,
+          variants: { discriminator: "kind", mapping: { a: "MissingVariantSchema" } }
+        }
+      ]
+    });
+    expect(() => validateSpec(spec)).toThrow(/missing schema: MissingVariantSchema/);
+  });
+
+  it("rejects a variants mapping value that is not an object schema", () => {
+    const spec = baseSpec();
+    spec.schemas.push({ name: "NotAnObjectSchema", type: "enum", fields: [] });
+    spec.schemas.push({
+      name: "VariantCarrier",
+      type: "object",
+      fields: [
+        { id: 1, name: "kind", type: "enum", required: true, deprecated: false, enum: ["a"] },
+        {
+          id: 2,
+          name: "payload",
+          type: "object",
+          required: true,
+          deprecated: false,
+          variants: { discriminator: "kind", mapping: { a: "NotAnObjectSchema" } }
+        }
+      ]
+    });
+    expect(() => validateSpec(spec)).toThrow(/variants\.mapping must reference an object schema/);
+  });
+
   it("rejects ids outside the Domain Registry range", () => {
     const spec = baseSpec();
     spec.capabilities[0].id = 0x0301;

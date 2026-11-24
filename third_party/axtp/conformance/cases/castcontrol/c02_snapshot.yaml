@@ -1,0 +1,428 @@
+id: castcontrol.c02_snapshot
+title: P0 c02 snapshot
+since: spec/v0.18.0
+level: cast-control
+profiles:
+  - cast-control
+  - websocket-jsonrpc
+given:
+  device_profile: cast_control_receiver
+  oracle: reference/cast-control.mjs
+  source: specs/45-cast-control.md
+scenarios:
+  - name: three_protocols
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: install
+        direction: runtime_local
+        control_model:
+          action: install_snapshot
+          input: {}
+          expect:
+            installed: true
+      - id: read
+        direction: runtime_local
+        control_model:
+          action: capture
+          input:
+            controlVersion: 1
+          expect:
+            status: SUCCESS
+            result:
+              receivers:
+                - receiverId: receiver-hid
+                  protocol: hid
+                  state: ready
+                  observedAt: 2026-10-20T08:00:00Z
+                - receiverId: receiver-airplay
+                  protocol: airplay
+                  state: ready
+                  observedAt: 2026-10-20T08:00:00Z
+                - receiverId: receiver-webcast
+                  protocol: webcast
+                  state: ready
+                  observedAt: 2026-10-20T08:00:00Z
+              sessions:
+                - session:
+                    id: session-hid
+                    generation: "9007199254740993"
+                  receiverId: receiver-hid
+                  protocol: hid
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+                - session:
+                    id: session-airplay
+                    generation: "9007199254740994"
+                  receiverId: receiver-airplay
+                  protocol: airplay
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+                - session:
+                    id: session-webcast
+                    generation: "9007199254740995"
+                  receiverId: receiver-webcast
+                  protocol: webcast
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: zero_sessions
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: install
+        direction: runtime_local
+        control_model:
+          action: install_snapshot
+          input:
+            patch:
+              sessions: []
+              presentation:
+                started: true
+                lifecycleGeneration: "1"
+                configuredCapacity: 3
+                validationAvailable: false
+                effectiveCapacity: 3
+                appliedCapacity: 3
+                layoutMode: grid
+                layoutSettling: false
+                slots: []
+                contentAdaptation: auto-fit
+              audioPolicy:
+                controlMode: manual
+                mixMode: exclusive
+                enabledSessions: []
+                effectiveAudioSessions: []
+                masterMuted: false
+          expect:
+            installed: true
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: one_session
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: install
+        direction: runtime_local
+        control_model:
+          action: install_snapshot
+          input:
+            patch:
+              sessions:
+                - session:
+                    id: session-hid
+                    generation: "9007199254740993"
+                  receiverId: receiver-hid
+                  protocol: hid
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+              presentation:
+                started: true
+                lifecycleGeneration: "1"
+                configuredCapacity: 3
+                validationAvailable: false
+                effectiveCapacity: 3
+                appliedCapacity: 3
+                layoutMode: grid
+                layoutSettling: false
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-hid
+                        generation: "9007199254740993"
+                      slotId: 0
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                contentAdaptation: auto-fit
+              audioPolicy:
+                controlMode: manual
+                mixMode: exclusive
+                enabledSessions: []
+                effectiveAudioSessions: []
+                masterMuted: false
+          expect:
+            installed: true
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: missing_controlsync
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: install
+        direction: runtime_local
+        control_model:
+          action: install_snapshot
+          input:
+            omit:
+              - controlSync
+          expect:
+            resync: true
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: missing_receivers
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: install
+        direction: runtime_local
+        control_model:
+          action: install_snapshot
+          input:
+            omit:
+              - receivers
+          expect:
+            resync: true
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: missing_sessions
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: install
+        direction: runtime_local
+        control_model:
+          action: install_snapshot
+          input:
+            omit:
+              - sessions
+          expect:
+            resync: true
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: missing_presentation
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: install
+        direction: runtime_local
+        control_model:
+          action: install_snapshot
+          input:
+            omit:
+              - presentation
+          expect:
+            resync: true
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: missing_audiopolicy
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: install
+        direction: runtime_local
+        control_model:
+          action: install_snapshot
+          input:
+            omit:
+              - audioPolicy
+          expect:
+            resync: true
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: missing_window
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: install
+        direction: runtime_local
+        control_model:
+          action: install_snapshot
+          input:
+            omit:
+              - window
+          expect:
+            resync: true
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: ghost_slot
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: install
+        direction: runtime_local
+        control_model:
+          action: install_snapshot
+          input:
+            patch:
+              sessions: []
+          expect:
+            resync: true
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: unknown_capacity
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: install
+        direction: runtime_local
+        control_model:
+          action: install_snapshot
+          input:
+            patch:
+              presentation:
+                started: true
+                lifecycleGeneration: "1"
+                configuredCapacity: 3
+                validationAvailable: true
+                effectiveCapacity: 3
+                appliedCapacity: 3
+                layoutMode: grid
+                layoutSettling: false
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-hid
+                        generation: "9007199254740993"
+                      slotId: 0
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 1
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-airplay
+                        generation: "9007199254740994"
+                      slotId: 1
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 2
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-webcast
+                        generation: "9007199254740995"
+                      slotId: 2
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                contentAdaptation: auto-fit
+          expect:
+            resync: true
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: null_target
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: install
+        direction: runtime_local
+        control_model:
+          action: install_snapshot
+          input:
+            patch:
+              presentation:
+                started: true
+                lifecycleGeneration: "1"
+                configuredCapacity: 3
+                validationAvailable: false
+                effectiveCapacity: 3
+                appliedCapacity: 3
+                layoutMode: grid
+                layoutSettling: false
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: false
+                    target: null
+                contentAdaptation: auto-fit
+          expect:
+            resync: true
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: no_frames_is_connected
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: install
+        direction: runtime_local
+        control_model:
+          action: install_snapshot
+          input:
+            patch:
+              sessions:
+                - session:
+                    id: session-hid
+                    generation: "9007199254740993"
+                  receiverId: receiver-hid
+                  protocol: hid
+                  receiverState: open
+                  presentationEligibility: priming
+                  videoTrackOpen: false
+                  audioTrackOpen: true
+                - session:
+                    id: session-airplay
+                    generation: "9007199254740994"
+                  receiverId: receiver-airplay
+                  protocol: airplay
+                  receiverState: open
+                  presentationEligibility: priming
+                  videoTrackOpen: false
+                  audioTrackOpen: true
+                - session:
+                    id: session-webcast
+                    generation: "9007199254740995"
+                  receiverId: receiver-webcast
+                  protocol: webcast
+                  receiverState: open
+                  presentationEligibility: priming
+                  videoTrackOpen: false
+                  audioTrackOpen: true
+              presentation:
+                started: true
+                lifecycleGeneration: "1"
+                configuredCapacity: 3
+                validationAvailable: false
+                effectiveCapacity: 3
+                appliedCapacity: 3
+                layoutMode: grid
+                layoutSettling: false
+                slots: []
+                contentAdaptation: auto-fit
+              audioPolicy:
+                controlMode: manual
+                mixMode: exclusive
+                enabledSessions: []
+                effectiveAudioSessions: []
+                masterMuted: false
+          expect:
+            installed: true
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: capture_unavailable
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: read
+        direction: runtime_local
+        control_model:
+          action: capture
+          input:
+            unavailable: true
+          expect:
+            status: UNAVAILABLE
+      - id: size
+        direction: runtime_local
+        control_model:
+          action: capture
+          input:
+            maxSnapshotBytes: 1
+          expect:
+            status: UNAVAILABLE
+    assertions:
+      - The observable result matches specs/45-cast-control.md.

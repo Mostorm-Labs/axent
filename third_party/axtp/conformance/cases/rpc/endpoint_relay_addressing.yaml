@@ -1,0 +1,53 @@
+id: rpc.endpoint_relay_addressing
+title: Object RPC relays one logical destination endpoint
+since: spec/v0.0.2
+level: endpoint-relay
+profiles:
+  - endpoint-relay
+  - websocket-jsonrpc
+
+given:
+  device_profile: minimal_device
+  relay_endpoint: ep-agent-001
+  child_endpoint: ep-child-audio-001
+  source_endpoint: ep-app-001
+  provider: child_session
+  method: audio.getAlgorithmConfig
+
+steps:
+  - id: routed_request
+    direction: client_to_server
+    jsonrpc:
+      sid: "12345678"
+      op: REQUEST
+      m:
+        src: ep-app-001
+        dst: ep-child-audio-001
+      d:
+        id: 41
+        method: audio.getAlgorithmConfig
+        params: {}
+
+  - id: routed_response
+    responseTo: routed_request
+    direction: server_to_client
+    expect:
+      jsonrpc:
+        sid: "12345678"
+        op: REQUEST_RESPONSE
+        m:
+          src: ep-child-audio-001
+          dst: ep-app-001
+        d:
+          id: 41
+          status:
+            ok: true
+            code: 0
+
+assertions:
+  - routed_request.m.dst == given.child_endpoint
+  - routed_request.m.dst is a single string and not an array
+  - relay resolves given.child_endpoint through its local provider mapping without a wire nextHop or route path
+  - routed_response.m.src == routed_request.m.dst
+  - routed_response.m.dst == routed_request.m.src
+  - routed_response.d.id == routed_request.d.id

@@ -1,0 +1,378 @@
+id: castcontrol.c03_reconnect
+title: P0 c03 reconnect
+since: spec/v0.18.0
+level: cast-control
+profiles:
+  - cast-control
+  - websocket-jsonrpc
+given:
+  device_profile: cast_control_receiver
+  oracle: reference/cast-control.mjs
+  source: specs/45-cast-control.md
+scenarios:
+  - name: snapshot_barrier
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: install
+        direction: runtime_local
+        control_model:
+          action: install_snapshot
+          input:
+            patch:
+              controlSync:
+                controlVersion: 1
+                runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+                revision: "2"
+                eventSequence: "1"
+          expect:
+            installed: true
+      - id: old_event
+        direction: runtime_local
+        control_model:
+          action: receive_event
+          input:
+            event:
+              name: cast.receiversChanged
+              data:
+                context:
+                  controlVersion: 1
+                  runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+                  revision: "2"
+                  eventSequence: "1"
+                  batchId: "1"
+                  partIndex: 0
+                  partCount: 1
+                receivers:
+                  - receiverId: receiver-hid
+                    protocol: hid
+                    state: ready
+                    observedAt: 2026-10-20T08:00:00Z
+                  - receiverId: receiver-airplay
+                    protocol: airplay
+                    state: ready
+                    observedAt: 2026-10-20T08:00:00Z
+                  - receiverId: receiver-webcast
+                    protocol: webcast
+                    state: ready
+                    observedAt: 2026-10-20T08:00:00Z
+          expect:
+            ignored: true
+      - id: new_event
+        direction: runtime_local
+        control_model:
+          action: receive_event
+          input:
+            event:
+              name: cast.receiversChanged
+              data:
+                context:
+                  controlVersion: 1
+                  runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+                  revision: "2"
+                  eventSequence: "2"
+                  batchId: "2"
+                  partIndex: 0
+                  partCount: 1
+                receivers:
+                  - receiverId: receiver-hid
+                    protocol: hid
+                    state: ready
+                    observedAt: 2026-10-20T08:00:00Z
+                  - receiverId: receiver-airplay
+                    protocol: airplay
+                    state: ready
+                    observedAt: 2026-10-20T08:00:00Z
+                  - receiverId: receiver-webcast
+                    protocol: webcast
+                    state: ready
+                    observedAt: 2026-10-20T08:00:00Z
+          expect:
+            applied: true
+            eventSequence: "2"
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: epoch_changed
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: install
+        direction: runtime_local
+        control_model:
+          action: install_snapshot
+          input: {}
+          expect:
+            installed: true
+      - id: event
+        direction: runtime_local
+        control_model:
+          action: receive_event
+          input:
+            event:
+              name: cast.receiversChanged
+              data:
+                context:
+                  controlVersion: 1
+                  runtimeInstanceId: 44444444-4444-4444-8444-444444444444
+                  revision: "2"
+                  eventSequence: "1"
+                  batchId: "1"
+                  partIndex: 0
+                  partCount: 1
+                receivers:
+                  - receiverId: receiver-hid
+                    protocol: hid
+                    state: ready
+                    observedAt: 2026-10-20T08:00:00Z
+                  - receiverId: receiver-airplay
+                    protocol: airplay
+                    state: ready
+                    observedAt: 2026-10-20T08:00:00Z
+                  - receiverId: receiver-webcast
+                    protocol: webcast
+                    state: ready
+                    observedAt: 2026-10-20T08:00:00Z
+          expect:
+            resync: true
+      - id: restart
+        direction: runtime_local
+        control_model:
+          action: restart
+          input:
+            runtimeInstanceId: 44444444-4444-4444-8444-444444444444
+          expect:
+            retained: 0
+            synchronized: false
+      - id: old_query
+        direction: runtime_local
+        control_model:
+          action: query
+          input: {}
+          expect:
+            status: INVALID_STATE
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: missed_removal
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: install
+        direction: runtime_local
+        control_model:
+          action: install_snapshot
+          input:
+            patch:
+              sessions:
+                - session:
+                    id: session-airplay
+                    generation: "9007199254740994"
+                  receiverId: receiver-airplay
+                  protocol: airplay
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+                - session:
+                    id: session-webcast
+                    generation: "9007199254740995"
+                  receiverId: receiver-webcast
+                  protocol: webcast
+                  receiverState: mediaActive
+                  presentationEligibility: presented
+                  videoTrackOpen: true
+                  audioTrackOpen: true
+              presentation:
+                started: true
+                lifecycleGeneration: "1"
+                configuredCapacity: 3
+                validationAvailable: false
+                effectiveCapacity: 3
+                appliedCapacity: 3
+                layoutMode: grid
+                layoutSettling: false
+                slots:
+                  - slotId: 0
+                    bindingGeneration: "1"
+                    occupied: false
+                  - slotId: 1
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-airplay
+                        generation: "9007199254740994"
+                      slotId: 1
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                  - slotId: 2
+                    bindingGeneration: "1"
+                    occupied: true
+                    target:
+                      session:
+                        id: session-webcast
+                        generation: "9007199254740995"
+                      slotId: 2
+                      bindingGeneration: "1"
+                      lifecycleGeneration: "1"
+                contentAdaptation: auto-fit
+              audioPolicy:
+                controlMode: manual
+                mixMode: exclusive
+                enabledSessions: []
+                effectiveAudioSessions: []
+                masterMuted: false
+              controlSync:
+                controlVersion: 1
+                runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+                revision: "20"
+                eventSequence: "99"
+          expect:
+            installed: true
+            eventSequence: "99"
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: uint64_precision
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: install
+        direction: runtime_local
+        control_model:
+          action: install_snapshot
+          input:
+            patch:
+              controlSync:
+                controlVersion: 1
+                runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+                revision: "1"
+                eventSequence: "9007199254740993"
+          expect:
+            installed: true
+      - id: event
+        direction: runtime_local
+        control_model:
+          action: receive_event
+          input:
+            event:
+              name: cast.receiversChanged
+              data:
+                context:
+                  controlVersion: 1
+                  runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+                  revision: "2"
+                  eventSequence: "9007199254740994"
+                  batchId: "9007199254740994"
+                  partIndex: 0
+                  partCount: 1
+                receivers:
+                  - receiverId: receiver-hid
+                    protocol: hid
+                    state: ready
+                    observedAt: 2026-10-20T08:00:00Z
+                  - receiverId: receiver-airplay
+                    protocol: airplay
+                    state: ready
+                    observedAt: 2026-10-20T08:00:00Z
+                  - receiverId: receiver-webcast
+                    protocol: webcast
+                    state: ready
+                    observedAt: 2026-10-20T08:00:00Z
+          expect:
+            applied: true
+            eventSequence: "9007199254740994"
+    assertions:
+      - The observable result matches specs/45-cast-control.md.
+  - name: subscribe_before_snapshot
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: buffer
+        direction: runtime_local
+        control_model:
+          action: receive_event
+          input:
+            event:
+              name: cast.receiversChanged
+              data:
+                context:
+                  controlVersion: 1
+                  runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+                  revision: "2"
+                  eventSequence: "1"
+                  batchId: "1"
+                  partIndex: 0
+                  partCount: 1
+                receivers:
+                  - receiverId: receiver-hid
+                    protocol: hid
+                    state: ready
+                    observedAt: 2026-10-20T08:00:00Z
+                  - receiverId: receiver-airplay
+                    protocol: airplay
+                    state: ready
+                    observedAt: 2026-10-20T08:00:00Z
+                  - receiverId: receiver-webcast
+                    protocol: webcast
+                    state: ready
+                    observedAt: 2026-10-20T08:00:00Z
+          expect:
+            applied: false
+            buffered: 1
+      - id: install
+        direction: runtime_local
+        control_model:
+          action: install_snapshot
+          input: {}
+          expect:
+            installed: true
+      - id: applied_after_barrier
+        direction: runtime_local
+        control_model:
+          action: assert_state
+          input: {}
+          expect:
+            client:
+              controlSync:
+                eventSequence: "1"
+                revision: "2"
+    assertions:
+      - All observable state and synchronization guarantees are maintained.
+  - name: initial_buffer_overflow
+    given:
+      client_axtp_version: 1.0.0
+    steps:
+      - id: overflow
+        direction: runtime_local
+        control_model:
+          action: receive_event
+          input:
+            event:
+              name: cast.receiversChanged
+              data:
+                context:
+                  controlVersion: 1
+                  runtimeInstanceId: 11111111-1111-4111-8111-111111111111
+                  revision: "2"
+                  eventSequence: "1"
+                  batchId: "1"
+                  partIndex: 0
+                  partCount: 1
+                receivers:
+                  - receiverId: receiver-hid
+                    protocol: hid
+                    state: ready
+                    observedAt: 2026-10-20T08:00:00Z
+                  - receiverId: receiver-airplay
+                    protocol: airplay
+                    state: ready
+                    observedAt: 2026-10-20T08:00:00Z
+                  - receiverId: receiver-webcast
+                    protocol: webcast
+                    state: ready
+                    observedAt: 2026-10-20T08:00:00Z
+            limits:
+              maxEventBufferBytes: 1
+          expect:
+            resync: true
+    assertions:
+      - All observable state and synchronization guarantees are maintained.

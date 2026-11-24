@@ -25,7 +25,7 @@ function walkProtocolDrafts(dir) {
 }
 
 function readFrontmatter(file) {
-  const text = fs.readFileSync(file, "utf8");
+  const text = fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n");
   if (!text.startsWith("---\n")) return { text, data: {} };
   const end = text.indexOf("\n---", 4);
   if (end < 0) return { text, data: {} };
@@ -58,6 +58,9 @@ for (const method of generated.methods ?? []) {
 for (const event of generated.events ?? []) {
   addDomainCount(event.domain);
   for (const capability of event.capabilities ?? []) generatedFeatures.add(capability);
+}
+for (const capability of generated.capabilities ?? []) {
+  generatedFeatures.add(capability.name);
 }
 
 for (const file of walkProtocolDrafts(protocolDraftRoot)) {

@@ -1,0 +1,127 @@
+id: sport.config_multi_device_roundtrip
+title: Sport configuration routes by MAC address and round-trips through get/set
+since: spec/v0.0.2
+level: sport
+profiles:
+  - sport
+  - websocket-jsonrpc
+
+given:
+  device_profile: vm33pro_multi_device
+  capability: sport.eventDetection
+  devices:
+    - AA:BB:CC:DD:EE:FF
+    - 11:22:33:44:55:66
+
+steps:
+  - id: get_device_a_before
+    role: precondition
+    direction: client_to_server
+    rpc:
+      encoding: json
+      op: REQUEST
+      requestId: 101
+      method: sport.getGoalShotWatermarkConfig
+      params:
+        macAddress: AA:BB:CC:DD:EE:FF
+        sportType: basketball
+
+  - id: get_device_a_before_response
+    responseTo: get_device_a_before
+    role: observe
+    direction: server_to_client
+    expect:
+      rpc:
+        op: REQUEST_RESPONSE
+        requestId: 101
+        statusCode: SUCCESS
+        result:
+          macAddress: AA:BB:CC:DD:EE:FF
+          sportType: basketball
+          goalVisible: true
+          shotVisible: true
+
+  - id: set_device_a
+    role: trigger
+    direction: client_to_server
+    rpc:
+      encoding: json
+      op: REQUEST
+      requestId: 102
+      method: sport.setGoalShotWatermarkConfig
+      params:
+        macAddress: AA:BB:CC:DD:EE:FF
+        sportType: basketball
+        goalVisible: false
+        shotVisible: false
+
+  - id: set_device_a_response
+    responseTo: set_device_a
+    role: observe
+    direction: server_to_client
+    expect:
+      rpc:
+        op: REQUEST_RESPONSE
+        requestId: 102
+        statusCode: SUCCESS
+
+  - id: get_device_a_after
+    triggeredBy: set_device_a_response
+    role: trigger
+    direction: client_to_server
+    rpc:
+      encoding: json
+      op: REQUEST
+      requestId: 103
+      method: sport.getGoalShotWatermarkConfig
+      params:
+        macAddress: AA:BB:CC:DD:EE:FF
+        sportType: basketball
+
+  - id: get_device_a_after_response
+    responseTo: get_device_a_after
+    role: observe
+    direction: server_to_client
+    expect:
+      rpc:
+        op: REQUEST_RESPONSE
+        requestId: 103
+        statusCode: SUCCESS
+        result:
+          macAddress: AA:BB:CC:DD:EE:FF
+          sportType: basketball
+          goalVisible: false
+          shotVisible: false
+
+  - id: get_device_b
+    role: trigger
+    direction: client_to_server
+    rpc:
+      encoding: json
+      op: REQUEST
+      requestId: 104
+      method: sport.getGoalShotWatermarkConfig
+      params:
+        macAddress: 11:22:33:44:55:66
+        sportType: basketball
+
+  - id: get_device_b_response
+    responseTo: get_device_b
+    role: observe
+    direction: server_to_client
+    expect:
+      rpc:
+        op: REQUEST_RESPONSE
+        requestId: 104
+        statusCode: SUCCESS
+        result:
+          macAddress: 11:22:33:44:55:66
+          sportType: basketball
+          goalVisible: false
+          shotVisible: true
+
+assertions:
+  - every configuration request includes macAddress and sportType
+  - get_device_a_after.result equals the values accepted by set_device_a
+  - device B values remain unchanged after updating device A
+  - response.requestId == request.requestId

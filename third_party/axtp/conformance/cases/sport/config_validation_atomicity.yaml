@@ -1,0 +1,99 @@
+id: sport.config_validation_atomicity
+title: Sport configuration validates MAC and numeric offset values before atomic update
+since: spec/v0.0.2
+level: sport
+profiles:
+  - sport
+  - websocket-jsonrpc
+
+given:
+  device_profile: vm33pro_multi_device
+  capability: sport.eventDetection
+  device: AA:BB:CC:DD:EE:FF
+  initial_event_clip:
+    beforeOffsetSeconds: 5
+    afterOffsetSeconds: 8
+
+steps:
+  - id: invalid_mac
+    role: trigger
+    direction: client_to_server
+    rpc:
+      encoding: json
+      op: REQUEST
+      requestId: 301
+      method: sport.setGoalShotWatermarkConfig
+      params:
+        macAddress: invalid-mac
+        sportType: basketball
+        goalVisible: false
+        shotVisible: false
+
+  - id: invalid_mac_response
+    responseTo: invalid_mac
+    role: degraded
+    direction: server_to_client
+    expect:
+      rpc:
+        op: REQUEST_RESPONSE
+        requestId: 301
+        statusCode: INVALID_ARGUMENT
+
+  - id: invalid_offset_type
+    triggeredBy: invalid_mac_response
+    role: trigger
+    direction: client_to_server
+    rpc:
+      encoding: json
+      op: REQUEST
+      requestId: 302
+      method: sport.setEventClipConfig
+      params:
+        macAddress: AA:BB:CC:DD:EE:FF
+        sportType: basketball
+        beforeOffsetSeconds: -1
+        afterOffsetSeconds: 15
+
+  - id: invalid_offset_type_response
+    responseTo: invalid_offset_type
+    role: degraded
+    direction: server_to_client
+    expect:
+      rpc:
+        op: REQUEST_RESPONSE
+        requestId: 302
+        statusCode: INVALID_ARGUMENT
+
+  - id: get_clip_after_rejection
+    triggeredBy: invalid_offset_type_response
+    role: liveness
+    direction: client_to_server
+    rpc:
+      encoding: json
+      op: REQUEST
+      requestId: 303
+      method: sport.getEventClipConfig
+      params:
+        macAddress: AA:BB:CC:DD:EE:FF
+        sportType: basketball
+
+  - id: get_clip_after_rejection_response
+    responseTo: get_clip_after_rejection
+    role: liveness
+    direction: server_to_client
+    expect:
+      rpc:
+        op: REQUEST_RESPONSE
+        requestId: 303
+        statusCode: SUCCESS
+        result:
+          macAddress: AA:BB:CC:DD:EE:FF
+          sportType: basketball
+          beforeOffsetSeconds: 5
+          afterOffsetSeconds: 8
+
+assertions:
+  - malformed MAC returns INVALID_ARGUMENT
+  - offset values outside the uint32 domain return INVALID_ARGUMENT
+  - failed clip update does not partially apply either offset
+  - session remains usable after validation errors

@@ -1,5 +1,5 @@
 domain: signage
-description: Digital signage playlist synchronization, query, reset, and playlist item URL refresh capabilities.
+description: Digital signage playlist synchronization, query, reset, playlist item URL refresh, and playlist item refresh capabilities.
 
 methods:
   - id: 0x0D01
@@ -93,10 +93,31 @@ methods:
     status: draft
     bitOffset: 4
     since: 1.0.0
-    description: Fetch the latest resource URL for a playlist item by itemId (URL refresh). The device calls this proactively when an item URL is about to expire. Clock items have no URL resource and return NOT_SUPPORTED.
+    description: Fetch the latest resource URL for a playlist item by itemId (URL refresh). The device calls this proactively when an item URL is about to expire. Clock items have no URL resource and powerbi items carry a non-URL embed-token resource; both return NOT_SUPPORTED (powerbi refresh MUST use signage.getPlaylistItem).
     rpc_op: request_response
     request_schema: SignageGetPlaylistItemUrlParams
     response_schema: SignageGetPlaylistItemUrlResult
+    recommended_encoding:
+      - json
+      - tlv
+    capabilities:
+      - signage.playlist
+    errors:
+      - SUCCESS
+      - NOT_SUPPORTED
+      - NOT_FOUND
+      - INTERNAL_ERROR
+
+  - id: 0x0D06
+    name: signage.getPlaylistItem
+    domain: signage
+    status: draft
+    bitOffset: 5
+    since: 1.0.0
+    description: Fetch the complete playlist item by itemId (item refresh). The device calls this proactively when settings.expiresAt is near expiry and replaces the local playlist item with the returned one. Non-URL resource types (powerbi) MUST use this method; URL resource types MAY use this or signage.getPlaylistItemUrl.
+    rpc_op: request_response
+    request_schema: SignageGetPlaylistItemParams
+    response_schema: SignageGetPlaylistItemResult
     recommended_encoding:
       - json
       - tlv
@@ -155,7 +176,7 @@ types:
         array:
           item_type: string
         required: true
-        description: Supported playlist item type strings; candidate values include image, website, video, clock, and unsplash.
+        description: Supported playlist item types as a subset of the SignagePlaylistItem.type enum values (image, website, video, clock, unsplash, powerbi).
       - id: 0x02
         name: maxPlaylists
         type: uint32
@@ -217,18 +238,47 @@ types:
 
   SignageGetPlaylistItemUrlResult:
     kind: object
-    description: Refreshed playlist item URL result. The internal structure of settings depends on type.
+    description: Refreshed playlist item URL result; the type field value selects the settings variant schema.
     fields:
       - id: 0x01
         name: type
         type: enum
         required: true
-        description: Playlist item type used to discriminate the settings structure; candidate values include image, video, website, and unsplash. Clock is excluded from URL refresh.
+        enum: [image, video, website, unsplash]
+        description: Playlist item type used to discriminate the settings structure; clock and powerbi are excluded from URL refresh and return NOT_SUPPORTED (powerbi refresh uses signage.getPlaylistItem).
       - id: 0x02
         name: settings
-        type: SignagePlaylistItemSettings
+        type: object
         required: true
-        description: Refreshed complete settings; the device may replace the locally cached settings with this value.
+        variants:
+          discriminator: type
+          mapping:
+            image: SignageImageItemSettings
+            video: SignageVideoItemSettings
+            website: SignageWebsiteItemSettings
+            unsplash: SignageUnsplashItemSettings
+        description: Refreshed complete settings; the device may replace the locally cached settings with this value. The type field value selects the variant schema.
+
+  SignageGetPlaylistItemParams:
+    kind: object
+    description: Request to refresh a complete playlist item by itemId.
+    fields:
+      - id: 0x01
+        name: itemId
+        type: string
+        required: true
+        max_length: 64
+        description: Playlist item unique identifier (UUID); same identifier space as signage.getPlaylistItemUrl.
+
+  SignageGetPlaylistItemResult:
+    kind: object
+    description: Refreshed complete playlist item; structurally identical to the SignagePlaylistItem elements carried in setPlaylistConfig / getPlaylistConfig payloads.
+    fields:
+      - id: 0x01
+        name: item
+        type: SignagePlaylistItem
+        required: true
+        description: Complete playlist item (id, type, duration, sort, settings). The device replaces the locally cached item with this value.
 
   SignagePlaylistConfigChangedEvent:
     kind: object
@@ -238,7 +288,8 @@ types:
         name: reason
         type: enum
         required: true
-        description: Change reason; candidate values include set_config (triggered by setPlaylistConfig) and reset_config (triggered by resetPlaylistConfig).
+        enum: [set_config, reset_config]
+        description: Change reason; set_config (configuration replaced via signage.setPlaylistConfig) and reset_config (configuration restored to factory default via signage.resetPlaylistConfig).
       - id: 0x02
         name: playlists
         type: array
@@ -260,7 +311,8 @@ types:
         name: type
         type: enum
         required: true
-        description: Playlist type; candidate values include default (always-on default playlist) and scheduled (time-windowed playlist).
+        enum: [default, scheduled]
+        description: Playlist type; default (always-on default playlist) and scheduled (time-windowed playlist; startDate, endDate, startTime, endTime, and days are required, see each field for ordering constraints).
       - id: 0x03
         name: startDate
         type: string
@@ -313,7 +365,8 @@ types:
         name: type
         type: enum
         required: true
-        description: Playlist item type; candidate values include image, website, video, clock, and unsplash.
+        enum: [image, website, video, clock, unsplash, powerbi]
+        description: Playlist item type; image (rotating image set), website (embedded web page), video (video media URL), clock (clock face list), unsplash (Unsplash photo set), and powerbi (embedded PowerBI dashboard). The value selects the settings variant schema.
       - id: 0x03
         name: duration
         type: uint32
@@ -330,69 +383,156 @@ types:
         description: Playback order, ascending by sort. The sort value MUST be unique within the same playlist; duplicate sort values return INVALID_ARGUMENT.
       - id: 0x05
         name: settings
-        type: SignagePlaylistItemSettings
+        type: object
         required: true
-        description: Playlist item settings; structure varies by type.
+        variants:
+          discriminator: type
+          mapping:
+            image: SignageImageItemSettings
+            website: SignageWebsiteItemSettings
+            video: SignageVideoItemSettings
+            clock: SignageClockItemSettings
+            unsplash: SignageUnsplashItemSettings
+            powerbi: SignagePowerBiItemSettings
+        description: Per-type playlist item settings; the type field value selects the variant schema applied to this field.
 
-  SignagePlaylistItemSettings:
+  SignageImageItemSettings:
     kind: object
-    description: Aggregated playlist item settings spanning all item types. Only the subset matching the enclosing item type is meaningful; see the per-type rules in the signage.playlist draft.
+    description: Settings for the image playlist item type; selected via PlaylistItem.settings variants when type is image.
     fields:
       - id: 0x01
         name: urls
         type: array
         array:
           item_type: string
-        required: false
-        description: "image type: non-empty image URLs."
+        required: true
+        description: Non-empty image URL list.
       - id: 0x02
         name: delaySeconds
         type: uint32
-        required: false
+        required: true
         min: 1
         default: 5
-        description: "image and unsplash types: per-image display interval in seconds."
+        description: Per-image display interval in seconds.
       - id: 0x03
         name: expiresAt
         type: uint64
         required: false
-        description: "image, video, and unsplash types: Unix timestamp URL expiry. 0 or absent means never expires."
-      - id: 0x04
+        description: Unix timestamp URL expiry. 0 or absent means never expires.
+
+  SignageVideoItemSettings:
+    kind: object
+    description: Settings for the video playlist item type; selected via PlaylistItem.settings variants when type is video.
+    fields:
+      - id: 0x01
         name: url
         type: string
-        required: false
+        required: true
         max_length: 2048
-        description: "video and website types: media or page URL."
-      - id: 0x05
+        description: Video media URL.
+      - id: 0x02
+        name: expiresAt
+        type: uint64
+        required: false
+        description: Unix timestamp URL expiry. 0 or absent means never expires.
+      - id: 0x03
         name: muted
         type: bool
         required: false
         default: false
-        description: "video type: whether to play muted."
-      - id: 0x06
+        description: Whether to play muted.
+
+  SignageWebsiteItemSettings:
+    kind: object
+    description: Settings for the website playlist item type; selected via PlaylistItem.settings variants when type is website.
+    fields:
+      - id: 0x01
+        name: url
+        type: string
+        required: true
+        max_length: 2048
+        description: Web page URL.
+      - id: 0x02
         name: ignoreCertificateError
         type: bool
         required: false
         default: false
-        description: "website type: whether to ignore TLS certificate errors. Enabling bypasses certificate validation and carries MITM risk; the default policy and caller permission requirements are product-defined."
-      - id: 0x07
+        description: Whether to ignore TLS certificate errors. Enabling bypasses certificate validation and carries MITM risk; the default policy and caller permission requirements are product-defined.
+      - id: 0x03
         name: refreshIntervalSecs
         type: uint32
         required: false
         min: 1
-        description: "website type: page refresh interval in seconds. 0 or absent means no refresh."
-      - id: 0x08
+        description: Page refresh interval in seconds. 0 or absent means no refresh.
+
+  SignageClockItemSettings:
+    kind: object
+    description: Settings for the clock playlist item type; selected via PlaylistItem.settings variants when type is clock.
+    fields:
+      - id: 0x01
         name: clocks
         type: array
         schema: SignagePlaylistClockEntry
-        required: false
-        description: "clock type: non-empty playlist clock entry objects."
-      - id: 0x09
+        required: true
+        description: Non-empty clock entries.
+
+  SignageUnsplashItemSettings:
+    kind: object
+    description: Settings for the unsplash playlist item type; selected via PlaylistItem.settings variants when type is unsplash.
+    fields:
+      - id: 0x01
         name: photos
         type: array
         schema: SignagePlaylistUnsplashPhoto
+        required: true
+        description: Non-empty Unsplash photo entries with photographer attribution.
+      - id: 0x02
+        name: delaySeconds
+        type: uint32
+        required: true
+        min: 1
+        default: 5
+        description: Per-photo display interval in seconds.
+      - id: 0x03
+        name: expiresAt
+        type: uint64
         required: false
-        description: "unsplash type: non-empty playlist unsplash photo objects."
+        description: Unix timestamp URL expiry. 0 or absent means never expires.
+
+  SignagePowerBiItemSettings:
+    kind: object
+    description: Settings for the powerbi playlist item type; selected via PlaylistItem.settings variants when type is powerbi. All fields are required.
+    fields:
+      - id: 0x01
+        name: groupId
+        type: string
+        required: true
+        max_length: 64
+        description: PowerBI workspace (group) identifier (GUID).
+      - id: 0x02
+        name: dashboardId
+        type: string
+        required: true
+        max_length: 64
+        description: PowerBI dashboard identifier (GUID).
+      - id: 0x03
+        name: embedUrl
+        type: string
+        required: true
+        max_length: 2048
+        description: Dashboard embed URL; stable across token refreshes. The device SHOULD cache and reuse it.
+      - id: 0x04
+        name: token
+        type: string
+        required: true
+        max_length: 8192
+        description: AAD access token for the PowerBI audience (https://analysis.windows.net/powerbi/api; tokenType=Aad embedding; typically ~60 minutes). Tenants with many group/role claims issue JWTs of 5-8 KB, hence the generous bound. Sensitive credential transported only via the RPC channel; never embedded in resource URLs and not to be logged.
+      - id: 0x05
+        name: expiresAt
+        type: uint64
+        required: true
+        min: 1
+        description: Unix timestamp token expiry; MUST be greater than 0 (0 is invalid for powerbi, unlike the 0-equals-never-expires convention of URL-based item types). Always present for powerbi items; drives the device-side signage.getPlaylistItem refresh.
 
   SignagePlaylistClockEntry:
     kind: object
@@ -422,13 +562,23 @@ types:
         max_length: 2048
         description: Photo URL.
       - id: 0x02
-        name: userName
+        name: user
+        type: SignagePlaylistUnsplashUser
+        required: true
+        description: Photographer attribution.
+
+  SignagePlaylistUnsplashUser:
+    kind: object
+    description: Photographer attribution for an Unsplash photo.
+    fields:
+      - id: 0x01
+        name: name
         type: string
         required: true
         max_length: 128
         description: Photographer name.
-      - id: 0x03
-        name: userLink
+      - id: 0x02
+        name: link
         type: string
         required: true
         max_length: 2048
@@ -444,7 +594,7 @@ types:
         array:
           item_type: string
         required: true
-        description: Supported playlist item type strings; candidate values include image, website, video, clock, and unsplash.
+        description: Supported playlist item types as a subset of the SignagePlaylistItem.type enum values (image, website, video, clock, unsplash, powerbi).
       - id: 0x02
         name: maxPlaylists
         type: uint32
@@ -477,6 +627,6 @@ capabilities:
     domain: signage
     status: draft
     since: 1.0.0
-    description: Device supports digital signage playlist full sync, query, reset, playlist item URL refresh, and playlist config change notification.
+    description: Device supports digital signage playlist full sync, query, reset, playlist item URL refresh, playlist item refresh, and playlist config change notification.
     type: object
     schema: SignagePlaylistCapability

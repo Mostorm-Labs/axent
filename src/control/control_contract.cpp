@@ -9,6 +9,7 @@
 
 namespace axent::control {
 std::string_view protocol_spec_version() noexcept {return axtp::generated::kSpecVersion;}
+bool validate_object(std::string_view schema,const nlohmann::json& value){return axtp::SchemaObjectCodec::validate(std::string(schema),value);}
 
 bool validate_payload(std::string_view route, PayloadRole role, const nlohmann::json& value)
 {
